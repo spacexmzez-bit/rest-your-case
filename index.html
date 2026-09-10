@@ -222,27 +222,195 @@
     </div>
   </main>
 
-  <!-- ================= TABS 4 & 5: DOCUMENTATION (NEW) ================= -->
-  <main id="tab-howtoplay" class="hidden max-w-4xl mx-auto px-4 py-8 space-y-8 flex-grow w-full">
+  <!-- ================= TAB 4: HOW TO PLAY ================= -->
+  <main id="tab-howtoplay" class="hidden max-w-5xl mx-auto px-4 py-8 space-y-10 flex-grow w-full">
     <div class="border-b border-brand-border pb-4">
-      <h1 class="text-3xl font-serif text-white font-semibold">How to Play</h1>
-      <p class="text-brand-muted text-sm mt-2">Operational manual for navigating the Rest Your Case tactical engine.</p>
+      <h1 class="text-3xl font-serif text-white font-semibold">Field Manual: How to Play</h1>
+      <p class="text-brand-muted text-sm mt-2">Complete operational directives for the Rest Your Case tactical engine.</p>
     </div>
-    <div class="font-mono text-xs text-brand-muted p-4 border border-brand-border border-dashed rounded text-center">
-      [Placeholder: Game Cycle, Split Terminal Nav, and AP Mechanics content will live here]
+
+    <!-- Module 1 & 2 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">1. The Game Cycle</h2>
+        <ul class="text-sm text-slate-300 space-y-3 font-sans">
+          <li><strong class="text-white">Phase 1 (Intake):</strong> You have limited turns to interview your client in holding. Ask precise questions to lock down their alibi. If you don't find the holes in their story, the DA will.</li>
+          <li><strong class="text-white">Phase 2 (Pre-Trial):</strong> Direct Investigator Diaz. This is where you spend AP to subpoena bank records, trace IP logs, or file motions to suppress tainted discovery.</li>
+          <li><strong class="text-white">Phase 3 (Trial):</strong> Cross-examine State witnesses. Use the `!` menu to object to improper DA questions in real-time. Introduce admitted exhibits to impeach lying witnesses.</li>
+          <li><strong class="text-white">Phase 4 (Verdict):</strong> Deliver a closing argument. The jury renders a verdict, and the "Truth Vault" in your Notebook decrypts to reveal what actually happened.</li>
+        </ul>
+      </section>
+
+      <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">2. The Cockpit & Terminal</h2>
+        <div class="text-sm text-slate-300 space-y-3 font-sans">
+          <p>The <strong class="text-white">Live Terminal</strong> uses a Split-Bench system.</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong class="text-white">Desktop:</strong> The Left Panel acts as an immutable ledger (tracking marked evidence and established facts). The Right Panel is the real-time dialogue stream.</li>
+            <li><strong class="text-white">Mobile:</strong> The cold-data panel is hidden to save vertical space. You can review all logged evidence and facts securely in the <strong class="text-white">Notebook</strong> tab at any time.</li>
+          </ul>
+          <p class="pt-2 italic text-xs text-brand-muted">Note: The input bar and objection button (`!`) are permanently pinned to the bottom of your screen. They will never scroll out of view.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Module 3 & 4 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">3. Resource Economics</h2>
+        <div class="text-sm text-slate-300 space-y-4 font-sans">
+          <div>
+            <strong class="text-brand-gold block font-mono text-xs mb-1">Action Points (AP)</strong>
+            <p>AP represents your firm's time and budget. Issuing subpoenas, ordering forensic analysis, and filing formal motions cost AP. General conversation with your client or Partner is free.</p>
+          </div>
+          <div>
+            <strong class="text-rose-400 block font-mono text-xs mb-1">Judicial Strikes (0/3)</strong>
+            <p>The Judge tracks your conduct. Making frivolous arguments, pursuing badgering lines of questioning, or having your objections repeatedly overruled earns strikes. Max strikes = Mistrial/Contempt.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">4. Command Line Syntax</h2>
+        <div class="text-sm text-slate-300 space-y-3 font-sans">
+          <p>While you primarily use natural language to talk, system directives use slashes:</p>
+          <div class="bg-brand-dark p-2 rounded font-mono text-xs border border-brand-border space-y-2">
+            <div><span class="text-brand-gold">/recap</span> - Summarizes the trial so far (useful if you hit context limits).</div>
+            <div><span class="text-brand-gold">/inspect [Ex. 1]</span> - Demands granular forensic data or chain of custody on a marked exhibit.</div>
+            <div><span class="text-brand-gold">/subpoena [Target]</span> - Spends AP to legally compel phone records, bank statements, or server logs.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Module 5 & 6 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">5. Senior Partner Drawer</h2>
+        <div class="text-sm text-slate-300 space-y-2 font-sans">
+          <p>Stuck? Click the floating <strong class="text-brand-gold uppercase text-[10px] tracking-wider">Partner</strong> tab on the right edge of the screen.</p>
+          <p>This opens a secure, independent chat thread with your firm's senior partner. You can ask for legal advice, bounce case theories around, or ask if a specific objection applies. <strong class="text-emerald-400">Consultations cost 0 AP and 0 Strikes.</strong></p>
+        </div>
+      </section>
+
+      <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">6. Case Management</h2>
+        <div class="text-sm text-slate-300 space-y-3 font-sans">
+          <p>The <strong class="text-white">Notebook</strong> tab is your private workspace.</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong class="text-white">Logging Discovery:</strong> If the AI mentions a piece of evidence, manually log it via `+ Manual Entry`.</li>
+            <li><strong class="text-white">Status Toggles:</strong> Cycle evidence status between Marked, Admitted, or Suppressed.</li>
+            <li><strong class="text-white">Wiping Data:</strong> To start a fresh trial, click `Delete Case` (located in the Terminal header or Notebook) and type `CONFIRM` to wipe local storage.</li>
+          </ul>
+        </div>
+      </section>
     </div>
   </main>
 
-  <main id="tab-legal" class="hidden max-w-4xl mx-auto px-4 py-8 space-y-8 flex-grow w-full">
+  <!-- ================= TAB 5: LEGAL LIBRARY ================= -->
+  <main id="tab-legal" class="hidden max-w-5xl mx-auto px-4 py-8 space-y-10 flex-grow w-full">
     <div class="border-b border-brand-border pb-4">
       <h1 class="text-3xl font-serif text-white font-semibold">Legal Library</h1>
       <p class="text-brand-muted text-sm mt-2">Compendium of Criminal Defense tactics and Federal Rules of Evidence.</p>
     </div>
-    <div class="font-mono text-xs text-brand-muted p-4 border border-brand-border border-dashed rounded text-center">
-      [Placeholder: Burden of Proof, Objection Matrix, and Defense Tactics content will live here]
-    </div>
+
+    <!-- Section 1 -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">1. Criminal Defense Standards</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Burden of Proof</h3>
+          <p class="text-xs text-slate-300 font-sans">The defense does not have to prove innocence. The State must prove guilt <em class="text-white">beyond a reasonable doubt</em>. Poke holes in their narrative rather than inventing your own.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Exclusionary Rule</h3>
+          <p class="text-xs text-slate-300 font-sans">Evidence obtained through a violation of the 4th Amendment (warrantless/illegal searches) is tainted. File a motion to suppress to exclude "fruits of the poisonous tree."</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Brady Material</h3>
+          <p class="text-xs text-slate-300 font-sans">The prosecution is constitutionally required to turn over any exculpatory evidence (evidence favorable to the defendant). If they hide it, demand a mistrial.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">2. Complete Objection Matrix</h2>
+      <p class="text-xs text-brand-muted font-mono mb-4">Use the `!` button in the Terminal to rapidly deploy these during cross-examination.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Hearsay -->
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 802: Hearsay</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> A witness testifies about what someone else said out of court to prove it was true.</p>
+          <p class="text-xs text-slate-400 font-sans italic">"My neighbor told me he saw the defendant do it."</p>
+          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Exceptions: Present Sense Impression, Excited Utterance, Admissions.</p>
+        </div>
+
+        <!-- Leading -->
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 611(c): Leading (Direct)</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The prosecutor feeds the answer to their own friendly witness in the question.</p>
+          <p class="text-xs text-slate-400 font-sans italic">"You saw him holding the bloody crowbar, didn't you?"</p>
+          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Force the DA to ask open "Who, what, where" questions.</p>
+        </div>
+
+        <!-- Speculation -->
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 602: Speculation / Foundation</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The witness guesses about something they didn't personally perceive, or guesses someone else's state of mind.</p>
+          <p class="text-xs text-slate-400 font-sans italic">"I think he was planning to sell the stolen files."</p>
+          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Demand the DA lay a foundation showing personal knowledge.</p>
+        </div>
+
+        <!-- Character -->
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 404(b): Improper Character</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The State mentions prior bad acts or past crimes to prove the defendant acted in accordance with that trait.</p>
+          <p class="text-xs text-slate-400 font-sans italic">"He's a known liar who cheated on his taxes five years ago."</p>
+          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Defense: Past crimes do not prove current guilt.</p>
+        </div>
+
+        <!-- Prejudice -->
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 403: Unfair Prejudice</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The evidence's probative value is substantially outweighed by a danger of inflaming the jury's emotions.</p>
+          <p class="text-xs text-slate-400 font-sans italic">Introducing highly gruesome, unnecessary photos of a victim.</p>
+        </div>
+
+        <!-- Assumes Facts -->
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">Assumes Facts Not in Evidence</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The question embeds an unproven allegation as an accepted premise to trap the witness.</p>
+          <p class="text-xs text-slate-400 font-sans italic">"When did you stop embezzling the company funds?"</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section class="bg-brand-surface border border-emerald-900/50 rounded p-6 space-y-3">
+      <h2 class="text-emerald-400 font-mono text-sm uppercase tracking-wider border-b border-emerald-900/50 pb-2">3. Cross-Examination Tactics</h2>
+      <ul class="text-sm text-slate-300 space-y-3 font-sans list-disc pl-5">
+        <li><strong class="text-white">Impeachment by Prior Statement:</strong> If a witness changes their story on the stand, confront them with their original police statement (found in your Phase 2 discovery). <em>"Isn't it true you told Detective Vance..."</em></li>
+        <li><strong class="text-white">Financial Bias:</strong> Always ask cooperating witnesses or "experts" if they are being paid by the State for their testimony, or if they were offered a plea deal in exchange for testifying against your client.</li>
+        <li><strong class="text-white">Sensory Limitations:</strong> Attack the conditions of perception. <em>"It was midnight, raining, and you were 100 feet away without your glasses, correct?"</em></li>
+      </ul>
+    </section>
   </main>
 
+  <!-- ================= TAB 6: SETUP GUIDE ================= -->
   <main id="tab-setup" class="hidden max-w-3xl mx-auto px-4 py-12 flex-grow w-full space-y-6">
     <h1 class="text-3xl font-serif text-white font-semibold">Manual Integration</h1>
     <p class="text-brand-muted text-sm">Directives for native ChatGPT/Claude play coming soon.</p>
@@ -267,11 +435,6 @@
       <button id="tab-howtoplay-btn" onclick="navToTab('howtoplay')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">How to Play</button>
       <button id="tab-legal-btn" onclick="navToTab('legal')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Legal Library</button>
       <button id="tab-setup-btn" onclick="navToTab('setup')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Setup Guide</button>
-<a href="https://ko-fi.com/Mazendev" target="_blank" rel="noopener noreferrer" class="w-full text-left px-3 py-2.5 rounded bg-brand-surface border border-brand-gold/40 text-brand-gold hover:text-white hover:border-brand-gold transition flex items-center justify-between font-mono text-xs">
-  <span>☕ Support / Tip</span>
-  <span class="text-[10px] text-brand-muted">Ko-fi</span>
-</a>
-
     </nav>
   
     <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
@@ -428,7 +591,6 @@
     function persist() { localStorage.setItem('rest_your_case_state', JSON.stringify(appState)); }
 
     function renderUI() {
-      // Re-trigger nav logic to update the sidebar button states dynamically
       const currentTab = ['dossier', 'terminal', 'notebook', 'howtoplay', 'legal', 'setup'].find(t => !document.getElementById(`tab-${t}`).classList.contains('hidden')) || 'dossier';
       switchTab(currentTab);
 
