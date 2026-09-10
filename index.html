@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Rest Your Case | Procedural Defense Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -32,8 +32,8 @@
 <body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden">
 
   <!-- Top Navigation & Tab Bar -->
-  <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40">
-    <div class="max-w-5xl mx-auto px-4 min-h-16 py-2 flex flex-wrap items-center justify-between gap-2">
+  <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
+    <div class="max-w-7xl mx-auto px-4 min-h-14 py-2 flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center space-x-2">
         <span class="text-brand-gold text-lg">⚖</span>
         <span class="font-serif tracking-wide text-white uppercase text-sm font-bold">Rest Your Case</span>
@@ -107,102 +107,69 @@
     </section>
   </main>
 
-  <!-- ================= TAB 2: GAME TERMINAL (SPLIT BENCH) ================= -->
-  <main id="tab-terminal" class="hidden max-w-7xl mx-auto px-4 py-4 flex-grow w-full flex flex-col">
+  <!-- ================= TAB 2: GAME TERMINAL (SPLIT & MOBILE PINNED) ================= -->
+  <main id="tab-terminal" class="hidden max-w-7xl mx-auto px-2 sm:px-4 py-2 flex-grow w-full flex flex-col h-[calc(100dvh-4.5rem)]">
     <!-- Top HUD Bar -->
-    <div class="px-4 py-2 bg-brand-dark border border-brand-border rounded-t flex items-center justify-between">
+    <div class="px-3 py-2 bg-brand-dark border border-brand-border rounded-t flex items-center justify-between shrink-0">
       <div class="flex items-center space-x-2">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider">Courtroom Bench & Terminal</h3>
+        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider">Courtroom Bench</h3>
         <span id="engine-status" class="text-[10px] font-mono text-brand-muted sm:ml-2">Active</span>
       </div>
-      <div id="terminal-stats" class="hidden flex items-center space-x-3 sm:space-x-4 font-mono text-[10px] sm:text-xs">
-        <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Turn</span><span id="term-turn" class="text-white font-bold">1</span></div>
-        <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">AP</span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
-        <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Strikes</span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
-        <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
+      <div id="terminal-stats" class="hidden flex items-center space-x-2 sm:space-x-4 font-mono text-[10px] sm:text-xs">
+        <div><span class="text-brand-muted">Turn </span><span id="term-turn" class="text-white font-bold">1</span></div>
+        <div><span class="text-brand-muted">AP </span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
+        <div><span class="text-brand-muted">Strikes </span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
+        <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-1.5 py-0.5 rounded border border-rose-900/50">Delete</button>
       </div>
     </div>
 
-    <!-- Split Panels Container -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-0 border-x border-b border-brand-border bg-brand-surface rounded-b overflow-hidden h-[75vh] shadow-xl shadow-black/50">
+    <!-- Main Workspace Container -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 border-x border-b border-brand-border bg-brand-surface rounded-b flex-grow overflow-hidden shadow-xl">
       
-      <!-- ================= PANEL 1: CASE BRIEFING (COLD DATA) ================= -->
-      <aside class="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-brand-border bg-[#0e1115] flex flex-col h-full overflow-hidden">
-        <div class="px-3 py-2 bg-brand-dark/80 border-b border-brand-border flex justify-between items-center">
-          <span class="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest">Case Briefing & Record</span>
-          <span id="panel-phase-badge" class="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-slate-300">Phase 1</span>
+      <!-- Cold Data Panel: Side column on desktop, hidden on narrow screens (available in Notebook) -->
+      <aside class="hidden lg:flex lg:col-span-4 border-r border-brand-border bg-[#0e1115] flex-col h-full overflow-y-auto p-3 space-y-4 font-mono text-xs">
+        <div class="text-[10px] font-bold text-brand-gold uppercase tracking-widest border-b border-brand-border pb-1">Case Briefing</div>
+        <div class="p-2 rounded bg-brand-surface/50 border border-brand-border space-y-1">
+          <div class="text-white font-bold" id="panel-case-title">State v. Null</div>
+          <div class="text-[11px] text-brand-muted">Client: <span id="panel-client-name" class="text-slate-200">TBD</span></div>
+          <div class="text-[11px] text-brand-muted">Judge: <span id="panel-judge-name" class="text-slate-200">TBD</span></div>
+          <div class="text-[11px] text-brand-muted">Prosecutor: <span id="panel-da-name" class="text-rose-300">TBD</span></div>
         </div>
-
-        <div class="p-3 space-y-4 overflow-y-auto flex-grow font-mono text-xs">
-          <!-- Primary Meta Card -->
-          <div class="space-y-1.5 p-2.5 rounded bg-brand-surface/40 border border-brand-border/60">
-            <div class="text-white font-bold text-sm tracking-wide" id="panel-case-title">State v. Null</div>
-            <div class="grid grid-cols-2 gap-1 text-[11px] text-brand-muted pt-1">
-              <div><span class="text-slate-400">Client:</span> <span id="panel-client-name" class="text-slate-200">TBD</span></div>
-              <div><span class="text-slate-400">Judge:</span> <span id="panel-judge-name" class="text-slate-200">TBD</span></div>
-              <div class="col-span-2"><span class="text-slate-400">Prosecutor:</span> <span id="panel-da-name" class="text-rose-300">TBD</span></div>
-            </div>
-          </div>
-
-          <!-- Admitted Evidence Quick-List -->
-          <div class="space-y-1.5">
-            <div class="flex justify-between items-center text-[10px] text-brand-muted uppercase tracking-wider">
-              <span>Marked Evidence</span>
-              <span id="panel-evidence-count" class="text-brand-gold">0</span>
-            </div>
-            <div id="panel-evidence-list" class="space-y-1 max-h-36 overflow-y-auto pr-1">
-              <div class="text-[10px] text-brand-muted italic py-1">No discovery marked yet.</div>
-            </div>
-          </div>
-
-          <!-- Discovered Facts Quick-List -->
-          <div class="space-y-1.5">
-            <div class="flex justify-between items-center text-[10px] text-brand-muted uppercase tracking-wider">
-              <span>Established Facts</span>
-              <span id="panel-fact-count" class="text-brand-gold">0</span>
-            </div>
-            <div id="panel-fact-list" class="space-y-1 max-h-40 overflow-y-auto pr-1 text-[11px] text-slate-300">
-              <div class="text-[10px] text-brand-muted italic py-1">Awaiting preliminary statements.</div>
-            </div>
-          </div>
+        <div>
+          <span class="text-[10px] text-brand-muted uppercase block mb-1">Marked Evidence (<span id="panel-evidence-count">0</span>)</span>
+          <div id="panel-evidence-list" class="space-y-1 max-h-40 overflow-y-auto pr-1"></div>
+        </div>
+        <div>
+          <span class="text-[10px] text-brand-muted uppercase block mb-1">Established Facts</span>
+          <div id="panel-fact-list" class="space-y-1 text-slate-300 text-[11px] max-h-48 overflow-y-auto pr-1"></div>
         </div>
       </aside>
 
-      <!-- ================= PANEL 2: DIALOGUE PANEL (CONVERSATION ONLY) ================= -->
-      <section class="lg:col-span-8 flex flex-col h-full bg-[#0d0f12]">
-        <div class="px-3 py-2 bg-brand-dark/80 border-b border-brand-border flex justify-between items-center">
-          <span class="text-[10px] font-mono font-bold text-slate-300 uppercase tracking-widest">Transcript & Oral Arguments</span>
-          <span class="text-[10px] font-mono text-brand-muted">Directives active</span>
-        </div>
-
-        <!-- Pure Dialogue Stream -->
+      <!-- Dialogue Section: Pure conversation feed with guaranteed pinned bottom bar -->
+      <section class="lg:col-span-8 flex flex-col h-full bg-[#0d0f12] overflow-hidden">
+        <!-- Scrollable Dialogue Feed -->
         <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]"></div>
 
-        <!-- Input Bar & Objections -->
-        <div class="p-3 bg-brand-dark border-t border-brand-border space-y-2 flex flex-col">
-          <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-2 w-full relative">
+        <!-- Pinned Input & Dispatch Controls -->
+        <div class="p-2.5 bg-brand-dark border-t border-brand-border shrink-0 z-20 space-y-2">
+          <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-1.5 w-full relative">
             <div class="relative">
-              <button type="button" onclick="toggleObjectionMenu()" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition focus:outline-none flex flex-col items-center justify-center">!</button>
-              <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-64 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-64 overflow-y-auto">
-                <div class="px-3 py-1.5 bg-brand-surface border-b border-brand-border text-brand-gold font-bold uppercase tracking-wider text-[10px]">Federal Rules of Evidence</div>
-                <button type="button" onclick="selectObjection('FRE 802: Hearsay')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 802: Hearsay</button>
-                <button type="button" onclick="selectObjection('FRE 611c: Leading Question')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 611c: Leading (Direct)</button>
-                <button type="button" onclick="selectObjection('FRE 602/901: Speculation / Foundation')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 602/901: Speculation</button>
-                <button type="button" onclick="selectObjection('FRE 404b: Improper Character')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 404b: Improper Character</button>
-                <button type="button" onclick="selectObjection('FRE 611a: Argumentative / Badgering')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 611a: Argumentative</button>
-                <button type="button" onclick="selectObjection('FRE 403: Unfair Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 403: Unfair Prejudice</button>
-                <button type="button" onclick="selectObjection('Assumes Facts Not in Evidence')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 transition">Assumes Facts Not in Evidence</button>
+              <button type="button" onclick="toggleObjectionMenu()" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition">!</button>
+              <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-60 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-56 overflow-y-auto">
+                <button type="button" onclick="selectObjection('FRE 802: Hearsay')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 802: Hearsay</button>
+                <button type="button" onclick="selectObjection('FRE 611c: Leading')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 611c: Leading</button>
+                <button type="button" onclick="selectObjection('FRE 602: Speculation')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 602: Speculation</button>
+                <button type="button" onclick="selectObjection('FRE 403: Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200">FRE 403: Prejudice</button>
               </div>
             </div>
-            <input id="court-user-input" type="text" placeholder="State your defense argument or cross-examination query..." class="flex-grow bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
-            <button type="submit" id="court-submit-btn" class="bg-brand-gold hover:bg-white text-brand-dark px-4 py-2 rounded text-xs font-mono font-bold uppercase transition">Dispatch</button>
+            <input id="court-user-input" type="text" placeholder="Question client or object..." class="flex-grow min-w-0 bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+            <button type="submit" id="court-submit-btn" class="bg-brand-gold text-brand-dark px-3 py-2 rounded text-xs font-mono font-bold uppercase shrink-0">Dispatch</button>
           </form>
-          <div class="flex items-center gap-2 overflow-x-auto font-mono text-[11px] pt-1 px-1">
-            <span class="text-brand-muted hidden sm:inline">Commands:</span>
-            <button onclick="quickAction('/recap')" class="px-2 py-1 rounded hover:text-white text-brand-gold transition whitespace-nowrap">/recap</button>
-            <button onclick="quickAction('/inspect ')" class="px-2 py-1 rounded hover:text-white text-brand-muted transition whitespace-nowrap">/inspect [Ex. #]</button>
-            <button onclick="quickAction('/subpoena ')" class="px-2 py-1 rounded hover:text-white text-brand-muted transition whitespace-nowrap">/subpoena [Target]</button>
+          <div class="flex items-center gap-2 overflow-x-auto font-mono text-[10px] py-0.5">
+            <button onclick="quickAction('/recap')" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-gold whitespace-nowrap">/recap</button>
+            <button onclick="quickAction('/inspect ')" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/inspect</button>
+            <button onclick="quickAction('/subpoena ')" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/subpoena</button>
           </div>
         </div>
       </section>
@@ -362,7 +329,7 @@
     </div>
   </div>
 
-  <footer class="border-t border-brand-border py-4 px-4 text-[10px] font-mono text-brand-muted max-w-5xl mx-auto w-full">
+  <footer class="border-t border-brand-border py-2 px-4 text-[10px] font-mono text-brand-muted max-w-7xl mx-auto w-full shrink-0">
     Rest Your Case &copy; 2026. Local-First Client Storage.
   </footer>
 
@@ -435,13 +402,11 @@
       const clientEl = document.getElementById('panel-client-name');
       const judgeEl = document.getElementById('panel-judge-name');
       const daEl = document.getElementById('panel-da-name');
-      const phaseBadge = document.getElementById('panel-phase-badge');
 
       if (titleEl) titleEl.innerText = appState.profile.title || 'State v. Unknown';
       if (clientEl) clientEl.innerText = appState.profile.client || 'TBD';
       if (judgeEl) judgeEl.innerText = appState.profile.judge || 'TBD';
       if (daEl) daEl.innerText = appState.profile.da || 'TBD';
-      if (phaseBadge) phaseBadge.innerText = appState.phase || 'Phase 1';
 
       const evList = document.getElementById('panel-evidence-list');
       const evCount = document.getElementById('panel-evidence-count');
@@ -460,9 +425,7 @@
       }
 
       const factList = document.getElementById('panel-fact-list');
-      const factCount = document.getElementById('panel-fact-count');
-      if (factList && factCount) {
-        factCount.innerText = (appState.facts || []).length;
+      if (factList) {
         if (!appState.facts || appState.facts.length === 0) {
           factList.innerHTML = `<div class="text-[10px] text-brand-muted italic py-1">Awaiting preliminary statements.</div>`;
         } else {
