@@ -594,66 +594,195 @@
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
     async function sendCourtAction(userPrompt, isInit = false) {
-      if (engineLocked) return; engineLocked = true;
-      const statusBadge = document.getElementById('engine-status');
-      const submitBtn = document.getElementById('court-submit-btn');
-      if (statusBadge) statusBadge.innerText = "Processing...";
-      if (submitBtn) submitBtn.disabled = true;
+  if (engineLocked) return;
+  engineLocked = true;
 
-      if (!isInit) appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
-      else trialHistory = [];
+  const statusBadge = document.getElementById('engine-status');
+  const submitBtn = document.getElementById('court-submit-btn');
+  if (submitBtn) submitBtn.disabled = true;
 
-      try {
-        const response = await fetch(WORKER_URL, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userPrompt, history: trialHistory, isInit: isInit })
-        });
+  if (!isInit) appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
+  else trialHistory = [];
 
-        if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-        
-        const data = await response.json();
-        trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
-        trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
-        processCourtResponse(data.reply);
+  const MAX_RETRIES = 2;
+  let attempt = 0;
+  let success = false;
 
-      } catch (err) {
-        console.error("Courtroom engine failed:", err);
-        appendErrorAlert(err.message, userPrompt, false);
-      } finally {
-        engineLocked = false;
-        if (statusBadge) statusBadge.innerText = "Active";
-        if (submitBtn) submitBtn.disabled = false;
+  while (attempt <= MAX_RETRIES && !success) {
+    attempt++;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+
+    if (statusBadge) {
+      statusBadge.innerText = attempt === 1 ? "Processing..." : `Retrying (${attempt}/${MAX_RETRIES + 1})...`;
+    }
+
+    try {
+      const response = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userPrompt, history: trialHistory, isInit: isInit }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
+      }
+
+      const data = await response.json();
+      trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
+      trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
+      processCourtResponse(data.reply);
+      success = true;
+
+    } catch (err) {
+      clearTimeout(timeoutId);
+      const isTimeout = err.name === "AbortError";
+      const errMsg = isTimeout ? "Request timed out after 25s." : err.message;
+
+      console.warn(`Attempt ${attempt} failed: ${errMsg}`);
+
+      if (attempt <= MAX_RETRIES) {
+        // Wait 1.5s before retrying
+        await new Promise(res => setTimeout(res, 1500));
+      } else {
+        // All retries exhausted: show Error Guardian
+        appendErrorAlert(errMsg, userPrompt, false);
       }
     }
+  }
+
+  engineLocked = false;
+  if (statusBadge) statusBadge.innerText = "Active";
+  if (submitBtn) submitBtn.disabled = false;
+}
+
 
     async function sendPartnerAction(userPrompt) {
       if (engineLocked) return; engineLocked = true;
       const submitBtn = document.getElementById('partner-submit-btn');
       if (submitBtn) submitBtn.disabled = true;
+    async function sendCourtAction(userPrompt, isInit = false) {
+      if (engineLocked) return;
+      engineLocked = true;
+
+      const statusBadge = document.getElementById('engine-status');
+      const submitBtn = document.getElementById('court-submit-btn');
+      if (submitBtn) submitBtn.disabled = true;
+
+      if (!isInit) appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
+      else trialHistory = [];
+
+      const MAX_RETRIES = 2;
+      let attempt = 0;
+      let success = false;
+
+      while (attempt <= MAX_RETRIES && !success) {
+        attempt++;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+        if (statusBadge) {
+          statusBadge.innerText = attempt === 1 ? "Processing..." : `Retrying (${attempt}/${MAX_RETRIES + 1})...`;
+        }
+
+        try {
+          const response = await fetch(WORKER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: userPrompt, history: trialHistory, isInit: isInit }),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
+          }
+
+          const data = await response.json();
+          trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
+          trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
+          processCourtResponse(data.reply);
+          success = true;
+
+        } catch (err) {
+          clearTimeout(timeoutId);
+          const isTimeout = err.name === "AbortError";
+          const errMsg = isTimeout ? "Request timed out after 25s." : err.message;
+          console.warn(`Courtroom attempt ${attempt} failed: ${errMsg}`);
+
+          if (attempt <= MAX_RETRIES) {
+            await new Promise(res => setTimeout(res, 1500));
+          } else {
+            appendErrorAlert(errMsg, userPrompt, false);
+          }
+        }
+      }
+
+      engineLocked = false;
+      if (statusBadge) statusBadge.innerText = "Active";
+      if (submitBtn) submitBtn.disabled = false;
+    }
+
+    async function sendPartnerAction(userPrompt) {
+      if (engineLocked) return;
+      engineLocked = true;
+
+      const submitBtn = document.getElementById('partner-submit-btn');
+      if (submitBtn) submitBtn.disabled = true;
 
       appendPartnerMessage("YOU", userPrompt, true);
 
-      try {
-        const response = await fetch(WORKER_URL, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, history: trialHistory, isInit: false })
-        });
+      const MAX_RETRIES = 2;
+      let attempt = 0;
+      let success = false;
 
-        if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-        
-        const data = await response.json();
-        trialHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
-        trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
-        appendPartnerMessage("SENIOR PARTNER", data.reply.replace(/<!--[\s\S]*?-->/g, "").trim(), false);
+      while (attempt <= MAX_RETRIES && !success) {
+        attempt++;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-      } catch (err) {
-        console.error("Partner engine failed:", err);
-        appendErrorAlert(err.message, userPrompt, true);
-      } finally {
-        engineLocked = false;
-        if (submitBtn) submitBtn.disabled = false;
+        try {
+          const response = await fetch(WORKER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, history: trialHistory, isInit: false }),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
+          }
+
+          const data = await response.json();
+          trialHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
+          trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
+          appendPartnerMessage("SENIOR PARTNER", data.reply.replace(/<!--[\s\S]*?-->/g, "").trim(), false);
+          success = true;
+
+        } catch (err) {
+          clearTimeout(timeoutId);
+          const isTimeout = err.name === "AbortError";
+          const errMsg = isTimeout ? "Request timed out after 25s." : err.message;
+          console.warn(`Partner attempt ${attempt} failed: ${errMsg}`);
+
+          if (attempt <= MAX_RETRIES) {
+            await new Promise(res => setTimeout(res, 1500));
+          } else {
+            appendErrorAlert(errMsg, userPrompt, true);
+          }
+        }
       }
+
+      engineLocked = false;
+      if (submitBtn) submitBtn.disabled = false;
     }
+
 
     function processCourtResponse(rawText) {
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
