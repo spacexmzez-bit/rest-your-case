@@ -53,7 +53,7 @@
         <button onclick="openSetupModal()" class="px-3 py-1.5 rounded text-brand-gold border border-brand-gold/30 hover:bg-brand-gold/10 transition whitespace-nowrap">
           ⚙️ Setup Guide
         </button>
-        <!-- Live Tablet Test Button -->
+        <!-- Phase 2 Live Trial Action Button -->
         <button onclick="startNewTrial()" class="px-3 py-1.5 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-bold transition whitespace-nowrap shadow text-xs">
           ⚖️ Start Live Trial
         </button>
@@ -106,7 +106,6 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
-        <!-- Step 1 -->
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
           <div class="flex items-center space-x-2">
             <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">1</span>
@@ -117,7 +116,6 @@
           </p>
         </div>
 
-        <!-- Step 2 -->
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
           <div class="flex items-center space-x-2">
             <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">2</span>
@@ -128,7 +126,6 @@
           </p>
         </div>
 
-        <!-- Step 3 -->
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
           <div class="flex items-center space-x-2">
             <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">3</span>
@@ -139,7 +136,6 @@
           </p>
         </div>
 
-        <!-- Step 4 -->
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
           <div class="flex items-center space-x-2">
             <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">4</span>
@@ -193,7 +189,6 @@
     </section>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- Left Col: Objection Cheat Sheet -->
       <section class="space-y-4">
         <h2 class="text-xl font-serif text-white uppercase tracking-wide">Objection Cheat Sheet</h2>
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-3 font-sans text-xs">
@@ -253,7 +248,6 @@
         </div>
       </section>
 
-      <!-- Right Col: Master Commands & 1-Tap Copy -->
       <section class="space-y-4">
         <h2 class="text-xl font-serif text-white uppercase tracking-wide">Master Command Ledger</h2>
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2 font-mono text-xs">
@@ -309,7 +303,7 @@
       <span class="text-4xl">📁</span>
       <h2 class="text-xl font-serif text-white">No Active Case File Loaded</h2>
       <p class="text-brand-muted text-sm max-w-md text-center">
-        The Trial Notebook is locked. Extract your case automatically using Gemini's <code class="text-brand-gold font-mono">/generate</code> output or configure parameters manually.
+        The Trial Notebook is locked. Tap <strong class="text-slate-200">Start Live Trial</strong> in the header or configure manual parameters.
       </p>
       <button onclick="openNewCaseModal()" class="mt-4 bg-brand-gold text-brand-dark px-6 py-2.5 rounded font-mono text-sm font-bold hover:bg-white transition shadow-[0_0_15px_rgba(197,168,128,0.2)]">
         + Initialize Case File
@@ -321,8 +315,6 @@
       
       <!-- Sticky Resource HUD -->
       <section class="bg-brand-surface border border-brand-border rounded p-4 space-y-4">
-        
-        <!-- Top Row: Case Details & Wipe Button -->
         <div class="flex items-center justify-between border-b border-brand-border/60 pb-3">
           <div class="flex space-x-4 font-mono text-xs overflow-x-auto">
             <div>
@@ -343,7 +335,6 @@
           </button>
         </div>
 
-        <!-- Bottom Row: Live Dynamic Counters -->
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <span class="text-[10px] font-mono uppercase text-brand-muted block">Active Phase</span>
@@ -358,7 +349,6 @@
           </div>
 
           <div class="flex items-center space-x-6 font-mono text-xs">
-            <!-- Turn Tracker -->
             <div class="flex items-center space-x-2 bg-brand-dark px-2 py-1 rounded border border-brand-border">
               <span class="text-brand-muted text-[10px] uppercase">Turn:</span>
               <button onclick="adjustResource('turn', -1)" class="text-brand-muted hover:text-white px-1">-</button>
@@ -367,7 +357,6 @@
               <span id="hud-cadence" class="text-brand-muted text-[10px]">/15</span>
             </div>
 
-            <!-- AP Counter -->
             <div class="flex items-center space-x-2">
               <span class="text-brand-muted">AP:</span>
               <button onclick="adjustResource('ap', -1)" class="w-6 h-6 rounded bg-brand-border text-white hover:bg-brand-gold hover:text-black flex items-center justify-center">-</button>
@@ -375,7 +364,6 @@
               <button onclick="adjustResource('ap', 1)" class="w-6 h-6 rounded bg-brand-border text-white hover:bg-brand-gold hover:text-black flex items-center justify-center">+</button>
             </div>
 
-            <!-- Judicial Strikes -->
             <div class="flex items-center space-x-2">
               <span class="text-brand-muted">Strikes:</span>
               <button onclick="adjustResource('strikes', -1)" class="w-6 h-6 rounded bg-brand-border text-white hover:bg-brand-crimson flex items-center justify-center">-</button>
@@ -386,9 +374,45 @@
         </div>
       </section>
 
+      <!-- PHASE 2: LIVE INTERACTIVE COURTROOM DOCKET FEED -->
+      <section class="border border-brand-border bg-brand-surface rounded overflow-hidden space-y-0">
+        <div class="px-4 py-3 bg-brand-dark border-b border-brand-border flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider">Live Courtroom Transcript</h3>
+          </div>
+          <span id="engine-status" class="text-[10px] font-mono text-brand-muted">Idle</span>
+        </div>
+
+        <!-- Transcript Window -->
+        <div id="transcript-feed" class="p-4 space-y-3 max-h-96 min-h-64 overflow-y-auto font-mono text-xs">
+          <div class="p-3 rounded bg-brand-dark border border-brand-border text-brand-muted">
+            Docket initialized. Waiting for bench assignment...
+          </div>
+        </div>
+
+        <!-- Interactive Action Bar & Input -->
+        <div class="p-3 bg-brand-dark border-t border-brand-border space-y-2">
+          <!-- Quick Legal Command Chips -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 font-mono text-[11px]">
+            <button onclick="quickAction('OBJECTION: Hearsay')" class="px-2.5 py-1 bg-brand-surface border border-brand-border rounded hover:border-brand-gold text-slate-200 transition whitespace-nowrap">Objection: Hearsay</button>
+            <button onclick="quickAction('OBJECTION: Leading Question')" class="px-2.5 py-1 bg-brand-surface border border-brand-border rounded hover:border-brand-gold text-slate-200 transition whitespace-nowrap">Objection: Leading</button>
+            <button onclick="quickAction('OBJECTION: Speculation')" class="px-2.5 py-1 bg-brand-surface border border-brand-border rounded hover:border-brand-gold text-slate-200 transition whitespace-nowrap">Objection: Speculation</button>
+            <button onclick="quickAction('/recap')" class="px-2.5 py-1 bg-brand-surface border border-brand-border rounded hover:border-brand-gold text-brand-gold transition whitespace-nowrap">/recap</button>
+          </div>
+
+          <!-- Input Submission Row -->
+          <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-2">
+            <input id="court-user-input" type="text" placeholder="State your defense argument, cross-examination query, or objection..." class="flex-grow bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+            <button type="submit" id="court-submit-btn" class="bg-brand-gold hover:bg-white text-brand-dark px-4 py-2 rounded text-xs font-mono font-bold uppercase transition">
+              Dispatch
+            </button>
+          </form>
+        </div>
+      </section>
+
       <!-- Security Vaults -->
       <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Base64 Ground Truth Vault -->
         <div class="border border-brand-border rounded p-4 bg-brand-surface space-y-3">
           <div class="flex justify-between items-center border-b border-brand-border/60 pb-2">
             <h3 class="text-sm font-serif text-white uppercase tracking-wider">Base64 Truth Vault</h3>
@@ -402,7 +426,6 @@
           <div id="decoded-truth-output" class="hidden p-3 bg-brand-dark border border-emerald-900/50 rounded text-emerald-400 text-xs font-mono mt-2 leading-relaxed"></div>
         </div>
 
-        <!-- Machine Checkpoint Ledger -->
         <div class="border border-brand-border rounded p-4 bg-brand-surface space-y-3">
           <div class="flex justify-between items-center border-b border-brand-border/60 pb-2">
             <h3 class="text-sm font-serif text-white uppercase tracking-wider">Machine Checkpoints</h3>
@@ -447,7 +470,6 @@
         <button onclick="closeSetupModal()" class="text-brand-muted hover:text-white font-mono text-sm px-2 py-1">✕</button>
       </div>
 
-      <!-- 4 Step Cards -->
       <div class="space-y-4 font-sans text-xs">
         <div class="bg-brand-dark border border-brand-border rounded p-4 space-y-2">
           <div class="flex items-center space-x-2">
@@ -631,7 +653,8 @@
       exhibits: [],
       checkpoints: [],
       truthHash: '',
-      truthDecoded: ''
+      truthDecoded: '',
+      transcript: []
     };
 
     function switchTab(tabId) {
@@ -668,6 +691,7 @@
         renderHUD();
         renderDocket();
         renderCheckpoints();
+        renderTranscriptFeed();
         
         document.getElementById('attorney-notes').value = appState.notes || '';
         document.getElementById('base64-input').value = appState.truthHash || '';
@@ -688,7 +712,6 @@
       }
     }
 
-    // Modal Control: Setup Guide
     function openSetupModal() {
       document.getElementById('setup-guide-modal').classList.remove('hidden');
     }
@@ -696,7 +719,6 @@
       document.getElementById('setup-guide-modal').classList.add('hidden');
     }
 
-    // Modal Control: Case Initialization
     function switchInitMode(mode) {
       activeInitMode = mode;
       document.getElementById('mode-auto').classList.toggle('hidden', mode !== 'auto');
@@ -762,7 +784,8 @@
         exhibits: [],
         checkpoints: [],
         truthHash: '',
-        truthDecoded: ''
+        truthDecoded: '',
+        transcript: []
       };
 
       persist();
@@ -773,16 +796,16 @@
     function closeActiveCase() {
       if(confirm("Are you sure? This will wipe the active case file from your local storage.")) {
         appState.hasActiveCase = false;
+        appState.transcript = [];
         persist();
         renderViewGating();
       }
     }
 
-    // HUD & Resource Handlers
     function renderHUD() {
       const p = appState.profile;
-      document.getElementById('hud-casetitle').innerText = p.title;
-      document.getElementById('hud-client').innerText = p.client;
+      document.getElementById('hud-casetitle').innerText = p.title || 'State v. Assigned';
+      document.getElementById('hud-client').innerText = p.client || 'Client';
       document.getElementById('hud-settings').innerText = `${p.diff} / Lvl ${p.comp}`;
       
       document.getElementById('hud-phase').value = appState.phase;
@@ -811,7 +834,6 @@
       persist();
     }
 
-    // Base64 Vault Logic
     function decodeTruth() {
       const input = document.getElementById('base64-input').value.trim();
       const output = document.getElementById('decoded-truth-output');
@@ -835,7 +857,6 @@
       persist();
     }
 
-    // Checkpoint Vault Logic
     function saveCheckpoint() {
       const input = document.getElementById('checkpoint-input');
       const val = input.value.trim();
@@ -883,7 +904,6 @@
       }
     }
 
-    // Clipboard Helper
     function copyCmd(text, btn) {
       navigator.clipboard.writeText(text);
       const original = btn.innerText;
@@ -895,7 +915,6 @@
       }, 1500);
     }
 
-    // Docket Tracker Logic
     function renderDocket() {
       const container = document.getElementById('docket-list');
       container.innerHTML = '';
@@ -963,10 +982,43 @@
       closeAddExhibitModal();
     }
 
+    // Phase 2 Transcript Feed Helpers
+    function appendTranscriptMessage(sender, text, isUser = false) {
+      if (!appState.transcript) appState.transcript = [];
+      appState.transcript.push({ sender, text, isUser });
+      renderTranscriptFeed();
+      persist();
+    }
+
+    function renderTranscriptFeed() {
+      const feed = document.getElementById('transcript-feed');
+      if (!feed) return;
+      feed.innerHTML = '';
+      
+      if (!appState.transcript || appState.transcript.length === 0) {
+        feed.innerHTML = `<div class="p-3 rounded bg-brand-dark border border-brand-border text-brand-muted">Docket initialized. Bench is in session.</div>`;
+        return;
+      }
+
+      appState.transcript.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = "flex flex-col space-y-1";
+        const tagColor = entry.isUser ? "text-brand-gold" : "text-emerald-400";
+        const bgBox = entry.isUser ? "bg-brand-surface border-brand-gold/30" : "bg-brand-dark border-brand-border";
+        
+        item.innerHTML = `
+          <span class="text-[10px] font-bold ${tagColor} uppercase tracking-wider">${entry.sender}</span>
+          <div class="p-3 rounded border ${bgBox} text-slate-200 text-xs whitespace-pre-wrap leading-relaxed">${entry.text}</div>
+        `;
+        feed.appendChild(item);
+      });
+      feed.scrollTop = feed.scrollHeight;
+    }
+
     window.onload = initApp;
   </script>
 
-    <!-- ================= GAME RUNTIME ENGINE ================= -->
+  <!-- ================= PHASE 2: GAME RUNTIME ENGINE ================= -->
   <script>
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
     let engineLocked = false;
@@ -975,6 +1027,15 @@
     async function sendCourtAction(userPrompt, isInit = false) {
       if (engineLocked) return;
       engineLocked = true;
+
+      const statusBadge = document.getElementById('engine-status');
+      const submitBtn = document.getElementById('court-submit-btn');
+      if (statusBadge) statusBadge.innerText = "Awaiting bench...";
+      if (submitBtn) submitBtn.disabled = true;
+
+      if (!isInit) {
+        appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
+      }
 
       try {
         const payload = {
@@ -1004,18 +1065,20 @@
            appState.turn++; 
         }
 
-        processCourtResponse(reply, isInit);
+        processCourtResponse(reply);
 
       } catch (err) {
         console.error("Courtroom engine failed:", err);
-        alert("⚠️ ERROR DETAILS:\n\n" + err.message);
+        appendTranscriptMessage("SYSTEM ERROR", err.message, false);
       } finally {
         engineLocked = false;
+        if (statusBadge) statusBadge.innerText = "Active";
+        if (submitBtn) submitBtn.disabled = false;
       }
     }
 
-    function processCourtResponse(rawText, isInit) {
-      // 1. Checkpoint detection
+    function processCourtResponse(rawText) {
+      // 1. Process Checkpoint State
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
       if (checkpointMatch && appState.hasActiveCase) {
         try {
@@ -1024,56 +1087,70 @@
           appState.ap = stateUpdate.ap ?? appState.ap;
           appState.strikes = stateUpdate.strikes ?? appState.strikes;
           appState.phase = stateUpdate.phase ?? appState.phase;
-          persist();
-          renderHUD();
+          if (stateUpdate.caseTitle) appState.profile.title = stateUpdate.caseTitle;
+          if (stateUpdate.clientName) appState.profile.client = stateUpdate.clientName;
         } catch (e) {
           console.error("Failed to parse checkpoint", e);
         }
       }
 
-      // 2. Auto-extract case profile on initialization if JSON code block is present
-      if (isInit) {
-        try {
-          const cleaned = rawText.replace(/```json|```/gi, '').trim();
-          const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            appState.hasActiveCase = true;
-            appState.profile = {
-              title: parsed.title || 'State v. Defendant',
-              client: parsed.client || 'Client',
-              diff: parsed.diff || 'Normal',
-              comp: String(parsed.comp || '3'),
-              judge: parsed.judge || 'Hon. Vance',
-              da: parsed.da || 'ADA Miller',
-              cadence: 15
-            };
-            persist();
-            renderViewGating();
-          }
-        } catch (e) {
-          console.log("No initial JSON block detected yet, manual initialization available.");
-        }
-      }
-
+      // 2. Format and Append Dialogue
       const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
-      
-      // Log transcript into Attorney Notes and update view
+      appendTranscriptMessage("THE BENCH / WITNESS", cleanText, false);
+
+      // 3. Mirror into Attorney Notes and update storage
       appState.notes = cleanText;
       const notesField = document.getElementById('attorney-notes');
       if (notesField) notesField.value = cleanText;
+      
       persist();
-
-      // Switch to Notebook tab automatically so you see the active case dashboard load!
-      switchTab('notebook');
+      renderHUD();
     }
 
+    // Input Tray Form Submit Handler
+    function handleCourtActionSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('court-user-input');
+      const val = input.value.trim();
+      if (!val) return;
+      input.value = "";
+      sendCourtAction(val, false);
+    }
+
+    // Command Chip Click Handler
+    function quickAction(cmd) {
+      const input = document.getElementById('court-user-input');
+      input.value = cmd;
+      input.focus();
+    }
+
+    // Full Initialization (Zero manual modal required)
     window.startNewTrial = function() {
       trialHistory = [];
-      let comp = appState.profile && appState.profile.comp ? appState.profile.comp : 3;
-      sendCourtAction("/start --mode=web --complexity=" + comp, true);
+      
+      appState.hasActiveCase = true;
+      appState.profile = {
+        title: "State v. In-Progress",
+        client: "Awaiting Intake",
+        diff: "Normal",
+        comp: "3",
+        judge: "Hon. Vance",
+        da: "ADA Miller",
+        cadence: 15
+      };
+      appState.phase = "Phase 1: Intake";
+      appState.turn = 1;
+      appState.ap = 4;
+      appState.strikes = 0;
+      appState.notes = "Court in session. Case file opened.";
+      appState.transcript = [];
+      
+      persist();
+      switchTab('notebook');
+      renderViewGating();
+
+      sendCourtAction("/start --mode=web --complexity=3", true);
     };
   </script>
-
 </body>
 </html>
