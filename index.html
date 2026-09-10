@@ -107,52 +107,105 @@
     </section>
   </main>
 
-  <!-- ================= TAB 2: GAME TERMINAL ================= -->
-  <main id="tab-terminal" class="hidden max-w-5xl mx-auto px-4 py-6 flex-grow w-full flex flex-col relative">
-    <div class="border border-brand-border bg-brand-surface rounded overflow-hidden flex flex-col h-[75vh] shadow-lg shadow-black/50">
-      
-      <div class="px-4 py-3 bg-brand-dark border-b border-brand-border flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider hidden sm:block">Live Courtroom Terminal</h3>
-          <span id="engine-status" class="text-[10px] font-mono text-brand-muted sm:ml-2">Active</span>
-        </div>
-        
-        <div id="terminal-stats" class="hidden flex items-center space-x-3 sm:space-x-4 font-mono text-[10px] sm:text-xs">
-          <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Turn</span><span id="term-turn" class="text-white font-bold">1</span></div>
-          <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">AP</span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
-          <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Strikes</span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
-          <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
-        </div>
+  <!-- ================= TAB 2: GAME TERMINAL (SPLIT BENCH) ================= -->
+  <main id="tab-terminal" class="hidden max-w-7xl mx-auto px-4 py-4 flex-grow w-full flex flex-col">
+    <!-- Top HUD Bar -->
+    <div class="px-4 py-2 bg-brand-dark border border-brand-border rounded-t flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider">Courtroom Bench & Terminal</h3>
+        <span id="engine-status" class="text-[10px] font-mono text-brand-muted sm:ml-2">Active</span>
       </div>
+      <div id="terminal-stats" class="hidden flex items-center space-x-3 sm:space-x-4 font-mono text-[10px] sm:text-xs">
+        <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Turn</span><span id="term-turn" class="text-white font-bold">1</span></div>
+        <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">AP</span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
+        <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Strikes</span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
+        <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
+      </div>
+    </div>
 
-      <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]"></div>
+    <!-- Split Panels Container -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-0 border-x border-b border-brand-border bg-brand-surface rounded-b overflow-hidden h-[75vh] shadow-xl shadow-black/50">
+      
+      <!-- ================= PANEL 1: CASE BRIEFING (COLD DATA) ================= -->
+      <aside class="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-brand-border bg-[#0e1115] flex flex-col h-full overflow-hidden">
+        <div class="px-3 py-2 bg-brand-dark/80 border-b border-brand-border flex justify-between items-center">
+          <span class="text-[10px] font-mono font-bold text-brand-gold uppercase tracking-widest">Case Briefing & Record</span>
+          <span id="panel-phase-badge" class="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-slate-300">Phase 1</span>
+        </div>
 
-      <div class="p-3 bg-brand-dark border-t border-brand-border space-y-2 flex flex-col">
-        <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-2 w-full relative">
-          <div class="relative">
-            <button type="button" onclick="toggleObjectionMenu()" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition focus:outline-none flex flex-col items-center justify-center">!</button>
-            <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-64 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-64 overflow-y-auto">
-              <div class="px-3 py-1.5 bg-brand-surface border-b border-brand-border text-brand-gold font-bold uppercase tracking-wider text-[10px]">Federal Rules of Evidence</div>
-              <button type="button" onclick="selectObjection('FRE 802: Hearsay')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 802: Hearsay</button>
-              <button type="button" onclick="selectObjection('FRE 611c: Leading Question')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 611c: Leading (Direct)</button>
-              <button type="button" onclick="selectObjection('FRE 602/901: Speculation / Foundation')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 602/901: Speculation</button>
-              <button type="button" onclick="selectObjection('FRE 404b: Improper Character')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 404b: Improper Character</button>
-              <button type="button" onclick="selectObjection('FRE 611a: Argumentative / Badgering')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 611a: Argumentative</button>
-              <button type="button" onclick="selectObjection('FRE 403: Unfair Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 403: Unfair Prejudice</button>
-              <button type="button" onclick="selectObjection('Assumes Facts Not in Evidence')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 transition">Assumes Facts Not in Evidence</button>
+        <div class="p-3 space-y-4 overflow-y-auto flex-grow font-mono text-xs">
+          <!-- Primary Meta Card -->
+          <div class="space-y-1.5 p-2.5 rounded bg-brand-surface/40 border border-brand-border/60">
+            <div class="text-white font-bold text-sm tracking-wide" id="panel-case-title">State v. Null</div>
+            <div class="grid grid-cols-2 gap-1 text-[11px] text-brand-muted pt-1">
+              <div><span class="text-slate-400">Client:</span> <span id="panel-client-name" class="text-slate-200">TBD</span></div>
+              <div><span class="text-slate-400">Judge:</span> <span id="panel-judge-name" class="text-slate-200">TBD</span></div>
+              <div class="col-span-2"><span class="text-slate-400">Prosecutor:</span> <span id="panel-da-name" class="text-rose-300">TBD</span></div>
             </div>
           </div>
-          <input id="court-user-input" type="text" placeholder="State your defense argument or cross-examination query..." class="flex-grow bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
-          <button type="submit" id="court-submit-btn" class="bg-brand-gold hover:bg-white text-brand-dark px-4 py-2 rounded text-xs font-mono font-bold uppercase transition">Dispatch</button>
-        </form>
-        <div class="flex items-center gap-2 overflow-x-auto font-mono text-[11px] pt-1 px-1">
-          <span class="text-brand-muted hidden sm:inline">Commands:</span>
-          <button onclick="quickAction('/recap')" class="px-2 py-1 rounded hover:text-white text-brand-gold transition whitespace-nowrap">/recap</button>
-          <button onclick="quickAction('/inspect ')" class="px-2 py-1 rounded hover:text-white text-brand-muted transition whitespace-nowrap">/inspect [Ex. #]</button>
-          <button onclick="quickAction('/subpoena ')" class="px-2 py-1 rounded hover:text-white text-brand-muted transition whitespace-nowrap">/subpoena [Target]</button>
+
+          <!-- Admitted Evidence Quick-List -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-[10px] text-brand-muted uppercase tracking-wider">
+              <span>Marked Evidence</span>
+              <span id="panel-evidence-count" class="text-brand-gold">0</span>
+            </div>
+            <div id="panel-evidence-list" class="space-y-1 max-h-36 overflow-y-auto pr-1">
+              <div class="text-[10px] text-brand-muted italic py-1">No discovery marked yet.</div>
+            </div>
+          </div>
+
+          <!-- Discovered Facts Quick-List -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-[10px] text-brand-muted uppercase tracking-wider">
+              <span>Established Facts</span>
+              <span id="panel-fact-count" class="text-brand-gold">0</span>
+            </div>
+            <div id="panel-fact-list" class="space-y-1 max-h-40 overflow-y-auto pr-1 text-[11px] text-slate-300">
+              <div class="text-[10px] text-brand-muted italic py-1">Awaiting preliminary statements.</div>
+            </div>
+          </div>
         </div>
-      </div>
+      </aside>
+
+      <!-- ================= PANEL 2: DIALOGUE PANEL (CONVERSATION ONLY) ================= -->
+      <section class="lg:col-span-8 flex flex-col h-full bg-[#0d0f12]">
+        <div class="px-3 py-2 bg-brand-dark/80 border-b border-brand-border flex justify-between items-center">
+          <span class="text-[10px] font-mono font-bold text-slate-300 uppercase tracking-widest">Transcript & Oral Arguments</span>
+          <span class="text-[10px] font-mono text-brand-muted">Directives active</span>
+        </div>
+
+        <!-- Pure Dialogue Stream -->
+        <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]"></div>
+
+        <!-- Input Bar & Objections -->
+        <div class="p-3 bg-brand-dark border-t border-brand-border space-y-2 flex flex-col">
+          <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-2 w-full relative">
+            <div class="relative">
+              <button type="button" onclick="toggleObjectionMenu()" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition focus:outline-none flex flex-col items-center justify-center">!</button>
+              <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-64 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-64 overflow-y-auto">
+                <div class="px-3 py-1.5 bg-brand-surface border-b border-brand-border text-brand-gold font-bold uppercase tracking-wider text-[10px]">Federal Rules of Evidence</div>
+                <button type="button" onclick="selectObjection('FRE 802: Hearsay')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 802: Hearsay</button>
+                <button type="button" onclick="selectObjection('FRE 611c: Leading Question')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 611c: Leading (Direct)</button>
+                <button type="button" onclick="selectObjection('FRE 602/901: Speculation / Foundation')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 602/901: Speculation</button>
+                <button type="button" onclick="selectObjection('FRE 404b: Improper Character')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 404b: Improper Character</button>
+                <button type="button" onclick="selectObjection('FRE 611a: Argumentative / Badgering')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 611a: Argumentative</button>
+                <button type="button" onclick="selectObjection('FRE 403: Unfair Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 403: Unfair Prejudice</button>
+                <button type="button" onclick="selectObjection('Assumes Facts Not in Evidence')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 transition">Assumes Facts Not in Evidence</button>
+              </div>
+            </div>
+            <input id="court-user-input" type="text" placeholder="State your defense argument or cross-examination query..." class="flex-grow bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+            <button type="submit" id="court-submit-btn" class="bg-brand-gold hover:bg-white text-brand-dark px-4 py-2 rounded text-xs font-mono font-bold uppercase transition">Dispatch</button>
+          </form>
+          <div class="flex items-center gap-2 overflow-x-auto font-mono text-[11px] pt-1 px-1">
+            <span class="text-brand-muted hidden sm:inline">Commands:</span>
+            <button onclick="quickAction('/recap')" class="px-2 py-1 rounded hover:text-white text-brand-gold transition whitespace-nowrap">/recap</button>
+            <button onclick="quickAction('/inspect ')" class="px-2 py-1 rounded hover:text-white text-brand-muted transition whitespace-nowrap">/inspect [Ex. #]</button>
+            <button onclick="quickAction('/subpoena ')" class="px-2 py-1 rounded hover:text-white text-brand-muted transition whitespace-nowrap">/subpoena [Target]</button>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -361,7 +414,9 @@
         document.getElementById('nb-casetitle').innerText = appState.profile.title || 'State v. Unknown';
         document.getElementById('nb-phase').innerText = appState.phase;
         document.getElementById('attorney-notes').value = appState.notes || '';
-        renderDocket(); renderFactLedger();
+        renderDocket(); 
+        renderFactLedger();
+        renderTerminalSidePanel();
         
         const truthOut = document.getElementById('decoded-truth-output');
         if (appState.phase.includes('4') && appState.truthHash) {
@@ -371,6 +426,51 @@
         } else { truthOut.classList.add('hidden'); }
       }
       renderTranscriptFeed();
+    }
+
+    function renderTerminalSidePanel() {
+      if (!appState.hasActiveCase) return;
+      
+      const titleEl = document.getElementById('panel-case-title');
+      const clientEl = document.getElementById('panel-client-name');
+      const judgeEl = document.getElementById('panel-judge-name');
+      const daEl = document.getElementById('panel-da-name');
+      const phaseBadge = document.getElementById('panel-phase-badge');
+
+      if (titleEl) titleEl.innerText = appState.profile.title || 'State v. Unknown';
+      if (clientEl) clientEl.innerText = appState.profile.client || 'TBD';
+      if (judgeEl) judgeEl.innerText = appState.profile.judge || 'TBD';
+      if (daEl) daEl.innerText = appState.profile.da || 'TBD';
+      if (phaseBadge) phaseBadge.innerText = appState.phase || 'Phase 1';
+
+      const evList = document.getElementById('panel-evidence-list');
+      const evCount = document.getElementById('panel-evidence-count');
+      if (evList && evCount) {
+        evCount.innerText = (appState.docket || []).length;
+        if (!appState.docket || appState.docket.length === 0) {
+          evList.innerHTML = `<div class="text-[10px] text-brand-muted italic py-1">No discovery marked yet.</div>`;
+        } else {
+          evList.innerHTML = appState.docket.map(item => `
+            <div class="p-1.5 rounded bg-brand-surface/70 border border-brand-border flex justify-between items-center text-[10px]">
+              <span class="text-brand-gold font-bold truncate max-w-[150px]">${item.id || item.tag}: ${item.name || item.title}</span>
+              <span class="text-[9px] px-1 rounded ${item.status === 'Admitted' ? 'text-emerald-400 bg-emerald-950' : item.status === 'SUPPRESSED' ? 'text-rose-400 line-through' : 'text-amber-400'}">${item.status || 'Marked'}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      const factList = document.getElementById('panel-fact-list');
+      const factCount = document.getElementById('panel-fact-count');
+      if (factList && factCount) {
+        factCount.innerText = (appState.facts || []).length;
+        if (!appState.facts || appState.facts.length === 0) {
+          factList.innerHTML = `<div class="text-[10px] text-brand-muted italic py-1">Awaiting preliminary statements.</div>`;
+        } else {
+          factList.innerHTML = appState.facts.map(fact => `
+            <div class="py-1 border-b border-brand-border/40 last:border-0">• ${fact}</div>
+          `).join('');
+        }
+      }
     }
 
     function startOrResumeTrial() { appState.hasActiveCase ? switchTab('terminal') : document.getElementById('intake-modal').classList.remove('hidden'); }
@@ -461,6 +561,7 @@
             </div>
           </div>`;
       });
+      renderTerminalSidePanel(); 
     }
 
     function renderFactLedger() {
@@ -468,6 +569,7 @@
       if (!container) return; container.innerHTML = '';
       if (!appState.facts || appState.facts.length === 0) { container.innerHTML = `<span class="text-brand-muted italic">Awaiting witness statements and rulings...</span>`; return; }
       appState.facts.forEach(fact => { container.innerHTML += `<div class="pb-2 border-b border-brand-border/50 last:border-0 mb-2">• ${fact}</div>`; });
+      renderTerminalSidePanel(); 
     }
 
     function parseTranscriptFormat(text) {
@@ -566,7 +668,6 @@
     let engineLocked = false;
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
-    // Robust Fetch Wrapper
     async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
