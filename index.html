@@ -106,7 +106,6 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
-        
         <!-- Step 1 -->
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
           <div class="flex items-center space-x-2">
@@ -150,7 +149,6 @@
             Deliver your closing argument highlighting reasonable doubt. After the jury returns a verdict, take the sealed Base64 hash from Turn 2, paste it into the Notebook's Truth Vault, and unseal what really happened.
           </p>
         </div>
-
       </div>
     </section>
 
@@ -186,7 +184,6 @@
 
   <!-- ================= TAB 2: FIELD MANUAL ================= -->
   <main id="tab-manual" class="hidden max-w-5xl mx-auto px-4 py-8 space-y-12 flex-grow w-full">
-    
     <section class="border-b border-brand-border pb-4 space-y-2">
       <div class="text-brand-gold font-mono text-xs uppercase tracking-widest">Field Manual</div>
       <h1 class="text-3xl font-serif text-white font-semibold">Rules of Evidence & Commands</h1>
@@ -196,7 +193,6 @@
     </section>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      
       <!-- Left Col: Objection Cheat Sheet -->
       <section class="space-y-4">
         <h2 class="text-xl font-serif text-white uppercase tracking-wide">Objection Cheat Sheet</h2>
@@ -261,7 +257,6 @@
       <section class="space-y-4">
         <h2 class="text-xl font-serif text-white uppercase tracking-wide">Master Command Ledger</h2>
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2 font-mono text-xs">
-          
           <div class="flex items-center justify-between p-2 rounded bg-brand-dark border border-brand-border gap-2">
             <div class="flex-grow">
               <span class="text-brand-gold font-bold block">/generate</span>
@@ -301,7 +296,6 @@
             </div>
             <button onclick="copyCmd('OBJECTION: ', this)" class="px-2 py-1 bg-brand-border text-white rounded hover:bg-brand-gold hover:text-black transition">Copy</button>
           </div>
-
         </div>
       </section>
     </div>
@@ -351,7 +345,6 @@
 
         <!-- Bottom Row: Live Dynamic Counters -->
         <div class="flex flex-wrap items-center justify-between gap-4">
-          
           <div>
             <span class="text-[10px] font-mono uppercase text-brand-muted block">Active Phase</span>
             <select id="hud-phase" onchange="saveHUD()" class="bg-brand-dark border border-brand-border rounded px-2 py-1 text-xs text-white font-mono outline-none">
@@ -365,7 +358,6 @@
           </div>
 
           <div class="flex items-center space-x-6 font-mono text-xs">
-            
             <!-- Turn Tracker -->
             <div class="flex items-center space-x-2 bg-brand-dark px-2 py-1 rounded border border-brand-border">
               <span class="text-brand-muted text-[10px] uppercase">Turn:</span>
@@ -396,7 +388,6 @@
 
       <!-- Security Vaults -->
       <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
         <!-- Base64 Ground Truth Vault -->
         <div class="border border-brand-border rounded p-4 bg-brand-surface space-y-3">
           <div class="flex justify-between items-center border-b border-brand-border/60 pb-2">
@@ -424,7 +415,6 @@
           </div>
           <div id="checkpoints-list" class="space-y-2 mt-2 max-h-32 overflow-y-auto"></div>
         </div>
-
       </section>
 
       <!-- Evidence Docket Tracker -->
@@ -443,14 +433,12 @@
         <h3 class="text-sm font-serif text-white uppercase tracking-wider">Attorney Notes</h3>
         <textarea id="attorney-notes" oninput="saveNotes()" placeholder="Type timeline notes, witness contradictions, or questions for Diaz here..." class="w-full h-36 bg-brand-surface border border-brand-border rounded p-3 text-xs text-slate-200 font-mono outline-none focus:border-brand-gold/50 resize-none"></textarea>
       </section>
-
     </div>
   </main>
 
   <!-- ================= MODAL: SETUP GUIDE ================= -->
   <div id="setup-guide-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-brand-border rounded max-w-2xl w-full p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-      
       <div class="flex items-center justify-between border-b border-brand-border pb-3">
         <div>
           <h3 class="text-brand-gold font-serif text-lg font-bold">How to Set Up Your Simulation</h3>
@@ -461,14 +449,13 @@
 
       <!-- 4 Step Cards -->
       <div class="space-y-4 font-sans text-xs">
-        
         <div class="bg-brand-dark border border-brand-border rounded p-4 space-y-2">
           <div class="flex items-center space-x-2">
             <span class="w-6 h-6 rounded-full bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">1</span>
             <h4 class="text-white font-bold text-sm">Create a Gemini Gem (Recommended)</h4>
           </div>
           <p class="text-brand-muted leading-relaxed">
-            Open <a href="https://gemini.google.com" target="_blank" class="text-brand-gold underline">Gemini</a>, open the side menu, and tap <strong class="text-slate-200">Gems Manager</strong> &rarr; <strong class="text-slate-200">New Gem</strong>. (If you are on the free tier, you can simply paste the prompt into any fresh Gemini chat).
+            Open <a href="https://gemini.google.com" target="_blank" class="text-brand-gold underline">Gemini</a>, open the side menu, and tap <strong class="text-slate-200">Gems Manager</strong> &rarr; <strong class="text-slate-200">New Gem</strong>.
           </p>
         </div>
 
@@ -494,9 +481,6 @@
             <span class="text-emerald-400 font-bold">/start</span>
             <button onclick="copyCmd('/start', this)" class="px-2 py-1 bg-brand-border text-white rounded hover:bg-brand-gold hover:text-black transition text-[11px]">Copy</button>
           </div>
-          <p class="text-brand-muted text-[11px]">
-            The engine outputs the Phase 0 intake menu. Select your language, presentation style, difficulty, complexity, charge category, and account tier.
-          </p>
         </div>
 
         <div class="bg-brand-dark border border-brand-border rounded p-4 space-y-2">
@@ -508,7 +492,6 @@
             When Turn 2 initializes with your case discovery, type <code class="text-brand-gold font-mono">/generate</code> in Gemini. Copy the JSON block, navigate to this site's <strong class="text-slate-200">Notebook</strong> tab, click <strong class="text-slate-200">Initialize Case File</strong>, and paste it into <strong class="text-slate-200">Auto-Extract</strong>.
           </p>
         </div>
-
       </div>
 
       <div class="flex justify-end border-t border-brand-border pt-3">
@@ -516,14 +499,12 @@
           Got It, Let's Play
         </button>
       </div>
-
     </div>
   </div>
 
   <!-- ================= MODAL: CASE INITIALIZATION ================= -->
   <div id="new-case-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-brand-border rounded max-w-lg w-full p-6 space-y-4">
-      
       <div class="flex items-center justify-between border-b border-brand-border pb-3">
         <div>
           <h3 class="text-brand-gold font-serif text-lg">Initialize Case File</h3>
@@ -735,7 +716,6 @@
     function handleCaseInitSubmit() {
       let title, client, diff, comp, judge, da, cadence;
       
-      // Fixed JSON Extractor to strip markdown fences securely
       if (activeInitMode === 'auto') {
         const rawText = document.getElementById('auto-paste-box').value;
         try {
@@ -1009,7 +989,10 @@
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error(`Courtroom gateway fault: ${response.status}`);
+        if (!response.ok) {
+          const errBody = await response.text();
+          throw new Error(`Worker HTTP ${response.status}: ${errBody}`);
+        }
 
         const data = await response.json();
         const reply = data.reply;
@@ -1025,14 +1008,13 @@
 
       } catch (err) {
         console.error("Courtroom engine failed:", err);
-        alert("Connection to the courtroom bench failed. Please try again.");
+        alert("⚠️ ERROR DETAILS:\n\n" + err.message);
       } finally {
         engineLocked = false;
       }
     }
 
     function processCourtResponse(rawText) {
-      // Checkpoint detection mapped directly to your appState!
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
       if (checkpointMatch && appState.hasActiveCase) {
         try {
@@ -1050,17 +1032,14 @@
 
       const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
       
-      // Directly display on-screen for tablet users
-      alert("⚖️ BENCH RESPONSE RECEIVED:\n\n" + cleanText.slice(0, 500) + "...\n\n(Check Attorney Notes tab to read full transcript!)");
+      alert("⚖️ BENCH RESPONSE RECEIVED:\n\n" + cleanText.slice(0, 400) + "...\n\n(Full docket logged in Notebook tab)");
       
-      // Auto-fill into the Attorney Notes area on the Notebook tab so you can scroll through it
       appState.notes = cleanText;
       const notesField = document.getElementById('attorney-notes');
       if (notesField) notesField.value = cleanText;
       persist();
     }
 
-    // Use this command in Developer Console to test, or tap the button!
     window.startNewTrial = function() {
       trialHistory = [];
       let comp = appState.profile ? appState.profile.comp : 3;
@@ -1069,4 +1048,3 @@
   </script>
 </body>
 </html>
-
