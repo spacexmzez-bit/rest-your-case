@@ -458,7 +458,7 @@
   <script>
     let appState = {
       hasActiveCase: false,
-      profile: { title: '', client: '' },
+      profile: { title: '', client: '', judge: '', da: '' },
       phase: 'Phase 1: Intake',
       turn: 1,
       ap: 4,
@@ -584,7 +584,7 @@
       const input = document.getElementById('wipe-confirm-input').value;
       if (input === 'CONFIRM') {
         appState = {
-          hasActiveCase: false, profile: { title: '', client: '' },
+          hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
           phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3,
           notes: '', transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
         };
@@ -810,6 +810,12 @@
           if (stateUpdate.case && stateUpdate.case.title) appState.profile.title = stateUpdate.case.title;
           if (stateUpdate.caseTitle) appState.profile.title = stateUpdate.caseTitle; 
           
+          if (stateUpdate.case && stateUpdate.case.client) appState.profile.client = stateUpdate.case.client;
+          if (stateUpdate.clientName) appState.profile.client = stateUpdate.clientName; 
+
+          if (stateUpdate.judge) appState.profile.judge = stateUpdate.judge;
+          if (stateUpdate.da) appState.profile.da = stateUpdate.da;
+          
           if (stateUpdate.truthHash && !appState.truthHash) appState.truthHash = stateUpdate.truthHash;
           
           if (stateUpdate.docket) appState.docket = stateUpdate.docket;
@@ -834,7 +840,7 @@
       
       appState = {
         hasActiveCase: true,
-        profile: { title: "Assigning Case...", client: "TBD" },
+        profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
         phase: "Phase 1: Intake",
         turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
         transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
@@ -844,7 +850,9 @@
       switchTab('terminal');
       renderUI();
 
-      sendCourtAction("/start --mode=web --complexity=3", true);
+      const initPrompt = `/start --mode=web --complexity=3\n\nSYSTEM OVERRIDE: Skip the Phase 0 pre-game setup menu entirely. Immediately generate the initial Case File, crime details, and the Turn 1 Intake dialogue. \n\nYou MUST conclude your response with the invisible <!--STATE_CHECKPOINT: {...}--> JSON block containing: turn (1), ap (4), strikes (0), phase ('Phase 1: Intake'), caseTitle, clientName, judge, da, docket (array of objects with id, name, facts), and facts (array of strings detailing initial police findings).`;
+
+      sendCourtAction(initPrompt, true);
     };
   </script>
 </body>
