@@ -31,7 +31,7 @@
 </head>
 <body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden">
 
-  <!-- Top Navigation & Tab Bar -->
+  <!-- ================= TOP HUD NAV ================= -->
   <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
     <div class="max-w-7xl mx-auto px-4 min-h-14 py-2 flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center space-x-2">
@@ -39,12 +39,11 @@
         <span class="font-serif tracking-wide text-white uppercase text-sm font-bold">Rest Your Case</span>
       </div>
       
-      <nav class="flex items-center space-x-1 font-mono text-xs overflow-x-auto py-1">
-        <button id="tab-dossier-btn" onclick="switchTab('dossier')" class="px-3 py-1.5 rounded bg-brand-border text-white border border-brand-gold/40 transition whitespace-nowrap">Overview</button>
-        <button id="tab-terminal-btn" onclick="switchTab('terminal')" class="hidden px-3 py-1.5 rounded text-brand-muted hover:text-white transition whitespace-nowrap">Terminal</button>
-        <button id="tab-notebook-btn" onclick="switchTab('notebook')" class="px-3 py-1.5 rounded text-brand-muted hover:text-white transition whitespace-nowrap">Notebook</button>
-        <button id="tab-manual-btn" onclick="switchTab('manual')" class="px-3 py-1.5 rounded text-brand-muted hover:text-white transition whitespace-nowrap">Field Manual</button>
-        <button id="tab-setup-btn" onclick="switchTab('setup')" class="px-3 py-1.5 rounded text-brand-muted hover:text-white transition whitespace-nowrap">Setup Guide</button>
+      <nav class="flex items-center">
+        <button onclick="toggleNavDrawer()" class="px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border text-brand-gold hover:text-white transition flex items-center gap-2 font-mono text-xs shadow-sm hover:border-brand-gold/50">
+          <span class="text-base leading-none">☰</span>
+          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Menu</span>
+        </button>
       </nav>
     </div>
   </header>
@@ -63,7 +62,7 @@
         <button id="overview-start-btn" onclick="startOrResumeTrial()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-6 py-3 rounded font-mono font-bold uppercase transition text-sm shadow text-center w-full sm:w-auto">
           Start Live Trial
         </button>
-        <button onclick="switchTab('setup')" class="bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold px-6 py-3 rounded font-mono font-bold transition text-sm text-center w-full sm:w-auto whitespace-nowrap">
+        <button onclick="navToTab('setup')" class="bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold px-6 py-3 rounded font-mono font-bold transition text-sm text-center w-full sm:w-auto whitespace-nowrap">
           Wanna play on your own?
         </button>
       </div>
@@ -107,7 +106,7 @@
     </section>
   </main>
 
-  <!-- ================= TAB 2: GAME TERMINAL (SPLIT & MOBILE PINNED) ================= -->
+  <!-- ================= TAB 2: GAME TERMINAL (SPLIT BENCH) ================= -->
   <main id="tab-terminal" class="hidden max-w-7xl mx-auto px-2 sm:px-4 py-2 flex-grow w-full flex flex-col h-[calc(100dvh-4.5rem)]">
     <!-- Top HUD Bar -->
     <div class="px-3 py-2 bg-brand-dark border border-brand-border rounded-t flex items-center justify-between shrink-0">
@@ -127,7 +126,7 @@
     <!-- Main Workspace Container -->
     <div class="grid grid-cols-1 lg:grid-cols-12 border-x border-b border-brand-border bg-brand-surface rounded-b flex-grow overflow-hidden shadow-xl">
       
-      <!-- Cold Data Panel: Side column on desktop, hidden on narrow screens (available in Notebook) -->
+      <!-- Cold Data Panel: Side column on desktop -->
       <aside class="hidden lg:flex lg:col-span-4 border-r border-brand-border bg-[#0e1115] flex-col h-full overflow-y-auto p-3 space-y-4 font-mono text-xs">
         <div class="text-[10px] font-bold text-brand-gold uppercase tracking-widest border-b border-brand-border pb-1">Case Briefing</div>
         <div class="p-2 rounded bg-brand-surface/50 border border-brand-border space-y-1">
@@ -146,12 +145,10 @@
         </div>
       </aside>
 
-      <!-- Dialogue Section: Pure conversation feed with guaranteed pinned bottom bar -->
+      <!-- Dialogue Section: Pure conversation feed with pinned footer -->
       <section class="lg:col-span-8 flex flex-col h-full bg-[#0d0f12] overflow-hidden">
-        <!-- Scrollable Dialogue Feed -->
         <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]"></div>
 
-        <!-- Pinned Input & Dispatch Controls -->
         <div class="p-2.5 bg-brand-dark border-t border-brand-border shrink-0 z-20 space-y-2">
           <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-1.5 w-full relative">
             <div class="relative">
@@ -225,16 +222,57 @@
     </div>
   </main>
 
-  <!-- ================= TAB 4/5: FIELD MANUAL & SETUP ================= -->
-  <main id="tab-manual" class="hidden max-w-5xl mx-auto px-4 py-8 space-y-8 flex-grow w-full">
-    <h1 class="text-3xl font-serif text-white font-semibold">Rules of Evidence</h1>
-    <p class="text-brand-muted text-sm">See objection flyout menu (`!`) in the Terminal for quick access during cross-examinations.</p>
+  <!-- ================= TABS 4 & 5: DOCUMENTATION (NEW) ================= -->
+  <main id="tab-howtoplay" class="hidden max-w-4xl mx-auto px-4 py-8 space-y-8 flex-grow w-full">
+    <div class="border-b border-brand-border pb-4">
+      <h1 class="text-3xl font-serif text-white font-semibold">How to Play</h1>
+      <p class="text-brand-muted text-sm mt-2">Operational manual for navigating the Rest Your Case tactical engine.</p>
+    </div>
+    <div class="font-mono text-xs text-brand-muted p-4 border border-brand-border border-dashed rounded text-center">
+      [Placeholder: Game Cycle, Split Terminal Nav, and AP Mechanics content will live here]
+    </div>
   </main>
-  
+
+  <main id="tab-legal" class="hidden max-w-4xl mx-auto px-4 py-8 space-y-8 flex-grow w-full">
+    <div class="border-b border-brand-border pb-4">
+      <h1 class="text-3xl font-serif text-white font-semibold">Legal Library</h1>
+      <p class="text-brand-muted text-sm mt-2">Compendium of Criminal Defense tactics and Federal Rules of Evidence.</p>
+    </div>
+    <div class="font-mono text-xs text-brand-muted p-4 border border-brand-border border-dashed rounded text-center">
+      [Placeholder: Burden of Proof, Objection Matrix, and Defense Tactics content will live here]
+    </div>
+  </main>
+
   <main id="tab-setup" class="hidden max-w-3xl mx-auto px-4 py-12 flex-grow w-full space-y-6">
     <h1 class="text-3xl font-serif text-white font-semibold">Manual Integration</h1>
     <p class="text-brand-muted text-sm">Directives for native ChatGPT/Claude play coming soon.</p>
   </main>
+
+  <!-- ================= NAVIGATION SIDEBAR DRAWER ================= -->
+  <div id="nav-drawer-backdrop" onclick="toggleNavDrawer()" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"></div>
+  
+  <aside id="nav-drawer" class="fixed left-0 top-0 h-full w-72 sm:w-80 bg-brand-dark border-r border-brand-border z-50 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+    <div class="px-4 py-3 bg-brand-surface border-b border-brand-border flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-brand-gold text-base">⚖</span>
+        <span class="font-serif text-white uppercase text-xs font-bold tracking-wider">Rest Your Case</span>
+      </div>
+      <button onclick="toggleNavDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
+    </div>
+  
+    <nav class="p-4 flex flex-col space-y-2 font-mono text-xs overflow-y-auto flex-grow">
+      <button id="tab-dossier-btn" onclick="navToTab('dossier')" class="w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition">Overview</button>
+      <button id="tab-terminal-btn" onclick="navToTab('terminal')" class="hidden w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Live Terminal</button>
+      <button id="tab-notebook-btn" onclick="navToTab('notebook')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Notebook</button>
+      <button id="tab-howtoplay-btn" onclick="navToTab('howtoplay')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">How to Play</button>
+      <button id="tab-legal-btn" onclick="navToTab('legal')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Legal Library</button>
+      <button id="tab-setup-btn" onclick="navToTab('setup')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Setup Guide</button>
+    </nav>
+  
+    <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
+      Procedural Engine &copy; 2026
+    </div>
+  </aside>
 
   <!-- ================= FLOATING PARTNER DRAWER UI ================= -->
   <button onclick="togglePartnerDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 bg-brand-surface border border-r-0 border-brand-border hover:border-brand-gold text-brand-gold px-1.5 py-4 rounded-l-md font-mono text-xs z-50 shadow-xl flex items-center transition group">
@@ -341,13 +379,29 @@
       transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
     };
 
+    function toggleNavDrawer() {
+      document.getElementById('nav-drawer').classList.toggle('-translate-x-full');
+      document.getElementById('nav-drawer-backdrop').classList.toggle('hidden');
+    }
+
     function switchTab(tabId) {
-      const tabs = ['dossier', 'terminal', 'notebook', 'manual', 'setup'];
+      const tabs = ['dossier', 'terminal', 'notebook', 'howtoplay', 'legal', 'setup'];
       tabs.forEach(t => {
         const view = document.getElementById(`tab-${t}`);
         const btn = document.getElementById(`tab-${t}-btn`);
         if (view) view.classList.toggle('hidden', t !== tabId);
-        if (btn) btn.className = (t === tabId) ? 'px-3 py-1.5 rounded bg-brand-border text-white border border-brand-gold/40 transition whitespace-nowrap' : 'px-3 py-1.5 rounded text-brand-muted hover:text-white transition whitespace-nowrap';
+        
+        if (btn) {
+          btn.className = (t === tabId) 
+            ? 'w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition'
+            : 'w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition';
+            
+          if (t === 'terminal' && !appState.hasActiveCase) {
+            btn.classList.add('hidden');
+          } else {
+            btn.classList.remove('hidden');
+          }
+        }
       });
       if (tabId === 'terminal') {
         const feed = document.getElementById('transcript-feed');
@@ -355,15 +409,24 @@
       }
     }
 
+    function navToTab(tabId) {
+      switchTab(tabId);
+      toggleNavDrawer();
+    }
+
     function initApp() {
       const saved = localStorage.getItem('rest_your_case_state');
       if (saved) { try { appState = JSON.parse(saved); } catch (e) {} }
       renderUI();
     }
+    
     function persist() { localStorage.setItem('rest_your_case_state', JSON.stringify(appState)); }
 
     function renderUI() {
-      document.getElementById('tab-terminal-btn').classList.toggle('hidden', !appState.hasActiveCase);
+      // Re-trigger nav logic to update the sidebar button states dynamically
+      const currentTab = ['dossier', 'terminal', 'notebook', 'howtoplay', 'legal', 'setup'].find(t => !document.getElementById(`tab-${t}`).classList.contains('hidden')) || 'dossier';
+      switchTab(currentTab);
+
       document.getElementById('terminal-stats').classList.toggle('hidden', !appState.hasActiveCase);
       document.getElementById('view-no-case-notebook').classList.toggle('hidden', appState.hasActiveCase);
       document.getElementById('view-active-case-notebook').classList.toggle('hidden', !appState.hasActiveCase);
