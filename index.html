@@ -966,7 +966,7 @@
     window.onload = initApp;
   </script>
 
-  <!-- ================= GAME RUNTIME ENGINE ================= -->
+    <!-- ================= GAME RUNTIME ENGINE ================= -->
   <script>
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
     let engineLocked = false;
@@ -1004,7 +1004,7 @@
            appState.turn++; 
         }
 
-        processCourtResponse(reply);
+        processCourtResponse(reply, isInit);
 
       } catch (err) {
         console.error("Courtroom engine failed:", err);
@@ -1014,7 +1014,8 @@
       }
     }
 
-    function processCourtResponse(rawText) {
+    function processCourtResponse(rawText, isInit) {
+      // 1. Checkpoint detection
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
       if (checkpointMatch && appState.hasActiveCase) {
         try {
@@ -1030,21 +1031,49 @@
         }
       }
 
+      // 2. Auto-extract case profile on initialization if JSON code block is present
+      if (isInit) {
+        try {
+          const cleaned = rawText.replace(/```json|```/gi, '').trim();
+          const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            appState.hasActiveCase = true;
+            appState.profile = {
+              title: parsed.title || 'State v. Defendant',
+              client: parsed.client || 'Client',
+              diff: parsed.diff || 'Normal',
+              comp: String(parsed.comp || '3'),
+              judge: parsed.judge || 'Hon. Vance',
+              da: parsed.da || 'ADA Miller',
+              cadence: 15
+            };
+            persist();
+            renderViewGating();
+          }
+        } catch (e) {
+          console.log("No initial JSON block detected yet, manual initialization available.");
+        }
+      }
+
       const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
       
-      alert("⚖️ BENCH RESPONSE RECEIVED:\n\n" + cleanText.slice(0, 400) + "...\n\n(Full docket logged in Notebook tab)");
-      
+      // Log transcript into Attorney Notes and update view
       appState.notes = cleanText;
       const notesField = document.getElementById('attorney-notes');
       if (notesField) notesField.value = cleanText;
       persist();
+
+      // Switch to Notebook tab automatically so you see the active case dashboard load!
+      switchTab('notebook');
     }
 
     window.startNewTrial = function() {
       trialHistory = [];
-      let comp = appState.profile ? appState.profile.comp : 3;
+      let comp = appState.profile && appState.profile.comp ? appState.profile.comp : 3;
       sendCourtAction("/start --mode=web --complexity=" + comp, true);
     };
   </script>
+
 </body>
 </html>
