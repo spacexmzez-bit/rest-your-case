@@ -111,7 +111,6 @@
   <main id="tab-terminal" class="hidden max-w-5xl mx-auto px-4 py-6 flex-grow w-full flex flex-col relative">
     <div class="border border-brand-border bg-brand-surface rounded overflow-hidden flex flex-col h-[75vh] shadow-lg shadow-black/50">
       
-      <!-- Terminal Header with Restored Delete Case Button -->
       <div class="px-4 py-3 bg-brand-dark border-b border-brand-border flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -123,19 +122,14 @@
           <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Turn</span><span id="term-turn" class="text-white font-bold">1</span></div>
           <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">AP</span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
           <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Strikes</span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
-          <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">
-            Delete Case
-          </button>
+          <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
         </div>
       </div>
 
-      <!-- Transcript Feed -->
       <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]"></div>
 
-      <!-- Interactive Action Bar -->
       <div class="p-3 bg-brand-dark border-t border-brand-border space-y-2 flex flex-col">
         <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-2 w-full relative">
-          
           <div class="relative">
             <button type="button" onclick="toggleObjectionMenu()" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition focus:outline-none flex flex-col items-center justify-center">!</button>
             <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-64 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-64 overflow-y-auto">
@@ -149,11 +143,9 @@
               <button type="button" onclick="selectObjection('Assumes Facts Not in Evidence')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 transition">Assumes Facts Not in Evidence</button>
             </div>
           </div>
-
           <input id="court-user-input" type="text" placeholder="State your defense argument or cross-examination query..." class="flex-grow bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
           <button type="submit" id="court-submit-btn" class="bg-brand-gold hover:bg-white text-brand-dark px-4 py-2 rounded text-xs font-mono font-bold uppercase transition">Dispatch</button>
         </form>
-
         <div class="flex items-center gap-2 overflow-x-auto font-mono text-[11px] pt-1 px-1">
           <span class="text-brand-muted hidden sm:inline">Commands:</span>
           <button onclick="quickAction('/recap')" class="px-2 py-1 rounded hover:text-white text-brand-gold transition whitespace-nowrap">/recap</button>
@@ -173,8 +165,6 @@
     </div>
 
     <div id="view-active-case-notebook" class="hidden space-y-6">
-      
-      <!-- Notebook Header with Restored Delete Case Button -->
       <div class="bg-brand-dark border border-brand-border rounded p-3 text-xs font-mono flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div class="flex items-center gap-3">
           <span class="text-brand-gold font-bold" id="nb-casetitle">State v. Null</span>
@@ -182,9 +172,7 @@
         </div>
         <div class="flex items-center gap-3">
           <span class="text-brand-muted text-[10px]">Background auto-sync active</span>
-          <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">
-            Delete Case
-          </button>
+          <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
         </div>
       </div>
 
@@ -228,7 +216,7 @@
     <p class="text-brand-muted text-sm">Directives for native ChatGPT/Claude play coming soon.</p>
   </main>
 
-  <!-- ================= FLOATING PARTNER DRAWER UI (NO EMOJIS) ================= -->
+  <!-- ================= FLOATING PARTNER DRAWER UI ================= -->
   <button onclick="togglePartnerDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 bg-brand-surface border border-r-0 border-brand-border hover:border-brand-gold text-brand-gold px-1.5 py-4 rounded-l-md font-mono text-xs z-50 shadow-xl flex items-center transition group">
     <span class="transform -rotate-90 block whitespace-nowrap text-brand-gold font-bold tracking-widest text-[11px] group-hover:text-white uppercase">Partner</span>
   </button>
@@ -238,25 +226,22 @@
       <h3 class="text-xs font-mono font-bold text-brand-gold uppercase tracking-wider">Senior Partner Consultation</h3>
       <button onclick="togglePartnerDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
     </div>
-    
     <div id="partner-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]">
       <div class="text-brand-muted text-xs font-mono italic text-center mt-10">Private strategy channel. Consultations do not cost Action Points.</div>
     </div>
-    
     <form id="partner-form" onsubmit="handlePartnerSubmit(event)" class="p-3 bg-brand-dark border-t border-brand-border flex flex-col gap-2">
       <input id="partner-input" type="text" placeholder="Ask for tactical advice or case theory..." class="w-full bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
       <button type="submit" id="partner-submit-btn" class="w-full bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold py-2 rounded text-xs font-mono font-bold transition">Consult Partner</button>
     </form>
   </div>
 
-  <!-- ================= INTAKE MODAL (With Complexity Inspector) ================= -->
+  <!-- ================= INTAKE MODAL ================= -->
   <div id="intake-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-6 space-y-5 shadow-2xl">
       <div class="border-b border-brand-border pb-2">
         <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide">Case Parameters</h3>
         <p class="text-brand-muted text-[11px] font-mono">Calibrate the legal engine before intake.</p>
       </div>
-      
       <div class="space-y-4 font-sans text-sm text-slate-200">
         <div class="space-y-1">
           <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Trial Difficulty</label>
@@ -266,7 +251,6 @@
             <option value="Hard">Hard (3 AP, 2 Strikes)</option>
           </select>
         </div>
-        
         <div class="space-y-1">
           <div class="flex justify-between items-end">
             <div class="flex items-center gap-2">
@@ -276,12 +260,10 @@
             <span id="comp-val" class="text-white font-bold text-xs bg-brand-dark px-2 rounded border border-brand-border">Level 3</span>
           </div>
           <input id="intake-comp" type="range" min="1" max="5" value="3" step="1" class="w-full accent-brand-gold cursor-pointer" oninput="updateComplexityInfo(this.value)">
-          
           <div id="comp-info-drawer" class="hidden mt-2 p-2.5 bg-brand-dark border border-brand-border rounded font-mono text-[10px] text-slate-300 shadow-inner">
              <span id="comp-desc-text" class="leading-relaxed">Level 3 (Layered): Client conceals timeline gaps, conflicting witness testimony, requires subpoena verification (moderate AP pressure).</span>
           </div>
         </div>
-
         <div class="space-y-1">
           <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Charge Category</label>
           <select id="intake-cat" class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold cursor-pointer">
@@ -292,7 +274,6 @@
           </select>
         </div>
       </div>
-      
       <div class="flex justify-end gap-3 pt-3 border-t border-brand-border">
         <button onclick="closeIntakeModal()" class="px-4 py-2 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
         <button onclick="confirmIntake()" class="px-4 py-2 bg-brand-gold text-brand-dark font-bold font-mono text-xs rounded hover:bg-white transition shadow">Accept Case File</button>
@@ -300,7 +281,7 @@
     </div>
   </div>
 
-  <!-- Destructive Wipe Modal -->
+  <!-- ================= WIPE & EXHIBIT MODALS ================= -->
   <div id="wipe-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-rose-900/50 rounded max-w-md w-full p-6 space-y-4">
       <h3 class="text-rose-400 font-serif text-xl font-bold">Wipe Trial Data?</h3>
@@ -313,7 +294,6 @@
     </div>
   </div>
 
-  <!-- Add Exhibit Modal -->
   <div id="exhibit-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-5 space-y-4">
       <h3 class="text-white font-serif font-medium text-base">Log Discovery Exhibit</h3>
@@ -428,7 +408,6 @@
       sendCourtAction(initPrompt, true);
     }
 
-    // Objection Menu Toggle
     function toggleObjectionMenu() { document.getElementById('objection-menu').classList.toggle('hidden'); }
     function selectObjection(ruleStr) {
       const input = document.getElementById('court-user-input');
@@ -441,10 +420,7 @@
       if (!menu.classList.contains('hidden') && !menu.contains(event.target) && event.target !== menu.previousElementSibling) { menu.classList.add('hidden'); }
     });
 
-    // Partner Drawer Toggle
     function togglePartnerDrawer() { document.getElementById('partner-drawer').classList.toggle('translate-x-full'); }
-
-    // Utility & DOM Handlers
     function saveNotes() { appState.notes = document.getElementById('attorney-notes').value; persist(); }
     function openWipeModal() { document.getElementById('wipe-confirm-input').value = ''; document.getElementById('wipe-modal').classList.remove('hidden'); }
     function closeWipeModal() { document.getElementById('wipe-modal').classList.add('hidden'); }
@@ -494,10 +470,8 @@
       appState.facts.forEach(fact => { container.innerHTML += `<div class="pb-2 border-b border-brand-border/50 last:border-0 mb-2">• ${fact}</div>`; });
     }
 
-    // Clean Dialogue Parser
     function parseTranscriptFormat(text) {
       let parsed = text.replace(/^###\s+/gm, ''); 
-      
       parsed = parsed.replace(/^(?:\*\*)?([A-Za-z\s\-\.\']+(?:Counsel|Judge|Witness|DA|Defendant|Prosecut[a-z]+|Defen[a-z]+|Sterling|Vance|Diaz|Bench|Court)?)(?:\*\*)?\s*:\s*/gim, (match, name) => {
          let color = 'text-brand-gold'; 
          let lower = name.toLowerCase();
@@ -507,7 +481,6 @@
          name = name.replace(/\*/g, '').trim();
          return `<br><span class="block mt-4 mb-1 text-sm font-bold tracking-wide uppercase ${color}">${name}</span>`;
       });
-
       parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
                      .replace(/\*(.*?)\*/g, '<em class="text-slate-300 italic">$1</em>')
                      .replace(/^\> (.*$)/gim, '<blockquote class="border-l-2 border-brand-gold pl-3 ml-1 my-2 italic text-brand-muted">$1</blockquote>')
@@ -515,13 +488,13 @@
       return parsed.replace(/^(<br>)+/, ''); 
     }
 
-    // Error Guardian Builder
     function appendErrorAlert(rawError, lastPrompt, isPartner = false) {
       const feedId = isPartner ? 'partner-feed' : 'transcript-feed';
       const feed = document.getElementById(feedId);
       let humanError = "The server link dropped unexpectedly. Check worker availability or resubmit.";
       if (rawError.includes("MAX_TOKENS") || rawError.includes("token limit")) humanError = "The maximum token limit per request was reached. Rephrase your inquiry or run /recap to condense the record context.";
       else if (rawError.includes("429") || rawError.includes("rate limit")) humanError = "API request threshold exceeded. Wait 20–30 seconds before filing your next action.";
+      else if (rawError.includes("timed out")) humanError = "The AI model is taking too long to respond. The request has been aborted to prevent freezing.";
       
       const errorId = 'err-' + Date.now();
       const alertHtml = `
@@ -593,77 +566,27 @@
     let engineLocked = false;
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
-    async function sendCourtAction(userPrompt, isInit = false) {
-  if (engineLocked) return;
-  engineLocked = true;
-
-  const statusBadge = document.getElementById('engine-status');
-  const submitBtn = document.getElementById('court-submit-btn');
-  if (submitBtn) submitBtn.disabled = true;
-
-  if (!isInit) appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
-  else trialHistory = [];
-
-  const MAX_RETRIES = 2;
-  let attempt = 0;
-  let success = false;
-
-  while (attempt <= MAX_RETRIES && !success) {
-    attempt++;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
-
-    if (statusBadge) {
-      statusBadge.innerText = attempt === 1 ? "Processing..." : `Retrying (${attempt}/${MAX_RETRIES + 1})...`;
-    }
-
-    try {
-      const response = await fetch(WORKER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userPrompt, history: trialHistory, isInit: isInit }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-      }
-
-      const data = await response.json();
-      trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
-      trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
-      processCourtResponse(data.reply);
-      success = true;
-
-    } catch (err) {
-      clearTimeout(timeoutId);
-      const isTimeout = err.name === "AbortError";
-      const errMsg = isTimeout ? "Request timed out after 25s." : err.message;
-
-      console.warn(`Attempt ${attempt} failed: ${errMsg}`);
-
-      if (attempt <= MAX_RETRIES) {
-        // Wait 1.5s before retrying
-        await new Promise(res => setTimeout(res, 1500));
-      } else {
-        // All retries exhausted: show Error Guardian
-        appendErrorAlert(errMsg, userPrompt, false);
+    // Robust Fetch Wrapper
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error(`Request timed out after ${timeoutMs / 1000}s.`);
+        }
+        throw err;
       }
     }
-  }
 
-  engineLocked = false;
-  if (statusBadge) statusBadge.innerText = "Active";
-  if (submitBtn) submitBtn.disabled = false;
-}
-
-
-    async function sendPartnerAction(userPrompt) {
-      if (engineLocked) return; engineLocked = true;
-      const submitBtn = document.getElementById('partner-submit-btn');
-      if (submitBtn) submitBtn.disabled = true;
     async function sendCourtAction(userPrompt, isInit = false) {
       if (engineLocked) return;
       engineLocked = true;
@@ -679,52 +602,40 @@
       let attempt = 0;
       let success = false;
 
-      while (attempt <= MAX_RETRIES && !success) {
-        attempt++;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
+      try {
+        while (attempt <= MAX_RETRIES && !success) {
+          attempt++;
+          if (statusBadge) statusBadge.innerText = attempt === 1 ? "Processing..." : `Retrying (${attempt}/${MAX_RETRIES + 1})...`;
 
-        if (statusBadge) {
-          statusBadge.innerText = attempt === 1 ? "Processing..." : `Retrying (${attempt}/${MAX_RETRIES + 1})...`;
-        }
+          try {
+            const response = await fetchWithTimeout(WORKER_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: userPrompt, history: trialHistory, isInit: isInit })
+            }, 15000);
 
-        try {
-          const response = await fetch(WORKER_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: userPrompt, history: trialHistory, isInit: isInit }),
-            signal: controller.signal
-          });
+            if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
+            
+            const data = await response.json();
+            trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
+            trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
+            processCourtResponse(data.reply);
+            success = true;
 
-          clearTimeout(timeoutId);
-
-          if (!response.ok) {
-            throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-          }
-
-          const data = await response.json();
-          trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
-          trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
-          processCourtResponse(data.reply);
-          success = true;
-
-        } catch (err) {
-          clearTimeout(timeoutId);
-          const isTimeout = err.name === "AbortError";
-          const errMsg = isTimeout ? "Request timed out after 25s." : err.message;
-          console.warn(`Courtroom attempt ${attempt} failed: ${errMsg}`);
-
-          if (attempt <= MAX_RETRIES) {
-            await new Promise(res => setTimeout(res, 1500));
-          } else {
-            appendErrorAlert(errMsg, userPrompt, false);
+          } catch (err) {
+            console.warn(`Courtroom attempt ${attempt} failed: ${err.message}`);
+            if (attempt <= MAX_RETRIES) {
+              await new Promise(res => setTimeout(res, 1000));
+            } else {
+              appendErrorAlert(err.message, userPrompt, false);
+            }
           }
         }
+      } finally {
+        engineLocked = false;
+        if (statusBadge) statusBadge.innerText = "Active";
+        if (submitBtn) submitBtn.disabled = false;
       }
-
-      engineLocked = false;
-      if (statusBadge) statusBadge.innerText = "Active";
-      if (submitBtn) submitBtn.disabled = false;
     }
 
     async function sendPartnerAction(userPrompt) {
@@ -740,49 +651,38 @@
       let attempt = 0;
       let success = false;
 
-      while (attempt <= MAX_RETRIES && !success) {
-        attempt++;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
+      try {
+        while (attempt <= MAX_RETRIES && !success) {
+          attempt++;
+          try {
+            const response = await fetchWithTimeout(WORKER_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, history: trialHistory, isInit: false })
+            }, 15000);
 
-        try {
-          const response = await fetch(WORKER_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, history: trialHistory, isInit: false }),
-            signal: controller.signal
-          });
+            if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
+            
+            const data = await response.json();
+            trialHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
+            trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
+            appendPartnerMessage("SENIOR PARTNER", data.reply.replace(/<!--[\s\S]*?-->/g, "").trim(), false);
+            success = true;
 
-          clearTimeout(timeoutId);
-
-          if (!response.ok) {
-            throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-          }
-
-          const data = await response.json();
-          trialHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
-          trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
-          appendPartnerMessage("SENIOR PARTNER", data.reply.replace(/<!--[\s\S]*?-->/g, "").trim(), false);
-          success = true;
-
-        } catch (err) {
-          clearTimeout(timeoutId);
-          const isTimeout = err.name === "AbortError";
-          const errMsg = isTimeout ? "Request timed out after 25s." : err.message;
-          console.warn(`Partner attempt ${attempt} failed: ${errMsg}`);
-
-          if (attempt <= MAX_RETRIES) {
-            await new Promise(res => setTimeout(res, 1500));
-          } else {
-            appendErrorAlert(errMsg, userPrompt, true);
+          } catch (err) {
+            console.warn(`Partner attempt ${attempt} failed: ${err.message}`);
+            if (attempt <= MAX_RETRIES) {
+              await new Promise(res => setTimeout(res, 1000));
+            } else {
+              appendErrorAlert(err.message, userPrompt, true);
+            }
           }
         }
+      } finally {
+        engineLocked = false;
+        if (submitBtn) submitBtn.disabled = false;
       }
-
-      engineLocked = false;
-      if (submitBtn) submitBtn.disabled = false;
     }
-
 
     function processCourtResponse(rawText) {
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
