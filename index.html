@@ -53,6 +53,10 @@
         <button onclick="openSetupModal()" class="px-3 py-1.5 rounded text-brand-gold border border-brand-gold/30 hover:bg-brand-gold/10 transition whitespace-nowrap">
           ⚙️ Setup Guide
         </button>
+        <!-- Live Tablet Test Button -->
+        <button onclick="startNewTrial()" class="px-3 py-1.5 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-bold transition whitespace-nowrap shadow text-xs">
+          ⚖️ Start Live Trial
+        </button>
       </nav>
     </div>
   </header>
@@ -1045,16 +1049,24 @@
       }
 
       const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
-      console.log("COURT PROCEEDINGS:\n", cleanText);
+      
+      // Directly display on-screen for tablet users
+      alert("⚖️ BENCH RESPONSE RECEIVED:\n\n" + cleanText.slice(0, 500) + "...\n\n(Check Attorney Notes tab to read full transcript!)");
+      
+      // Auto-fill into the Attorney Notes area on the Notebook tab so you can scroll through it
+      appState.notes = cleanText;
+      const notesField = document.getElementById('attorney-notes');
+      if (notesField) notesField.value = cleanText;
+      persist();
     }
 
-    // Use this command in Developer Console to test!
+    // Use this command in Developer Console to test, or tap the button!
     window.startNewTrial = function() {
       trialHistory = [];
       let comp = appState.profile ? appState.profile.comp : 3;
-      console.log("Commencing new trial docket...");
       sendCourtAction("/start --mode=web --complexity=" + comp, true);
     };
   </script>
 </body>
 </html>
+
