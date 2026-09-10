@@ -56,7 +56,7 @@
         <div class="text-brand-gold font-mono text-xs uppercase tracking-widest">Tactical Trial Simulator</div>
         <h1 class="text-3xl md:text-5xl font-serif text-white font-semibold leading-tight">Rest Your Case</h1>
         <p class="text-brand-muted text-sm md:text-base leading-relaxed">
-          A fair-play procedural defense mystery engine powered by Google Gemini. Sift through tainted evidence, preserve constitutional protections, command your private investigator, and dismantle the prosecution's theory before the jury deliberations.
+          A fair-play procedural defense mystery engine powered by Google Gemini. Sift through tainted evidence, preserve constitutional protections, command your private investigator, and dismantle the prosecution's theory before jury deliberations.
         </p>
       </div>
       <div class="flex flex-col sm:flex-row gap-3 pt-2">
@@ -111,7 +111,7 @@
   <main id="tab-terminal" class="hidden max-w-5xl mx-auto px-4 py-6 flex-grow w-full flex flex-col relative">
     <div class="border border-brand-border bg-brand-surface rounded overflow-hidden flex flex-col h-[75vh] shadow-lg shadow-black/50">
       
-      <!-- Terminal Header -->
+      <!-- Terminal Header with Restored Delete Case Button -->
       <div class="px-4 py-3 bg-brand-dark border-b border-brand-border flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -123,7 +123,9 @@
           <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Turn</span><span id="term-turn" class="text-white font-bold">1</span></div>
           <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">AP</span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
           <div class="flex items-center space-x-1"><span class="text-brand-muted uppercase">Strikes</span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
-          <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Wipe</button>
+          <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">
+            Delete Case
+          </button>
         </div>
       </div>
 
@@ -171,12 +173,19 @@
     </div>
 
     <div id="view-active-case-notebook" class="hidden space-y-6">
+      
+      <!-- Notebook Header with Restored Delete Case Button -->
       <div class="bg-brand-dark border border-brand-border rounded p-3 text-xs font-mono flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div class="flex items-center gap-3">
           <span class="text-brand-gold font-bold" id="nb-casetitle">State v. Null</span>
           <span class="text-white border-l border-brand-border pl-3" id="nb-phase">Phase 1: Intake</span>
         </div>
-        <span class="text-brand-muted text-[10px]">Background auto-sync active</span>
+        <div class="flex items-center gap-3">
+          <span class="text-brand-muted text-[10px]">Background auto-sync active</span>
+          <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">
+            Delete Case
+          </button>
+        </div>
       </div>
 
       <section class="space-y-4">
@@ -208,25 +217,25 @@
     </div>
   </main>
 
-  <!-- ================= TAB 4/5: FIELD MANUAL & SETUP (Omitted body for brevity, logic identical to previous version) ================= -->
+  <!-- ================= TAB 4/5: FIELD MANUAL & SETUP ================= -->
   <main id="tab-manual" class="hidden max-w-5xl mx-auto px-4 py-8 space-y-8 flex-grow w-full">
-      <h1 class="text-3xl font-serif text-white font-semibold">Rules of Evidence</h1>
-      <p class="text-brand-muted text-sm">See objection flyout menu (`!`) in the Terminal for quick access during cross-examinations.</p>
+    <h1 class="text-3xl font-serif text-white font-semibold">Rules of Evidence</h1>
+    <p class="text-brand-muted text-sm">See objection flyout menu (`!`) in the Terminal for quick access during cross-examinations.</p>
   </main>
+  
   <main id="tab-setup" class="hidden max-w-3xl mx-auto px-4 py-12 flex-grow w-full space-y-6">
     <h1 class="text-3xl font-serif text-white font-semibold">Manual Integration</h1>
     <p class="text-brand-muted text-sm">Directives for native ChatGPT/Claude play coming soon.</p>
   </main>
 
-  <!-- ================= FLOATING PARTNER DRAWER UI ================= -->
-  
+  <!-- ================= FLOATING PARTNER DRAWER UI (NO EMOJIS) ================= -->
   <button onclick="togglePartnerDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 bg-brand-surface border border-r-0 border-brand-border hover:border-brand-gold text-brand-gold px-1.5 py-4 rounded-l-md font-mono text-xs z-50 shadow-xl flex items-center transition group">
-    <span class="transform -rotate-90 block whitespace-nowrap text-brand-gold font-bold group-hover:text-white">👔 Partner</span>
+    <span class="transform -rotate-90 block whitespace-nowrap text-brand-gold font-bold tracking-widest text-[11px] group-hover:text-white uppercase">Partner</span>
   </button>
 
   <div id="partner-drawer" class="fixed right-0 top-0 h-full w-full sm:w-96 bg-brand-dark border-l border-brand-border z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
     <div class="px-4 py-3 bg-brand-surface border-b border-brand-border flex items-center justify-between">
-      <h3 class="text-xs font-mono font-bold text-brand-gold uppercase tracking-wider">👔 Senior Partner Consult</h3>
+      <h3 class="text-xs font-mono font-bold text-brand-gold uppercase tracking-wider">Senior Partner Consultation</h3>
       <button onclick="togglePartnerDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
     </div>
     
@@ -291,16 +300,20 @@
     </div>
   </div>
 
-  <!-- Destructive Wipe Modal & Add Exhibit Modal (Condensed for brevity) -->
+  <!-- Destructive Wipe Modal -->
   <div id="wipe-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-rose-900/50 rounded max-w-md w-full p-6 space-y-4">
       <h3 class="text-rose-400 font-serif text-xl font-bold">Wipe Trial Data?</h3>
       <p class="text-slate-200 text-sm font-sans">This will permanently delete your active case file. <strong class="text-white">This cannot be undone.</strong></p>
       <input id="wipe-confirm-input" type="text" placeholder="Type CONFIRM" autocomplete="off" class="w-full bg-brand-dark border border-brand-border rounded px-3 py-2 text-white font-mono outline-none focus:border-rose-500" />
-      <div class="flex justify-end gap-3 pt-2"><button onclick="closeWipeModal()" class="px-4 py-2 text-brand-muted hover:text-white font-mono text-xs">Cancel</button><button onclick="executeWipe()" class="px-4 py-2 bg-rose-900 hover:bg-rose-700 text-white font-mono text-xs font-bold rounded">Purge Data</button></div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closeWipeModal()" class="px-4 py-2 text-brand-muted hover:text-white font-mono text-xs">Cancel</button>
+        <button onclick="executeWipe()" class="px-4 py-2 bg-rose-900 hover:bg-rose-700 text-white font-mono text-xs font-bold rounded">Purge Data</button>
+      </div>
     </div>
   </div>
 
+  <!-- Add Exhibit Modal -->
   <div id="exhibit-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-5 space-y-4">
       <h3 class="text-white font-serif font-medium text-base">Log Discovery Exhibit</h3>
@@ -309,7 +322,10 @@
         <input id="modal-title" type="text" placeholder="Title" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none" />
         <textarea id="modal-details" rows="3" placeholder="Forensic Notes..." class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none resize-none"></textarea>
       </div>
-      <div class="flex justify-end gap-2 font-mono text-xs"><button onclick="closeAddExhibitModal()" class="px-3 py-1.5 text-brand-muted hover:text-white">Cancel</button><button onclick="saveNewExhibit()" class="px-3 py-1.5 bg-brand-gold text-brand-dark font-bold hover:bg-white rounded">Save</button></div>
+      <div class="flex justify-end gap-2 font-mono text-xs">
+        <button onclick="closeAddExhibitModal()" class="px-3 py-1.5 text-brand-muted hover:text-white">Cancel</button>
+        <button onclick="saveNewExhibit()" class="px-3 py-1.5 bg-brand-gold text-brand-dark font-bold hover:bg-white rounded">Save</button>
+      </div>
     </div>
   </div>
 
@@ -478,11 +494,10 @@
       appState.facts.forEach(fact => { container.innerHTML += `<div class="pb-2 border-b border-brand-border/50 last:border-0 mb-2">• ${fact}</div>`; });
     }
 
-    // New Clean Dialogue Parser
+    // Clean Dialogue Parser
     function parseTranscriptFormat(text) {
-      let parsed = text.replace(/^###\s+/gm, ''); // Strip fragment headers
+      let parsed = text.replace(/^###\s+/gm, ''); 
       
-      // Extract Speaker names, color code, and group block
       parsed = parsed.replace(/^(?:\*\*)?([A-Za-z\s\-\.\']+(?:Counsel|Judge|Witness|DA|Defendant|Prosecut[a-z]+|Defen[a-z]+|Sterling|Vance|Diaz|Bench|Court)?)(?:\*\*)?\s*:\s*/gim, (match, name) => {
          let color = 'text-brand-gold'; 
          let lower = name.toLowerCase();
@@ -497,7 +512,7 @@
                      .replace(/\*(.*?)\*/g, '<em class="text-slate-300 italic">$1</em>')
                      .replace(/^\> (.*$)/gim, '<blockquote class="border-l-2 border-brand-gold pl-3 ml-1 my-2 italic text-brand-muted">$1</blockquote>')
                      .replace(/\n/g, '<br/>');
-      return parsed.replace(/^(<br>)+/, ''); // Clean up initial breaks
+      return parsed.replace(/^(<br>)+/, ''); 
     }
 
     // Error Guardian Builder
