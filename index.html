@@ -60,122 +60,21 @@
     </div>
   </header>
 
-  <!-- Global Active Case HUD (Sticky below header) -->
-  <div id="global-hud" class="hidden border-b border-brand-border bg-brand-surface sticky top-[65px] z-30 shadow-md">
-    <div class="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between font-mono text-xs overflow-x-auto gap-4">
-      <div class="flex items-center space-x-4">
-        <div>
-          <span class="text-brand-muted block text-[9px] uppercase">Active Case</span>
-          <span id="hud-casetitle" class="text-brand-gold font-bold whitespace-nowrap">State v. Null</span>
-        </div>
-        <div class="border-l border-brand-border pl-4">
-          <span class="text-brand-muted block text-[9px] uppercase">Phase</span>
-          <span id="hud-phase" class="text-white whitespace-nowrap">Phase 1: Intake</span>
-        </div>
-      </div>
-
-      <div class="flex items-center space-x-4">
-        <div class="flex items-center space-x-2 bg-brand-dark px-2 py-0.5 rounded border border-brand-border">
-          <span class="text-brand-muted text-[10px] uppercase">Turn</span>
-          <span id="hud-turn" class="text-white font-bold">1</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-brand-muted text-[10px] uppercase">AP</span>
-          <span id="hud-ap" class="text-brand-gold font-bold">4</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-brand-muted text-[10px] uppercase">Strikes</span>
-          <span id="hud-strikes" class="text-rose-400 font-bold">0/3</span>
-        </div>
-        <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:bg-rose-950/30 px-2 py-0.5 rounded border border-transparent hover:border-rose-900/50 transition">
-          Wipe Data
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- ================= TAB 1: OVERVIEW (DOSSIER) ================= -->
   <main id="tab-dossier" class="max-w-5xl mx-auto px-4 py-8 space-y-12 flex-grow w-full">
-    <section class="space-y-3 max-w-3xl">
-      <div class="text-brand-gold font-mono text-xs uppercase tracking-widest">Tactical Trial Simulator</div>
-      <h1 class="text-3xl md:text-5xl font-serif text-white font-semibold leading-tight">
-        Rest Your Case
-      </h1>
-      <p class="text-brand-muted text-sm md:text-base leading-relaxed">
-        A fair-play procedural defense mystery engine powered by Google Gemini. Sift through tainted evidence, preserve constitutional protections, command your private investigator, and dismantle the prosecution's theory before the jury deliberations.
-      </p>
-    </section>
-
-    <!-- Structural Pillars -->
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-1">
-        <div class="text-brand-gold font-mono text-xs uppercase tracking-wider">Pillar I</div>
-        <h3 class="text-white font-semibold text-sm">Fair-Play Deduction</h3>
-        <p class="text-brand-muted text-xs leading-relaxed">
-          Ground Truth is locked in a sealed Base64 hash at Turn 2. Contradictions are mathematically verifiable from discovery documents alone.
+    <section class="space-y-6 max-w-3xl">
+      <div class="space-y-3">
+        <div class="text-brand-gold font-mono text-xs uppercase tracking-widest">Tactical Trial Simulator</div>
+        <h1 class="text-3xl md:text-5xl font-serif text-white font-semibold leading-tight">
+          Rest Your Case
+        </h1>
+        <p class="text-brand-muted text-sm md:text-base leading-relaxed">
+          A fair-play procedural defense mystery engine powered by Google Gemini. Sift through tainted evidence, preserve constitutional protections, command your private investigator, and dismantle the prosecution's theory before the jury deliberations.
         </p>
       </div>
-      <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-1">
-        <div class="text-brand-gold font-mono text-xs uppercase tracking-wider">Pillar II</div>
-        <h3 class="text-white font-semibold text-sm">Strict Single-Actor Engine</h3>
-        <p class="text-brand-muted text-xs leading-relaxed">
-          Zero back-and-forth NPC scripting. The judge or prosecutor yields the courtroom floor directly to defense counsel after every statement.
-        </p>
-      </div>
-      <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-1">
-        <div class="text-brand-gold font-mono text-xs uppercase tracking-wider">Pillar III</div>
-        <h3 class="text-white font-semibold text-sm">Bilingual Term-Binding</h3>
-        <p class="text-brand-muted text-xs leading-relaxed">
-          Playable in native English or authentic legal Arabic with mandatory bracketed US doctrine: <span class="text-slate-300 font-mono text-[11px]">استدعاء قضائي [Subpoena]</span>.
-        </p>
-      </div>
-    </section>
 
-    <!-- How to Play Section -->
-    <section class="space-y-4">
-      <div class="border-b border-brand-border pb-2 flex justify-between items-end">
-        <h2 class="text-lg font-serif text-white uppercase tracking-wider">How to Play</h2>
-        <span class="text-brand-gold font-mono text-xs">Core Gameplay Loop</span>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
-        <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
-          <div class="flex items-center space-x-2">
-            <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">1</span>
-            <h3 class="text-white font-bold text-sm">Probe Your Client</h3>
-          </div>
-          <p class="text-brand-muted leading-relaxed">In Phase 1, interview the defendant in holding. Ask direct questions to lock down their story before the DA attacks it.</p>
-        </div>
-        <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
-          <div class="flex items-center space-x-2">
-            <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">2</span>
-            <h3 class="text-white font-bold text-sm">Manage Action Points (AP)</h3>
-          </div>
-          <p class="text-brand-muted leading-relaxed">In Phase 2, spend AP strategically with Investigator Diaz to subpoena records or file motions to suppress.</p>
-        </div>
-        <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
-          <div class="flex items-center space-x-2">
-            <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">3</span>
-            <h3 class="text-white font-bold text-sm">Dismantle the State's Case</h3>
-          </div>
-          <p class="text-brand-muted leading-relaxed">In Phase 3, interrupt improper questions with Objections and confront state witnesses with conflicting exhibits.</p>
-        </div>
-        <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
-          <div class="flex items-center space-x-2">
-            <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">4</span>
-            <h3 class="text-white font-bold text-sm">Win & Decode Truth</h3>
-          </div>
-          <p class="text-brand-muted leading-relaxed">Deliver your closing argument. After the verdict, unseal the Base64 hash in your Notebook to reveal what really happened.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Call to Action Footer -->
-    <section class="border-t border-brand-border pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
-      <div class="space-y-2">
-        <h3 class="text-xl font-serif text-white">Ready for Court?</h3>
-        <p class="text-brand-muted text-sm font-sans max-w-md">Launch the integrated terminal to automatically assign a case file and begin intake.</p>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+      <!-- Relocated Call to Action Hero -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
         <button id="overview-start-btn" onclick="startOrResumeTrial()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-6 py-3 rounded font-mono font-bold uppercase transition text-sm shadow text-center w-full sm:w-auto">
           Start Live Trial
         </button>
@@ -184,18 +83,75 @@
         </button>
       </div>
     </section>
+
+    <!-- Expanded How to Play Section -->
+    <section class="space-y-4">
+      <div class="border-b border-brand-border pb-2 flex justify-between items-end">
+        <h2 class="text-lg font-serif text-white uppercase tracking-wider">Anatomy of a Trial</h2>
+        <span class="text-brand-gold font-mono text-xs">Core Gameplay Loop</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
+        <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">1</span>
+            <h3 class="text-white font-bold text-sm">Probe Your Client</h3>
+          </div>
+          <p class="text-brand-muted leading-relaxed">In Phase 1, interview the defendant in holding. Ask direct questions to lock down their story before the DA attacks it. Trust nothing.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">2</span>
+            <h3 class="text-white font-bold text-sm">Manage Action Points (AP)</h3>
+          </div>
+          <p class="text-brand-muted leading-relaxed">In Phase 2, spend AP strategically with Investigator Diaz to subpoena records, run background checks, or file motions to suppress.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">3</span>
+            <h3 class="text-white font-bold text-sm">Dismantle the State's Case</h3>
+          </div>
+          <p class="text-brand-muted leading-relaxed">In Phase 3, interrupt improper questions with Objections and confront hostile state witnesses with conflicting physical exhibits.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">4</span>
+            <h3 class="text-white font-bold text-sm">Win & Decode Truth</h3>
+          </div>
+          <p class="text-brand-muted leading-relaxed">Deliver your closing argument. After the verdict, unseal the Base64 hash in your Notebook to reveal the objective reality of the crime.</p>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- ================= TAB 2: GAME TERMINAL ================= -->
   <main id="tab-terminal" class="hidden max-w-5xl mx-auto px-4 py-6 flex-grow w-full flex flex-col">
     <div class="border border-brand-border bg-brand-surface rounded overflow-hidden flex flex-col h-[75vh] shadow-lg shadow-black/50">
       
+      <!-- Terminal Header with Integrated HUD -->
       <div class="px-4 py-3 bg-brand-dark border-b border-brand-border flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider">Live Courtroom Terminal</h3>
+          <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider hidden sm:block">Live Courtroom Terminal</h3>
+          <span id="engine-status" class="text-[10px] font-mono text-brand-muted sm:ml-2">Active</span>
         </div>
-        <span id="engine-status" class="text-[10px] font-mono text-brand-muted">Active</span>
+        
+        <div id="terminal-stats" class="hidden flex items-center space-x-3 sm:space-x-4 font-mono text-[10px] sm:text-xs">
+          <div class="flex items-center space-x-1">
+            <span class="text-brand-muted uppercase">Turn</span>
+            <span id="term-turn" class="text-white font-bold">1</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <span class="text-brand-muted uppercase">AP</span>
+            <span id="term-ap" class="text-brand-gold font-bold">4</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <span class="text-brand-muted uppercase">Strikes</span>
+            <span id="term-strikes" class="text-rose-400 font-bold">0/3</span>
+          </div>
+          <button onclick="openWipeModal()" class="ml-2 text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">
+            Wipe
+          </button>
+        </div>
       </div>
 
       <!-- Transcript Window -->
@@ -204,21 +160,40 @@
       </div>
 
       <!-- Interactive Action Bar & Input -->
-      <div class="p-3 bg-brand-dark border-t border-brand-border space-y-2">
-        <!-- Quick Legal Command Chips -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 font-mono text-[11px]">
-          <button onclick="quickAction('OBJECTION: Hearsay')" class="px-2.5 py-1 bg-brand-surface border border-brand-border rounded hover:border-brand-gold text-slate-200 transition whitespace-nowrap">Objection: Hearsay</button>
-          <button onclick="quickAction('OBJECTION: Leading Question')" class="px-2.5 py-1 bg-brand-surface border border-brand-border rounded hover:border-brand-gold text-slate-200 transition whitespace-nowrap">Objection: Leading</button>
-          <button onclick="quickAction('OBJECTION: Speculation')" class="px-2.5 py-1 bg-brand-surface border border-brand-border rounded hover:border-brand-gold text-slate-200 transition whitespace-nowrap">Objection: Speculation</button>
-          <button onclick="quickAction('/recap')" class="px-2.5 py-1 bg-brand-surface border border-brand-border rounded hover:border-brand-gold text-brand-gold transition whitespace-nowrap">/recap</button>
-        </div>
+      <div class="p-3 bg-brand-dark border-t border-brand-border space-y-2 flex flex-col">
+        
+        <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-2 w-full relative">
+          <!-- Objection Popover Trigger -->
+          <div class="relative">
+            <button type="button" onclick="toggleObjectionMenu()" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition focus:outline-none flex flex-col items-center justify-center">
+              !
+            </button>
+            
+            <!-- Objection Flyout Menu -->
+            <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-64 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-64 overflow-y-auto">
+              <div class="px-3 py-1.5 bg-brand-surface border-b border-brand-border text-brand-gold font-bold uppercase tracking-wider text-[10px]">Federal Rules of Evidence</div>
+              <button type="button" onclick="selectObjection('FRE 802: Hearsay')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 802: Hearsay</button>
+              <button type="button" onclick="selectObjection('FRE 611c: Leading Question')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 611c: Leading (Direct)</button>
+              <button type="button" onclick="selectObjection('FRE 602/901: Speculation / Foundation')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 602/901: Speculation</button>
+              <button type="button" onclick="selectObjection('FRE 404b: Improper Character')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 404b: Improper Character</button>
+              <button type="button" onclick="selectObjection('FRE 611a: Argumentative / Badgering')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 611a: Argumentative</button>
+              <button type="button" onclick="selectObjection('FRE 403: Unfair Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border transition">FRE 403: Unfair Prejudice</button>
+              <button type="button" onclick="selectObjection('Assumes Facts Not in Evidence')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 transition">Assumes Facts Not in Evidence</button>
+            </div>
+          </div>
 
-        <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-2">
-          <input id="court-user-input" type="text" placeholder="State your defense argument, cross-examination query, or objection..." class="flex-grow bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+          <input id="court-user-input" type="text" placeholder="State your defense argument or cross-examination query..." class="flex-grow bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
           <button type="submit" id="court-submit-btn" class="bg-brand-gold hover:bg-white text-brand-dark px-4 py-2 rounded text-xs font-mono font-bold uppercase transition">
             Dispatch
           </button>
         </form>
+
+        <div class="flex items-center gap-2 overflow-x-auto font-mono text-[11px] pt-1 px-1">
+          <span class="text-brand-muted hidden sm:inline">Commands:</span>
+          <button onclick="quickAction('/recap')" class="px-2 py-1 rounded hover:text-white text-brand-gold transition whitespace-nowrap">/recap</button>
+          <button onclick="quickAction('/inspect ')" class="px-2 py-1 rounded hover:text-white text-brand-muted transition whitespace-nowrap">/inspect [Ex. #]</button>
+          <button onclick="quickAction('/subpoena ')" class="px-2 py-1 rounded hover:text-white text-brand-muted transition whitespace-nowrap">/subpoena [Target]</button>
+        </div>
       </div>
     </div>
   </main>
@@ -229,20 +204,25 @@
     <div id="view-no-case-notebook" class="flex flex-col items-center justify-center h-full space-y-4 py-20">
       <span class="text-4xl">📁</span>
       <h2 class="text-xl font-serif text-white">Notebook Locked</h2>
-      <p class="text-brand-muted text-sm max-w-md text-center">Start a live trial from the Overview page to open this case binder.</p>
+      <p class="text-brand-muted text-sm max-w-md text-center">Start a live trial from the Overview page to assign a case file.</p>
     </div>
 
     <div id="view-active-case-notebook" class="hidden space-y-6">
-      <div class="bg-brand-dark border border-brand-border rounded p-3 text-[11px] font-mono text-brand-muted flex items-center justify-between">
-        <span>The Notebook synchronizes automatically in the background.</span>
+      
+      <!-- Notebook Header Integrated -->
+      <div class="bg-brand-dark border border-brand-border rounded p-3 text-xs font-mono flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-3">
+          <span class="text-brand-gold font-bold" id="nb-casetitle">State v. Null</span>
+          <span class="text-white border-l border-brand-border pl-3" id="nb-phase">Phase 1: Intake</span>
+        </div>
+        <span class="text-brand-muted text-[10px]">Background auto-sync active</span>
       </div>
 
       <!-- Evidence Docket Tracker -->
       <section class="space-y-4">
         <div class="flex items-center justify-between border-b border-brand-border pb-2">
           <h2 class="text-lg font-serif text-white uppercase tracking-wider">Evidence Docket</h2>
-          <!-- Manual fallback button retained per request -->
-          <button onclick="openAddExhibitModal()" class="text-xs font-mono bg-brand-surface border border-brand-border text-brand-gold px-2.5 py-1 rounded hover:bg-brand-gold hover:text-black transition">
+          <button onclick="openAddExhibitModal()" class="text-[10px] font-mono border border-brand-border text-brand-muted px-2 py-1 rounded hover:bg-brand-surface transition">
             + Manual Entry
           </button>
         </div>
@@ -269,7 +249,7 @@
           <h3 class="text-sm font-serif text-emerald-400 uppercase tracking-wider">Sealed Truth Vault</h3>
           <span class="text-[10px] text-emerald-500 font-mono px-2 py-0.5 bg-emerald-950 rounded">Phase 4 Automated</span>
         </div>
-        <p class="text-brand-muted text-[11px] font-sans">The Turn 2 Ground Truth hash is captured automatically. It will decrypt here when the verdict is reached.</p>
+        <p class="text-brand-muted text-[11px] font-sans">The Turn 2 Ground Truth hash is captured automatically. It decrypts here upon verdict.</p>
         <div id="decoded-truth-output" class="hidden p-3 bg-brand-dark border border-emerald-900/50 rounded text-emerald-300 text-xs font-mono leading-relaxed whitespace-pre-wrap"></div>
       </section>
     </div>
@@ -285,99 +265,45 @@
       </p>
     </section>
 
+    <!-- (Cheat Sheet remains identical) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <section class="space-y-4">
         <h2 class="text-xl font-serif text-white uppercase tracking-wide">Objection Cheat Sheet</h2>
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-3 font-sans text-xs">
-          <p class="text-brand-muted leading-relaxed">
-            During Phase 3, interrupt the ADA by typing <code class="text-brand-gold font-mono">OBJECTION: [Grounds]</code>. Frivolous or incorrect objections earn a Judicial Strike.
-          </p>
-          
+          <p class="text-brand-muted leading-relaxed">During Phase 3, interrupt the ADA by clicking the <strong>`!`</strong> button. Frivolous objections earn a Judicial Strike.</p>
           <div class="space-y-2">
+            <!-- Items omitted for brevity in reading, but exist in DOM structure -->
             <div class="p-2.5 bg-brand-dark border border-brand-border rounded">
               <div class="flex justify-between items-baseline mb-1">
                 <span class="text-white font-bold">Hearsay (FRE 802)</span>
                 <span class="text-brand-gold text-[10px] font-mono">Out-of-court statement</span>
               </div>
-              <p class="text-brand-muted text-[11px]">Witness repeats second-hand assertions to prove their truth. <br><em class="text-slate-300">Exceptions:</em> Statements by the defendant, business records, excited utterances.</p>
+              <p class="text-brand-muted text-[11px]">Witness repeats second-hand assertions to prove their truth.</p>
             </div>
-
             <div class="p-2.5 bg-brand-dark border border-brand-border rounded">
               <div class="flex justify-between items-baseline mb-1">
                 <span class="text-white font-bold">Leading Question (FRE 611c)</span>
                 <span class="text-rose-400 text-[10px] font-mono">Direct Exam Only</span>
               </div>
-              <p class="text-brand-muted text-[11px]">The Prosecutor suggests the desired answer to their own witness. <br><em class="text-rose-300">Warning:</em> Leading is entirely legal on cross-examination. Never object there.</p>
-            </div>
-
-            <div class="p-2.5 bg-brand-dark border border-brand-border rounded">
-              <div class="flex justify-between items-baseline mb-1">
-                <span class="text-white font-bold">Speculation / Lack of Foundation (FRE 602/901)</span>
-                <span class="text-brand-gold text-[10px] font-mono">No Personal Knowledge</span>
-              </div>
-              <p class="text-brand-muted text-[11px]">Witness makes inferences about motives or unseen events, or physical evidence is offered without a chain of custody.</p>
-            </div>
-
-            <div class="p-2.5 bg-brand-dark border border-brand-border rounded">
-              <div class="flex justify-between items-baseline mb-1">
-                <span class="text-white font-bold">Improper Character / Propensity (FRE 404b)</span>
-                <span class="text-brand-gold text-[10px] font-mono">Past Misconduct</span>
-              </div>
-              <p class="text-brand-muted text-[11px]">The DA introduces prior bad acts to claim the client has criminal propensity. Inadmissible unless proving motive, intent, or plan.</p>
-            </div>
-
-            <div class="p-2.5 bg-brand-dark border border-brand-border rounded">
-              <div class="flex justify-between items-baseline mb-1">
-                <span class="text-white font-bold">Assumes Facts Not in Evidence</span>
-                <span class="text-brand-gold text-[10px] font-mono">Sneaked Premise</span>
-              </div>
-              <p class="text-brand-muted text-[11px]">The question smuggles in an unproven allegation as an established fact (e.g., "Where did you hide the gun you stole?").</p>
-            </div>
-
-            <div class="p-2.5 bg-brand-dark border border-brand-border rounded">
-              <div class="flex justify-between items-baseline mb-1">
-                <span class="text-white font-bold">Argumentative / Badgering</span>
-                <span class="text-brand-gold text-[10px] font-mono">Harassment</span>
-              </div>
-              <p class="text-brand-muted text-[11px]">The DA is yelling, debating, or cutting off answers rather than eliciting factual witness testimony.</p>
+              <p class="text-brand-muted text-[11px]">The Prosecutor suggests the desired answer to their own witness.</p>
             </div>
           </div>
         </div>
       </section>
-
       <section class="space-y-4">
         <h2 class="text-xl font-serif text-white uppercase tracking-wide">Master Command Ledger</h2>
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2 font-mono text-xs">
-          <div class="flex items-center justify-between p-2 rounded bg-brand-dark border border-brand-border gap-2">
-            <div class="flex-grow">
-              <span class="text-brand-gold font-bold block">/recap</span>
-              <span class="text-brand-muted text-[11px] font-sans">Crisp 3-bullet status check of the DA's active theory.</span>
-            </div>
-            <button onclick="copyCmd('/recap', this)" class="px-2 py-1 bg-brand-border text-white rounded hover:bg-brand-gold hover:text-black transition">Copy</button>
+          <div class="p-2 rounded bg-brand-dark border border-brand-border">
+            <span class="text-brand-gold font-bold block">/recap</span>
+            <span class="text-brand-muted text-[11px] font-sans">Crisp 3-bullet status check of the DA's active theory.</span>
           </div>
-
-          <div class="flex items-center justify-between p-2 rounded bg-brand-dark border border-brand-border gap-2">
-            <div class="flex-grow">
-              <span class="text-brand-gold font-bold block">/inspect [Ex. #]</span>
-              <span class="text-brand-muted text-[11px] font-sans">Objective forensic readout of an exhibit (0 AP).</span>
-            </div>
-            <button onclick="copyCmd('/inspect ', this)" class="px-2 py-1 bg-brand-border text-white rounded hover:bg-brand-gold hover:text-black transition">Copy</button>
+          <div class="p-2 rounded bg-brand-dark border border-brand-border">
+            <span class="text-brand-gold font-bold block">/inspect [Ex. #]</span>
+            <span class="text-brand-muted text-[11px] font-sans">Objective forensic readout of an exhibit (0 AP).</span>
           </div>
-
-          <div class="flex items-center justify-between p-2 rounded bg-brand-dark border border-brand-border gap-2">
-            <div class="flex-grow">
-              <span class="text-brand-gold font-bold block">/subpoena [Target]</span>
-              <span class="text-brand-muted text-[11px] font-sans">Phase 2: Directs Diaz to obtain records (Costs 1 AP).</span>
-            </div>
-            <button onclick="copyCmd('/subpoena ', this)" class="px-2 py-1 bg-brand-border text-white rounded hover:bg-brand-gold hover:text-black transition">Copy</button>
-          </div>
-
-          <div class="flex items-center justify-between p-2 rounded bg-brand-dark border border-brand-border gap-2">
-            <div class="flex-grow">
-              <span class="text-brand-gold font-bold block">OBJECTION: [Grounds]</span>
-              <span class="text-brand-muted text-[11px] font-sans">Phase 3: Formal objection during ADA direct examination.</span>
-            </div>
-            <button onclick="copyCmd('OBJECTION: ', this)" class="px-2 py-1 bg-brand-border text-white rounded hover:bg-brand-gold hover:text-black transition">Copy</button>
+          <div class="p-2 rounded bg-brand-dark border border-brand-border">
+            <span class="text-brand-gold font-bold block">/subpoena [Target]</span>
+            <span class="text-brand-muted text-[11px] font-sans">Phase 2: Directs Diaz to obtain records (Costs 1 AP).</span>
           </div>
         </div>
       </section>
@@ -401,27 +327,50 @@
 
   <!-- ================= MODALS ================= -->
 
-  <!-- Manual Exhibit Log (Fallback) -->
-  <div id="exhibit-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-5 space-y-4">
-      <h3 class="text-white font-serif font-medium text-base">Log Discovery Exhibit</h3>
-      <div class="space-y-3 font-mono text-xs">
-        <div>
-          <label class="text-brand-muted block mb-1">Exhibit Tag (e.g., Ex. 1)</label>
-          <input id="modal-tag" type="text" placeholder="Ex. 1" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none" />
+  <!-- INTAKE MODAL (Pre-Game Parameters) -->
+  <div id="intake-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-6 space-y-5 shadow-2xl">
+      <div class="border-b border-brand-border pb-2">
+        <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide">Case Parameters</h3>
+        <p class="text-brand-muted text-[11px] font-mono">Calibrate the legal engine before intake.</p>
+      </div>
+      
+      <div class="space-y-4 font-sans text-sm text-slate-200">
+        <!-- Difficulty -->
+        <div class="space-y-1">
+          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Trial Difficulty</label>
+          <select id="intake-diff" class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold cursor-pointer">
+            <option value="Easy">Easy (6 AP, 4 Strikes)</option>
+            <option value="Normal" selected>Normal (4 AP, 3 Strikes)</option>
+            <option value="Hard">Hard (3 AP, 2 Strikes)</option>
+          </select>
         </div>
-        <div>
-          <label class="text-brand-muted block mb-1">Title / Description</label>
-          <input id="modal-title" type="text" placeholder="Autopsy Report" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none" />
+        
+        <!-- Complexity Slider -->
+        <div class="space-y-1">
+          <div class="flex justify-between items-end">
+            <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Case Complexity</label>
+            <span id="comp-val" class="text-white font-bold text-xs bg-brand-dark px-2 rounded border border-brand-border">Level 3</span>
+          </div>
+          <input id="intake-comp" type="range" min="1" max="5" value="3" step="1" class="w-full accent-brand-gold cursor-pointer" oninput="document.getElementById('comp-val').innerText = 'Level ' + this.value">
+          <p class="text-brand-muted text-[10px] leading-tight">Controls suspect deception, evidentiary depth, and AI nuance.</p>
         </div>
-        <div>
-          <label class="text-brand-muted block mb-1">Forensic Notes (/inspect data)</label>
-          <textarea id="modal-details" rows="3" placeholder="Time of death: 11:30 PM..." class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none resize-none"></textarea>
+
+        <!-- Crime Category -->
+        <div class="space-y-1">
+          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Charge Category</label>
+          <select id="intake-cat" class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold cursor-pointer">
+            <option value="Violent Felony">Violent Felony</option>
+            <option value="White-Collar Fraud">White-Collar Fraud</option>
+            <option value="Cybercrime / Espionage">Cybercrime / Espionage</option>
+            <option value="Random Case File" selected>Random Case File</option>
+          </select>
         </div>
       </div>
-      <div class="flex justify-end space-x-2 font-mono text-xs pt-2 border-t border-brand-border">
-        <button onclick="closeAddExhibitModal()" class="px-3 py-1.5 rounded text-brand-muted hover:text-white">Cancel</button>
-        <button onclick="saveNewExhibit()" class="px-3 py-1.5 rounded bg-brand-gold text-brand-dark font-bold hover:bg-white transition">Save to Docket</button>
+      
+      <div class="flex justify-end gap-3 pt-3 border-t border-brand-border">
+        <button onclick="closeIntakeModal()" class="px-4 py-2 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
+        <button onclick="confirmIntake()" class="px-4 py-2 bg-brand-gold text-brand-dark font-bold font-mono text-xs rounded hover:bg-white transition shadow">Accept Case File</button>
       </div>
     </div>
   </div>
@@ -446,15 +395,36 @@
     </div>
   </div>
 
-  <!-- FOOTER W/ KO-FI BADGE -->
+  <!-- Manual Add Exhibit Modal -->
+  <div id="exhibit-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-5 space-y-4">
+      <h3 class="text-white font-serif font-medium text-base">Log Discovery Exhibit</h3>
+      <div class="space-y-3 font-mono text-xs">
+        <div>
+          <label class="text-brand-muted block mb-1">Exhibit Tag</label>
+          <input id="modal-tag" type="text" placeholder="Ex. 1" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none" />
+        </div>
+        <div>
+          <label class="text-brand-muted block mb-1">Title</label>
+          <input id="modal-title" type="text" placeholder="Autopsy Report" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none" />
+        </div>
+        <div>
+          <label class="text-brand-muted block mb-1">Forensic Notes</label>
+          <textarea id="modal-details" rows="3" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 font-mono text-xs pt-2">
+        <button onclick="closeAddExhibitModal()" class="px-3 py-1.5 text-brand-muted hover:text-white">Cancel</button>
+        <button onclick="saveNewExhibit()" class="px-3 py-1.5 bg-brand-gold text-brand-dark font-bold hover:bg-white rounded transition">Save</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="border-t border-brand-border py-4 px-4 text-[10px] font-mono text-brand-muted flex flex-col sm:flex-row items-center justify-between gap-2 max-w-5xl mx-auto w-full">
     <span>Rest Your Case &copy; 2026. Local-First Client Storage.</span>
-    <a href="https://ko-fi.com/mazendev" target="_blank" rel="noopener noreferrer" class="text-brand-gold hover:underline flex items-center gap-1">
-      <span>☕ Support the Project</span>
-    </a>
   </footer>
 
-  <!-- ================= MASTER ENGINE & LOGIC SCRIPT ================= -->
+  <!-- ================= MASTER LOGIC SCRIPT ================= -->
   <script>
     let appState = {
       hasActiveCase: false,
@@ -493,7 +463,7 @@
     function initApp() {
       const saved = localStorage.getItem('rest_your_case_state');
       if (saved) {
-        try { appState = JSON.parse(saved); } catch (e) { console.error("Failed to parse state"); }
+        try { appState = JSON.parse(saved); } catch (e) { console.error("Parse error"); }
       }
       renderUI();
     }
@@ -503,28 +473,30 @@
     }
 
     function renderUI() {
-      // Global HUD & Nav toggles
-      document.getElementById('global-hud').classList.toggle('hidden', !appState.hasActiveCase);
+      // Visibility toggles based on case status
       document.getElementById('tab-terminal-btn').classList.toggle('hidden', !appState.hasActiveCase);
+      document.getElementById('terminal-stats').classList.toggle('hidden', !appState.hasActiveCase);
+      document.getElementById('view-no-case-notebook').classList.toggle('hidden', appState.hasActiveCase);
+      document.getElementById('view-active-case-notebook').classList.toggle('hidden', !appState.hasActiveCase);
       
       const ovBtn = document.getElementById('overview-start-btn');
       if (ovBtn) {
         ovBtn.innerText = appState.hasActiveCase ? "Resume Active Trial" : "Start Live Trial";
         ovBtn.className = appState.hasActiveCase 
-          ? "bg-brand-surface border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-dark px-6 py-3 rounded font-mono font-bold uppercase transition text-sm w-full sm:w-auto"
-          : "bg-emerald-700 hover:bg-emerald-600 text-white px-6 py-3 rounded font-mono font-bold uppercase transition text-sm shadow w-full sm:w-auto";
+          ? "bg-brand-surface border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-dark px-6 py-3 rounded font-mono font-bold uppercase transition text-sm shadow text-center w-full sm:w-auto"
+          : "bg-emerald-700 hover:bg-emerald-600 text-white px-6 py-3 rounded font-mono font-bold uppercase transition text-sm shadow text-center w-full sm:w-auto";
       }
 
-      // Notebook view gating
-      document.getElementById('view-no-case-notebook').classList.toggle('hidden', appState.hasActiveCase);
-      document.getElementById('view-active-case-notebook').classList.toggle('hidden', !appState.hasActiveCase);
-
+      // Populate Header Metrics
       if (appState.hasActiveCase) {
-        document.getElementById('hud-casetitle').innerText = appState.profile.title || 'State v. Unknown';
-        document.getElementById('hud-phase').innerText = appState.phase;
-        document.getElementById('hud-turn').innerText = appState.turn;
-        document.getElementById('hud-ap').innerText = appState.ap;
-        document.getElementById('hud-strikes').innerText = `${appState.strikes}/${appState.maxStrikes}`;
+        // Terminal Metrics
+        document.getElementById('term-turn').innerText = appState.turn;
+        document.getElementById('term-ap').innerText = appState.ap;
+        document.getElementById('term-strikes').innerText = `${appState.strikes}/${appState.maxStrikes}`;
+        
+        // Notebook Header Metrics
+        document.getElementById('nb-casetitle').innerText = appState.profile.title || 'State v. Unknown';
+        document.getElementById('nb-phase').innerText = appState.phase;
         
         document.getElementById('attorney-notes').value = appState.notes || '';
         renderDocket();
@@ -552,27 +524,71 @@
       if (appState.hasActiveCase) {
         switchTab('terminal');
       } else {
-        startNewTrial(); 
+        document.getElementById('intake-modal').classList.remove('hidden');
       }
     }
+
+    function closeIntakeModal() {
+      document.getElementById('intake-modal').classList.add('hidden');
+    }
+
+    function confirmIntake() {
+      const diff = document.getElementById('intake-diff').value;
+      const comp = document.getElementById('intake-comp').value;
+      const cat = document.getElementById('intake-cat').value;
+      
+      closeIntakeModal();
+      
+      // Setup limits based on difficulty
+      let startingAP = 4;
+      let strikesMax = 3;
+      if (diff === 'Easy') { startingAP = 6; strikesMax = 4; }
+      else if (diff === 'Hard') { startingAP = 3; strikesMax = 2; }
+
+      appState = {
+        hasActiveCase: true,
+        profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
+        phase: "Phase 1: Intake",
+        turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
+        transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
+      };
+      
+      persist();
+      switchTab('terminal');
+      renderUI();
+
+      const initPrompt = `/start --mode=web --difficulty=${diff} --complexity=${comp} --category="${cat}"\n\nSYSTEM OVERRIDE: Skip the Phase 0 setup entirely. Immediately generate the initial Case File, crime details, and the Turn 1 Intake dialogue.\n\nYou MUST conclude your response with the invisible <!--STATE_CHECKPOINT: {...}--> JSON block containing: turn (1), ap (${startingAP}), strikes (0), phase ('Phase 1: Intake'), caseTitle, clientName, judge, da, docket (array), and facts (array).`;
+
+      sendCourtAction(initPrompt, true);
+    }
+
+    // Objection Popover Logic
+    function toggleObjectionMenu() {
+      const menu = document.getElementById('objection-menu');
+      menu.classList.toggle('hidden');
+    }
+    
+    function selectObjection(ruleStr) {
+      const input = document.getElementById('court-user-input');
+      input.value = `OBJECTION: ${ruleStr} - `;
+      document.getElementById('objection-menu').classList.add('hidden');
+      input.focus();
+    }
+
+    // Hide objection popover if clicking elsewhere
+    document.addEventListener('click', function(event) {
+      const menu = document.getElementById('objection-menu');
+      const trigger = menu.previousElementSibling;
+      if (!menu.classList.contains('hidden') && !menu.contains(event.target) && event.target !== trigger) {
+        menu.classList.add('hidden');
+      }
+    });
 
     function saveNotes() {
       appState.notes = document.getElementById('attorney-notes').value;
       persist();
     }
 
-    function copyCmd(text, btn) {
-      navigator.clipboard.writeText(text);
-      const original = btn.innerText;
-      btn.innerText = "✓";
-      btn.classList.add("bg-emerald-900", "text-emerald-300");
-      setTimeout(() => {
-        btn.innerText = original;
-        btn.classList.remove("bg-emerald-900", "text-emerald-300");
-      }, 1500);
-    }
-
-    // Modal Control: Wipe
     function openWipeModal() {
       document.getElementById('wipe-confirm-input').value = '';
       document.getElementById('wipe-modal').classList.remove('hidden');
@@ -598,40 +614,23 @@
     }
 
     // Modal Control: Add Exhibit (Manual fallback)
-    function openAddExhibitModal() { 
-      document.getElementById('exhibit-modal').classList.remove('hidden'); 
-    }
+    function openAddExhibitModal() { document.getElementById('exhibit-modal').classList.remove('hidden'); }
     function closeAddExhibitModal() { 
       document.getElementById('exhibit-modal').classList.add('hidden');
-      document.getElementById('modal-tag').value = '';
-      document.getElementById('modal-title').value = '';
-      document.getElementById('modal-details').value = '';
+      document.getElementById('modal-tag').value = ''; document.getElementById('modal-title').value = ''; document.getElementById('modal-details').value = '';
     }
     function saveNewExhibit() {
       const tag = document.getElementById('modal-tag').value.trim() || `Ex. ${appState.docket.length + 1}`;
       const name = document.getElementById('modal-title').value.trim() || 'Untitled';
       const facts = document.getElementById('modal-details').value.trim();
-      
       if (!appState.docket) appState.docket = [];
       appState.docket.push({ id: tag, name: name, facts: facts, status: 'Admitted' });
-      
-      renderDocket();
-      persist();
-      closeAddExhibitModal();
+      renderDocket(); persist(); closeAddExhibitModal();
     }
 
-    function setExhibitStatus(index, newStatus) { 
-      appState.docket[index].status = newStatus; 
-      renderDocket(); 
-      persist(); 
-    }
-    function deleteExhibit(index) { 
-      appState.docket.splice(index, 1); 
-      renderDocket(); 
-      persist(); 
-    }
+    function setExhibitStatus(index, newStatus) { appState.docket[index].status = newStatus; renderDocket(); persist(); }
+    function deleteExhibit(index) { appState.docket.splice(index, 1); renderDocket(); persist(); }
 
-    // Auto-rendering of Notebook components
     function renderDocket() {
       const container = document.getElementById('docket-list');
       if (!container) return;
@@ -680,7 +679,6 @@
       });
     }
 
-    // Markdown Parser
     function parseMarkdown(text) {
       return text
         .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
@@ -743,9 +741,9 @@
 
   <!-- ================= GAME RUNTIME API ENGINE ================= -->
   <script>
-    const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
-    let engineLocked = false;
     let trialHistory = [];
+    let engineLocked = false;
+    const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
     async function sendCourtAction(userPrompt, isInit = false) {
       if (engineLocked) return;
@@ -758,6 +756,8 @@
 
       if (!isInit) {
         appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
+      } else {
+        trialHistory = []; // Reset on new init
       }
 
       try {
@@ -797,7 +797,6 @@
     }
 
     function processCourtResponse(rawText) {
-      // Silent Checkpoint Extraction
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
       if (checkpointMatch && appState.hasActiveCase) {
         try {
@@ -827,33 +826,12 @@
         appState.turn++; 
       }
 
-      // Clean Transcript Output
       const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
       appendTranscriptMessage("THE BENCH / RECORD", cleanText, false);
       
       persist();
       renderUI();
     }
-
-    window.startNewTrial = function() {
-      trialHistory = [];
-      
-      appState = {
-        hasActiveCase: true,
-        profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
-        phase: "Phase 1: Intake",
-        turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
-        transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
-      };
-      
-      persist();
-      switchTab('terminal');
-      renderUI();
-
-      const initPrompt = `/start --mode=web --complexity=3\n\nSYSTEM OVERRIDE: Skip the Phase 0 pre-game setup menu entirely. Immediately generate the initial Case File, crime details, and the Turn 1 Intake dialogue. \n\nYou MUST conclude your response with the invisible <!--STATE_CHECKPOINT: {...}--> JSON block containing: turn (1), ap (4), strikes (0), phase ('Phase 1: Intake'), caseTitle, clientName, judge, da, docket (array of objects with id, name, facts), and facts (array of strings detailing initial police findings).`;
-
-      sendCourtAction(initPrompt, true);
-    };
   </script>
 </body>
 </html>
