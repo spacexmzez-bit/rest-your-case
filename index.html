@@ -765,15 +765,16 @@
       renderTerminalSidePanel(); 
     }
 
+        // 1. Fixed Regex to allow optional [ brackets ]
     function parseTranscriptFormat(text) {
       let parsed = text.replace(/^###\s+/gm, ''); 
-      parsed = parsed.replace(/^(?:\*\*)?([A-Za-z\s\-\.\']+(?:Counsel|Judge|Witness|DA|Defendant|Prosecut[a-z]+|Defen[a-z]+|Sterling|Vance|Diaz|Bench|Court)?)(?:\*\*)?\s*:\s*/gim, (match, name) => {
+      parsed = parsed.replace(/^(?:\*\*)?\[?([A-Za-z\s\-\.\']+(?:Counsel|Judge|Witness|DA|Defendant|Prosecut[a-z]+|Defen[a-z]+|Sterling|Vance|Diaz|Bench|Court)?)\]?(?:\*\*)?\s*:\s*/gim, (match, name) => {
          let color = 'text-brand-gold'; 
          let lower = name.toLowerCase();
          if(lower.includes('judge') || lower.includes('bench') || lower.includes('court') || lower.includes('sterling')) color = 'text-slate-300';
          else if(lower.includes('prosecut') || lower.includes('da ') || lower.includes('vance')) color = 'text-rose-400';
          else if(lower.includes('witness') || lower.includes('diaz') || lower.includes('guard')) color = 'text-emerald-400';
-         name = name.replace(/\*/g, '').trim();
+         name = name.replace(/\*/g, '').replace(/\[|\]/g, '').trim(); // Strip brackets for the UI render
          return `<br><span class="block mt-4 mb-1 text-sm font-bold tracking-wide uppercase ${color}">${name}</span>`;
       });
       parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
@@ -782,6 +783,13 @@
                      .replace(/\n/g, '<br/>');
       return parsed.replace(/^(<br>)+/, ''); 
     }
+
+    // 2. Add isRetry parameter to prevent echo
+    window.retryAction = function(encodedPrompt, isPartner) {
+      const prompt = decodeURIComponent(encodedPrompt);
+      isPartner ? sendPartnerAction(prompt, true) : sendCourtAction(prompt, false, true);
+    }
+
 
     function appendErrorAlert(rawError, lastPrompt, isPartner = false) {
       const feedId = isPartner ? 'partner-feed' : 'transcript-feed';
