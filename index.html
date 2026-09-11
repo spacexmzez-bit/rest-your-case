@@ -126,7 +126,7 @@
     <!-- Main Workspace Container -->
     <div class="grid grid-cols-1 lg:grid-cols-12 border-x border-b border-brand-border bg-brand-surface rounded-b flex-grow overflow-hidden shadow-xl">
       
-      <!-- Cold Data Panel: Side column on desktop -->
+      <!-- Cold Data Panel -->
       <aside class="hidden lg:flex lg:col-span-4 border-r border-brand-border bg-[#0e1115] flex-col h-full overflow-y-auto p-3 space-y-4 font-mono text-xs">
         <div class="text-[10px] font-bold text-brand-gold uppercase tracking-widest border-b border-brand-border pb-1">Case Briefing</div>
         <div class="p-2 rounded bg-brand-surface/50 border border-brand-border space-y-1">
@@ -145,7 +145,7 @@
         </div>
       </aside>
 
-      <!-- Dialogue Section: Pure conversation feed with pinned footer -->
+      <!-- Dialogue Section -->
       <section class="lg:col-span-8 flex flex-col h-full bg-[#0d0f12] overflow-hidden">
         <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]"></div>
 
@@ -229,7 +229,6 @@
       <p class="text-brand-muted text-sm mt-2">Complete operational directives for the Rest Your Case tactical engine.</p>
     </div>
 
-    <!-- Module 1 & 2 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
         <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">1. The Game Cycle</h2>
@@ -254,7 +253,6 @@
       </section>
     </div>
 
-    <!-- Module 3 & 4 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
         <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">3. Resource Economics</h2>
@@ -283,7 +281,6 @@
       </section>
     </div>
 
-    <!-- Module 5 & 6 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
         <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">5. Senior Partner Drawer</h2>
@@ -314,7 +311,6 @@
       <p class="text-brand-muted text-sm mt-2">Compendium of Criminal Defense tactics and Federal Rules of Evidence.</p>
     </div>
 
-    <!-- Section 1 -->
     <section class="space-y-4">
       <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">1. Criminal Defense Standards</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -333,13 +329,11 @@
       </div>
     </section>
 
-    <!-- Section 2 -->
     <section class="space-y-4">
       <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">2. Complete Objection Matrix</h2>
       <p class="text-xs text-brand-muted font-mono mb-4">Use the `!` button in the Terminal to rapidly deploy these during cross-examination.</p>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Hearsay -->
         <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
           <div class="flex justify-between items-start">
             <h3 class="text-white font-bold font-mono text-sm">FRE 802: Hearsay</h3>
@@ -349,7 +343,6 @@
           <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Exceptions: Present Sense Impression, Excited Utterance, Admissions.</p>
         </div>
 
-        <!-- Leading -->
         <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
           <div class="flex justify-between items-start">
             <h3 class="text-white font-bold font-mono text-sm">FRE 611(c): Leading (Direct)</h3>
@@ -359,7 +352,6 @@
           <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Force the DA to ask open "Who, what, where" questions.</p>
         </div>
 
-        <!-- Speculation -->
         <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
           <div class="flex justify-between items-start">
             <h3 class="text-white font-bold font-mono text-sm">FRE 602: Speculation / Foundation</h3>
@@ -369,7 +361,6 @@
           <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Demand the DA lay a foundation showing personal knowledge.</p>
         </div>
 
-        <!-- Character -->
         <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
           <div class="flex justify-between items-start">
             <h3 class="text-white font-bold font-mono text-sm">FRE 404(b): Improper Character</h3>
@@ -379,7 +370,6 @@
           <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Defense: Past crimes do not prove current guilt.</p>
         </div>
 
-        <!-- Prejudice -->
         <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
           <div class="flex justify-between items-start">
             <h3 class="text-white font-bold font-mono text-sm">FRE 403: Unfair Prejudice</h3>
@@ -388,7 +378,6 @@
           <p class="text-xs text-slate-400 font-sans italic">Introducing highly gruesome, unnecessary photos of a victim.</p>
         </div>
 
-        <!-- Assumes Facts -->
         <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
           <div class="flex justify-between items-start">
             <h3 class="text-white font-bold font-mono text-sm">Assumes Facts Not in Evidence</h3>
@@ -399,7 +388,6 @@
       </div>
     </section>
 
-    <!-- Section 3 -->
     <section class="bg-brand-surface border border-emerald-900/50 rounded p-6 space-y-3">
       <h2 class="text-emerald-400 font-mono text-sm uppercase tracking-wider border-b border-emerald-900/50 pb-2">3. Cross-Examination Tactics</h2>
       <ul class="text-sm text-slate-300 space-y-3 font-sans list-disc pl-5">
@@ -435,6 +423,10 @@
       <button id="tab-howtoplay-btn" onclick="navToTab('howtoplay')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">How to Play</button>
       <button id="tab-legal-btn" onclick="navToTab('legal')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Legal Library</button>
       <button id="tab-setup-btn" onclick="navToTab('setup')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Setup Guide</button>
+      <a href="https://ko-fi.com/Mazendev" target="_blank" rel="noopener noreferrer" class="w-full text-left px-3 py-2.5 rounded bg-brand-surface border border-brand-gold/40 text-brand-gold hover:text-white hover:border-brand-gold transition flex items-center justify-between font-mono text-xs">
+        <span>☕ Support / Tip</span>
+        <span class="text-[10px] text-brand-muted">Ko-fi</span>
+      </a>
     </nav>
   
     <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
@@ -539,13 +531,18 @@
     Rest Your Case &copy; 2026. Local-First Client Storage.
   </footer>
 
-  <!-- ================= MASTER LOGIC SCRIPT ================= -->
+  <!-- ================= UNIFIED JAVASCRIPT ENGINE ================= -->
   <script>
     let appState = {
       hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
       transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
     };
+
+    let trialHistory = [];
+    let partnerHistory = [];
+    let engineLocked = false;
+    const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
     function toggleNavDrawer() {
       document.getElementById('nav-drawer').classList.toggle('-translate-x-full');
@@ -585,10 +582,19 @@
     function initApp() {
       const saved = localStorage.getItem('rest_your_case_state');
       if (saved) { try { appState = JSON.parse(saved); } catch (e) {} }
+      
+      const savedHistory = localStorage.getItem('rest_your_case_history');
+      if (savedHistory) { try { trialHistory = JSON.parse(savedHistory); } catch (e) {} }
+
+      const savedPartnerHistory = localStorage.getItem('rest_your_case_partner_history');
+      if (savedPartnerHistory) { try { partnerHistory = JSON.parse(savedPartnerHistory); } catch (e) {} }
+
       renderUI();
     }
     
-    function persist() { localStorage.setItem('rest_your_case_state', JSON.stringify(appState)); }
+    function persist() { 
+      localStorage.setItem('rest_your_case_state', JSON.stringify(appState)); 
+    }
 
     function renderUI() {
       const currentTab = ['dossier', 'terminal', 'notebook', 'howtoplay', 'legal', 'setup'].find(t => !document.getElementById(`tab-${t}`).classList.contains('hidden')) || 'dossier';
@@ -695,6 +701,11 @@
         phase: "Phase 1: Intake", turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
         transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
       };
+      trialHistory = [];
+      partnerHistory = [];
+      localStorage.removeItem('rest_your_case_history');
+      localStorage.removeItem('rest_your_case_partner_history');
+
       persist(); switchTab('terminal'); renderUI();
 
       const initPrompt = `/start --mode=web --difficulty=${diff} --complexity=${comp} --category="${cat}"\n\nSYSTEM OVERRIDE: Skip Phase 0 setup. Immediately generate the initial Case File, crime details, and Turn 1 Intake dialogue.\n\nMANDATORY: Conclude response with <!--STATE_CHECKPOINT: {...}--> JSON block containing: turn(1), ap(${startingAP}), strikes(0), phase, caseTitle, clientName, judge, da, docket(array), and facts(array).`;
@@ -720,6 +731,10 @@
     function executeWipe() {
       if (document.getElementById('wipe-confirm-input').value === 'CONFIRM') {
         appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '' };
+        trialHistory = [];
+        partnerHistory = [];
+        localStorage.removeItem('rest_your_case_history');
+        localStorage.removeItem('rest_your_case_partner_history');
         persist(); closeWipeModal(); switchTab('dossier'); renderUI();
       } else { alert("Type exactly 'CONFIRM'"); }
     }
@@ -765,16 +780,15 @@
       renderTerminalSidePanel(); 
     }
 
-        // 1. Fixed Regex to allow optional [ brackets ]
     function parseTranscriptFormat(text) {
       let parsed = text.replace(/^###\s+/gm, ''); 
-      parsed = parsed.replace(/^(?:\*\*)?\[?([A-Za-z\s\-\.\']+(?:Counsel|Judge|Witness|DA|Defendant|Prosecut[a-z]+|Defen[a-z]+|Sterling|Vance|Diaz|Bench|Court)?)\]?(?:\*\*)?\s*:\s*/gim, (match, name) => {
+      parsed = parsed.replace(/^(?:\*\*)?\[?([A-Za-z\s\-\.\']+(?:Client|Counsel|Judge|Witness|DA|Defendant|Prosecut[a-z]+|Defen[a-z]+|Sterling|Vance|Diaz|Bench|Court)?)\]?(?:\*\*)?\s*:\s*/gim, (match, name) => {
          let color = 'text-brand-gold'; 
          let lower = name.toLowerCase();
          if(lower.includes('judge') || lower.includes('bench') || lower.includes('court') || lower.includes('sterling')) color = 'text-slate-300';
          else if(lower.includes('prosecut') || lower.includes('da ') || lower.includes('vance')) color = 'text-rose-400';
          else if(lower.includes('witness') || lower.includes('diaz') || lower.includes('guard')) color = 'text-emerald-400';
-         name = name.replace(/\*/g, '').replace(/\[|\]/g, '').trim(); // Strip brackets for the UI render
+         name = name.replace(/\*/g, '').replace(/\[|\]/g, '').trim();
          return `<br><span class="block mt-4 mb-1 text-sm font-bold tracking-wide uppercase ${color}">${name}</span>`;
       });
       parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
@@ -783,13 +797,6 @@
                      .replace(/\n/g, '<br/>');
       return parsed.replace(/^(<br>)+/, ''); 
     }
-
-    // 2. Add isRetry parameter to prevent echo
-    window.retryAction = function(encodedPrompt, isPartner) {
-      const prompt = decodeURIComponent(encodedPrompt);
-      isPartner ? sendPartnerAction(prompt, true) : sendCourtAction(prompt, false, true);
-    }
-
 
     function appendErrorAlert(rawError, lastPrompt, isPartner = false) {
       const feedId = isPartner ? 'partner-feed' : 'transcript-feed';
@@ -818,7 +825,7 @@
 
     window.retryAction = function(encodedPrompt, isPartner) {
       const prompt = decodeURIComponent(encodedPrompt);
-      isPartner ? sendPartnerAction(prompt) : sendCourtAction(prompt, false);
+      isPartner ? sendPartnerAction(prompt, true) : sendCourtAction(prompt, false, true);
     }
 
     function appendTranscriptMessage(sender, text, isUser = false) {
@@ -861,23 +868,12 @@
     function quickAction(cmd) { const input = document.getElementById('court-user-input'); input.value = cmd; input.focus(); }
 
     window.onload = initApp;
-  </script>
-
-  <!-- ================= GAME RUNTIME API ENGINE ================= -->
-  <script>
-    let trialHistory = [];
-    let engineLocked = false;
-    const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
     async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      
       try {
-        const response = await fetch(url, {
-          ...options,
-          signal: controller.signal
-        });
+        const response = await fetch(url, { ...options, signal: controller.signal });
         clearTimeout(timeoutId);
         return response;
       } catch (err) {
@@ -889,7 +885,7 @@
       }
     }
 
-    async function sendCourtAction(userPrompt, isInit = false) {
+    async function sendCourtAction(userPrompt, isInit = false, isRetry = false) {
       if (engineLocked) return;
       engineLocked = true;
 
@@ -897,8 +893,16 @@
       const submitBtn = document.getElementById('court-submit-btn');
       if (submitBtn) submitBtn.disabled = true;
 
-      if (!isInit) appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
-      else trialHistory = [];
+      if (!isInit && !isRetry) {
+        appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
+      } else if (isInit) {
+        trialHistory = [];
+        localStorage.removeItem('rest_your_case_history');
+      }
+
+      if (userPrompt.trim().toLowerCase().startsWith('/undo') && trialHistory.length >= 2) {
+        trialHistory.splice(-2, 2);
+      }
 
       const MAX_RETRIES = 2;
       let attempt = 0;
@@ -921,6 +925,7 @@
             const data = await response.json();
             trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
             trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
+            localStorage.setItem('rest_your_case_history', JSON.stringify(trialHistory));
             processCourtResponse(data.reply);
             success = true;
 
@@ -940,46 +945,52 @@
       }
     }
 
-    async function sendPartnerAction(userPrompt) {
+    async function sendPartnerAction(userPrompt, isRetry = false) {
       if (engineLocked) return;
       engineLocked = true;
 
       const submitBtn = document.getElementById('partner-submit-btn');
       if (submitBtn) submitBtn.disabled = true;
 
-      appendPartnerMessage("YOU", userPrompt, true);
+      if (!isRetry) appendPartnerMessage("YOU", userPrompt, true);
 
       const MAX_RETRIES = 2;
       let attempt = 0;
       let success = false;
-    // Update the function signature to accept isRetry
-    async function sendCourtAction(userPrompt, isInit = false, isRetry = false) {
-      if (engineLocked) return;
-      engineLocked = true;
 
-      const statusBadge = document.getElementById('engine-status');
-      const submitBtn = document.getElementById('court-submit-btn');
-      if (submitBtn) submitBtn.disabled = true;
+      try {
+        while (attempt <= MAX_RETRIES && !success) {
+          attempt++;
+          try {
+            const response = await fetchWithTimeout(WORKER_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, history: partnerHistory, isInit: false })
+            }, 15000);
 
-      // Only print to UI if it's not a retry and not init
-      if (!isInit && !isRetry) {
-        appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
-      } else if (isInit) {
-        trialHistory = [];
-        localStorage.removeItem('rest_your_case_history');
+            if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
+            
+            const data = await response.json();
+            partnerHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
+            partnerHistory.push({ role: "model", parts: [{ text: data.reply }] });
+            localStorage.setItem('rest_your_case_partner_history', JSON.stringify(partnerHistory));
+            appendPartnerMessage("SENIOR PARTNER", data.reply.replace(/<!--[\s\S]*?-->/g, "").trim(), false);
+            success = true;
+
+          } catch (err) {
+            console.warn(`Partner attempt ${attempt} failed: ${err.message}`);
+            if (attempt <= MAX_RETRIES) {
+              await new Promise(res => setTimeout(res, 1000));
+            } else {
+              appendErrorAlert(err.message, userPrompt, true);
+            }
+          }
+        }
+      } finally {
+        engineLocked = false;
+        if (submitBtn) submitBtn.disabled = false;
       }
-
-      // ERASURE LOGIC: If user types /undo, physically slice the last mistake out of AI memory
-      if (userPrompt.trim().toLowerCase().startsWith('/undo') && trialHistory.length >= 2) {
-        trialHistory.splice(-2, 2); // Deletes the bad move and the bad AI response
-      }
-
-      const MAX_RETRIES = 2;
-      let attempt = 0;
-      let success = false;
-      
-      // ... (Keep the rest of your fetch/try-catch block exactly the same)
-
+    }
 
     function processCourtResponse(rawText) {
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
