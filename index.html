@@ -952,39 +952,34 @@
       const MAX_RETRIES = 2;
       let attempt = 0;
       let success = false;
+    // Update the function signature to accept isRetry
+    async function sendCourtAction(userPrompt, isInit = false, isRetry = false) {
+      if (engineLocked) return;
+      engineLocked = true;
 
-      try {
-        while (attempt <= MAX_RETRIES && !success) {
-          attempt++;
-          try {
-            const response = await fetchWithTimeout(WORKER_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, history: trialHistory, isInit: false })
-            }, 15000);
+      const statusBadge = document.getElementById('engine-status');
+      const submitBtn = document.getElementById('court-submit-btn');
+      if (submitBtn) submitBtn.disabled = true;
 
-            if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-            
-            const data = await response.json();
-            trialHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
-            trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
-            appendPartnerMessage("SENIOR PARTNER", data.reply.replace(/<!--[\s\S]*?-->/g, "").trim(), false);
-            success = true;
-
-          } catch (err) {
-            console.warn(`Partner attempt ${attempt} failed: ${err.message}`);
-            if (attempt <= MAX_RETRIES) {
-              await new Promise(res => setTimeout(res, 1000));
-            } else {
-              appendErrorAlert(err.message, userPrompt, true);
-            }
-          }
-        }
-      } finally {
-        engineLocked = false;
-        if (submitBtn) submitBtn.disabled = false;
+      // Only print to UI if it's not a retry and not init
+      if (!isInit && !isRetry) {
+        appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
+      } else if (isInit) {
+        trialHistory = [];
+        localStorage.removeItem('rest_your_case_history');
       }
-    }
+
+      // ERASURE LOGIC: If user types /undo, physically slice the last mistake out of AI memory
+      if (userPrompt.trim().toLowerCase().startsWith('/undo') && trialHistory.length >= 2) {
+        trialHistory.splice(-2, 2); // Deletes the bad move and the bad AI response
+      }
+
+      const MAX_RETRIES = 2;
+      let attempt = 0;
+      let success = false;
+      
+      // ... (Keep the rest of your fetch/try-catch block exactly the same)
+
 
     function processCourtResponse(rawText) {
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
