@@ -491,14 +491,6 @@
             <option value="Random Case File" selected>Random Case File</option>
           </select>
         </div>
-        <div class="space-y-1">
-          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">AI Inference Engine</label>
-          <select id="intake-model" class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold cursor-pointer">
-            <option value="gemini-3.8-flash" selected>Flash 3.8 (Fastest, High Throughput)</option>
-            <option value="gemini-3.1-pro-preview">Pro 3.1 (Deep Deduction, Heavy Reasoning)</option>
-            <option value="gemini-3.5-flash">Flash 3.5 (Balanced Fallback)</option>
-          </select>
-        </div>
       </div>
       <div class="flex justify-end gap-3 pt-3 border-t border-brand-border">
         <button onclick="closeIntakeModal()" class="px-4 py-2 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
@@ -545,7 +537,7 @@
       hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
       transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '',
-      selectedModel: 'gemini-3.8-flash'
+      selectedModel: 'gemini-3.6-flash'
     };
 
     let trialHistory = [];
@@ -700,7 +692,7 @@
       const diff = document.getElementById('intake-diff').value;
       const comp = document.getElementById('intake-comp').value;
       const cat = document.getElementById('intake-cat').value;
-      const modelChoice = document.getElementById('intake-model')?.value || 'gemini-3.8-flash';
+      
       closeIntakeModal();
       
       let startingAP = (diff === 'Easy') ? 6 : (diff === 'Hard') ? 3 : 4;
@@ -710,7 +702,7 @@
         hasActiveCase: true, profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
         phase: "Phase 1: Intake", turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
         transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '',
-        selectedModel: modelChoice
+        selectedModel: 'gemini-3.6-flash'
       };
       trialHistory = [];
       partnerHistory = [];
@@ -719,7 +711,8 @@
 
       persist(); switchTab('terminal'); renderUI();
 
-      const initPrompt = `/start --mode=web --difficulty=${diff} --complexity=${comp} --category="${cat}"\n\nSYSTEM OVERRIDE: Skip Phase 0 setup. Immediately generate the initial Case File, crime details, and Turn 1 Intake dialogue.\n\nMANDATORY: Conclude response with <!--STATE_CHECKPOINT: {...}--> JSON block containing: turn(1), ap(${startingAP}), strikes(0), phase, caseTitle, clientName, judge, da, docket(array), and facts(array).`;
+      const initPrompt = `/start --mode=web --difficulty=${diff} --complexity=${comp} --category="${cat}"\n\nFAST-START MANDATE:\n1. Roll Roster (Judge, DA, Client).\n2. Generate Case Title and a 1-sentence crime summary.\n3. Mark exactly TWO starting exhibits in the docket.\n4. Output 2 lines of dialogue from the Client in holding.\n5. Enclose all state in the checkpoint block and keep the total output under 200 words.`;
+      
       sendCourtAction(initPrompt, true);
     }
 
@@ -741,7 +734,7 @@
     function closeWipeModal() { document.getElementById('wipe-modal').classList.add('hidden'); }
     function executeWipe() {
       if (document.getElementById('wipe-confirm-input').value === 'CONFIRM') {
-        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '', selectedModel: 'gemini-3.8-flash' };
+        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '', selectedModel: 'gemini-3.6-flash' };
         trialHistory = [];
         partnerHistory = [];
         localStorage.removeItem('rest_your_case_history');
@@ -938,7 +931,7 @@
                 message: userPrompt, 
                 history: trialHistory, 
                 isInit: isInit,
-                model: appState.selectedModel || 'gemini-3.8-flash'
+                model: appState.selectedModel || 'gemini-3.6-flash'
               })
             }, 45000);
 
@@ -946,11 +939,6 @@
             
             const data = await response.json();
             
-            // Sync engine choice if worker performed automatic failover
-            if (data.fellBack && data.modelUsed) {
-              appState.selectedModel = data.modelUsed;
-            }
-
             trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
             trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
             localStorage.setItem('rest_your_case_history', JSON.stringify(trialHistory));
@@ -997,17 +985,13 @@
                 message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, 
                 history: partnerHistory, 
                 isInit: false,
-                model: appState.selectedModel || 'gemini-3.8-flash'
+                model: appState.selectedModel || 'gemini-3.6-flash'
               })
             }, 45000);
 
             if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
             
             const data = await response.json();
-
-            if (data.fellBack && data.modelUsed) {
-              appState.selectedModel = data.modelUsed;
-            }
 
             partnerHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
             partnerHistory.push({ role: "model", parts: [{ text: data.reply }] });
