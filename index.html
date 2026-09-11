@@ -491,6 +491,13 @@
             <option value="Random Case File" selected>Random Case File</option>
           </select>
         </div>
+        <div class="space-y-1">
+          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">AI Inference Engine</label>
+          <select id="intake-model" class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold cursor-pointer">
+            <option value="gemini-3.8-flash" selected>Flash Engine (Ultra-Fast Turns, ~2s)</option>
+            <option value="gemini-3.1-pro-preview">Pro Engine (Deep Legal Deduction, ~15s)</option>
+          </select>
+        </div>
       </div>
       <div class="flex justify-end gap-3 pt-3 border-t border-brand-border">
         <button onclick="closeIntakeModal()" class="px-4 py-2 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
@@ -536,7 +543,8 @@
     let appState = {
       hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
-      transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
+      transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '',
+      selectedModel: 'gemini-3.8-flash'
     };
 
     let trialHistory = [];
@@ -691,6 +699,7 @@
       const diff = document.getElementById('intake-diff').value;
       const comp = document.getElementById('intake-comp').value;
       const cat = document.getElementById('intake-cat').value;
+      const modelChoice = document.getElementById('intake-model')?.value || 'gemini-3.8-flash';
       closeIntakeModal();
       
       let startingAP = (diff === 'Easy') ? 6 : (diff === 'Hard') ? 3 : 4;
@@ -699,7 +708,8 @@
       appState = {
         hasActiveCase: true, profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
         phase: "Phase 1: Intake", turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
-        transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: ''
+        transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '',
+        selectedModel: modelChoice
       };
       trialHistory = [];
       partnerHistory = [];
@@ -730,7 +740,7 @@
     function closeWipeModal() { document.getElementById('wipe-modal').classList.add('hidden'); }
     function executeWipe() {
       if (document.getElementById('wipe-confirm-input').value === 'CONFIRM') {
-        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '' };
+        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '', selectedModel: 'gemini-3.8-flash' };
         trialHistory = [];
         partnerHistory = [];
         localStorage.removeItem('rest_your_case_history');
@@ -869,7 +879,7 @@
 
     window.onload = initApp;
 
-    async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -917,8 +927,13 @@
             const response = await fetchWithTimeout(WORKER_URL, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message: userPrompt, history: trialHistory, isInit: isInit })
-            }, 15000);
+              body: JSON.stringify({ 
+                message: userPrompt, 
+                history: trialHistory, 
+                isInit: isInit,
+                model: appState.selectedModel || 'gemini-3.8-flash'
+              })
+            }, 45000);
 
             if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
             
@@ -965,8 +980,13 @@
             const response = await fetchWithTimeout(WORKER_URL, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, history: partnerHistory, isInit: false })
-            }, 15000);
+              body: JSON.stringify({ 
+                message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, 
+                history: partnerHistory, 
+                isInit: false,
+                model: appState.selectedModel || 'gemini-3.8-flash'
+              })
+            }, 45000);
 
             if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
             
