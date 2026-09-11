@@ -494,8 +494,9 @@
         <div class="space-y-1">
           <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">AI Inference Engine</label>
           <select id="intake-model" class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold cursor-pointer">
-            <option value="gemini-3.8-flash" selected>Flash Engine (Ultra-Fast Turns, ~2s)</option>
-            <option value="gemini-3.1-pro-preview">Pro Engine (Deep Legal Deduction, ~15s)</option>
+            <option value="gemini-3.8-flash" selected>Flash 3.8 (Fastest, High Throughput)</option>
+            <option value="gemini-3.1-pro-preview">Pro 3.1 (Deep Deduction, Heavy Reasoning)</option>
+            <option value="gemini-3.5-flash">Flash 3.5 (Balanced Fallback)</option>
           </select>
         </div>
       </div>
@@ -812,9 +813,15 @@
       const feedId = isPartner ? 'partner-feed' : 'transcript-feed';
       const feed = document.getElementById(feedId);
       let humanError = "The server link dropped unexpectedly. Check worker availability or resubmit.";
-      if (rawError.includes("MAX_TOKENS") || rawError.includes("token limit")) humanError = "The maximum token limit per request was reached. Rephrase your inquiry or run /recap to condense the record context.";
-      else if (rawError.includes("429") || rawError.includes("rate limit")) humanError = "API request threshold exceeded. Wait 20–30 seconds before filing your next action.";
-      else if (rawError.includes("timed out")) humanError = "The AI model is taking too long to respond. The request has been aborted to prevent freezing.";
+      if (rawError.includes("503") || rawError.includes("high demand") || rawError.includes("UNAVAILABLE")) {
+        humanError = "All Gemini endpoints are experiencing peak traffic. Please wait a few seconds and hit Retry.";
+      } else if (rawError.includes("MAX_TOKENS") || rawError.includes("token limit")) {
+        humanError = "The maximum token limit per request was reached. Rephrase your inquiry or run /recap to condense the record context.";
+      } else if (rawError.includes("429") || rawError.includes("rate limit")) {
+        humanError = "API request threshold exceeded. Wait 20–30 seconds before filing your next action.";
+      } else if (rawError.includes("timed out")) {
+        humanError = "The AI model is taking too long to respond. The request has been aborted to prevent freezing.";
+      }
       
       const errorId = 'err-' + Date.now();
       const alertHtml = `
@@ -938,6 +945,12 @@
             if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
             
             const data = await response.json();
+            
+            // Sync engine choice if worker performed automatic failover
+            if (data.fellBack && data.modelUsed) {
+              appState.selectedModel = data.modelUsed;
+            }
+
             trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
             trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
             localStorage.setItem('rest_your_case_history', JSON.stringify(trialHistory));
@@ -991,6 +1004,11 @@
             if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
             
             const data = await response.json();
+
+            if (data.fellBack && data.modelUsed) {
+              appState.selectedModel = data.modelUsed;
+            }
+
             partnerHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
             partnerHistory.push({ role: "model", parts: [{ text: data.reply }] });
             localStorage.setItem('rest_your_case_partner_history', JSON.stringify(partnerHistory));
