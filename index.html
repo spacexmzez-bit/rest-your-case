@@ -176,12 +176,8 @@
         <div class="p-2.5 bg-brand-dark border-t border-brand-border shrink-0 z-20 space-y-2">
           
           <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-1.5 w-full relative">
-            
-            <!-- BATCH 5: #8 Command Autocomplete Menu -->
-            <div id="autocomplete-menu" class="hidden absolute bottom-full mb-1 left-10 w-64 bg-brand-dark border border-brand-border rounded shadow-xl font-mono text-xs z-50 max-h-48 overflow-y-auto"></div>
-
             <div class="relative">
-              <button type="button" onclick="toggleObjectionMenu()" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition">!</button>
+              <button type="button" onclick="toggleObjectionMenu(event)" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition">!</button>
               <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-60 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-56 overflow-y-auto">
                 <button type="button" onclick="selectObjection('FRE 802: Hearsay')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 802: Hearsay</button>
                 <button type="button" onclick="selectObjection('FRE 611c: Leading')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 611c: Leading</button>
@@ -190,14 +186,18 @@
               </div>
             </div>
             
-            <!-- BATCH 5: Input interceptor for Autocomplete -->
-            <input id="court-user-input" type="text" placeholder="Question client or object..." oninput="handleInputDraft()" class="flex-grow min-w-0 bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+            <div class="relative flex-grow min-w-0">
+              <!-- Autocomplete Popup anchored directly to the input box -->
+              <div id="autocomplete-menu" class="hidden absolute bottom-full mb-2 left-0 right-0 bg-brand-dark border border-brand-border rounded shadow-2xl font-mono text-xs z-50 max-h-52 overflow-y-auto divide-y divide-brand-border/40"></div>
+              <input id="court-user-input" type="text" placeholder="Question client or object..." oninput="handleInputDraft()" class="w-full bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+            </div>
+
             <button type="submit" id="court-submit-btn" class="bg-brand-gold text-brand-dark px-3 py-2 rounded text-xs font-mono font-bold uppercase shrink-0">Dispatch</button>
           </form>
           <div class="flex items-center gap-2 overflow-x-auto font-mono text-[10px] py-0.5">
-            <button onclick="quickAction('/recap')" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-gold whitespace-nowrap">/recap</button>
-            <button onclick="quickAction('/inspect ')" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/inspect</button>
-            <button onclick="quickAction('/subpoena ')" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/subpoena</button>
+            <button type="button" onclick="quickAction('/recap', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-gold whitespace-nowrap">/recap</button>
+            <button type="button" onclick="quickAction('/inspect ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/inspect</button>
+            <button type="button" onclick="quickAction('/subpoena ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/subpoena</button>
           </div>
         </div>
       </section>
@@ -479,6 +479,10 @@
       <button id="tab-howtoplay-btn" onclick="navToTab('howtoplay')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">How to Play</button>
       <button id="tab-legal-btn" onclick="navToTab('legal')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Legal Library</button>
       <button id="tab-setup-btn" onclick="navToTab('setup')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Setup Guide</button>
+      <a href="https://ko-fi.com/Mazendev" target="_blank" rel="noopener noreferrer" class="w-full text-left px-3 py-2.5 rounded bg-brand-surface border border-brand-gold/40 text-brand-gold hover:text-white hover:border-brand-gold transition flex items-center justify-between font-mono text-xs">
+        <span>☕ Support / Tip</span>
+        <span class="text-[10px] text-brand-muted">Ko-fi</span>
+      </a>
     </nav>
   
     <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
@@ -726,34 +730,80 @@
       localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);
     }
 
-    // BATCH 5: #8 Command Autocomplete logic
+    // BATCH 5: #8 Command Autocomplete Logic
     function handleInputDraft() {
       saveDraft();
-      const val = document.getElementById('court-user-input').value;
+      const input = document.getElementById('court-user-input');
+      const val = input.value.trim().toLowerCase();
       const menu = document.getElementById('autocomplete-menu');
       
       if (val.startsWith('/inspect')) {
-         const exhibits = (appState.docket || []).map(e => e.id || e.tag).filter(Boolean);
-         if (exhibits.length > 0) {
-           menu.innerHTML = exhibits.map(ex => `<button type="button" onclick="fillAutocomplete('/inspect ${ex}')" class="block w-full text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border last:border-0">${ex}</button>`).join('');
-           menu.classList.remove('hidden');
-         } else { menu.classList.add('hidden'); }
+        const exhibits = (appState.docket || []).map(e => e.id || e.tag).filter(Boolean);
+        if (exhibits.length > 0) {
+          menu.innerHTML = exhibits.map(ex => `
+            <button type="button" onmousedown="fillAutocomplete('/inspect ${ex}')" class="block w-full text-left px-3 py-2 bg-brand-dark hover:bg-brand-surface text-slate-200 hover:text-brand-gold transition flex items-center justify-between">
+              <span>${ex}</span>
+              <span class="text-[10px] text-brand-muted uppercase">Exhibit</span>
+            </button>
+          `).join('');
+          menu.classList.remove('hidden');
+        } else {
+          menu.innerHTML = `<div class="px-3 py-2 text-[10px] text-brand-muted italic">No marked exhibits in docket yet.</div>`;
+          menu.classList.remove('hidden');
+        }
       } else if (val.startsWith('/subpoena')) {
-         const targets = ["Cell Tower Dumps", "Bank Statements", "Surveillance Footage", "Medical Records", "IP Access Logs"];
-         menu.innerHTML = targets.map(t => `<button type="button" onclick="fillAutocomplete('/subpoena ${t}')" class="block w-full text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border last:border-0">${t}</button>`).join('');
-         menu.classList.remove('hidden');
+        const targets = [
+          { name: "Cell Tower Dumps", desc: "Location & call logs" },
+          { name: "Bank Statements", desc: "Financial ledger" },
+          { name: "Surveillance Footage", desc: "CCTV records" },
+          { name: "Medical / Coroner Records", desc: "Toxicology & injuries" },
+          { name: "IP & Server Access Logs", desc: "Digital footprint" }
+        ];
+        menu.innerHTML = targets.map(t => `
+          <button type="button" onmousedown="fillAutocomplete('/subpoena ${t.name}')" class="block w-full text-left px-3 py-2 bg-brand-dark hover:bg-brand-surface text-slate-200 hover:text-brand-gold transition flex items-center justify-between">
+            <span>${t.name}</span>
+            <span class="text-[9px] text-brand-muted">${t.desc}</span>
+          </button>
+        `).join('');
+        menu.classList.remove('hidden');
       } else {
-         menu.classList.add('hidden');
+        menu.classList.add('hidden');
       }
     }
 
     function fillAutocomplete(text) {
       const input = document.getElementById('court-user-input');
-      input.value = text;
+      input.value = text + ' ';
       document.getElementById('autocomplete-menu').classList.add('hidden');
       input.focus();
       saveDraft();
     }
+
+    function quickAction(cmd, event) {
+      if (event) event.stopPropagation();
+      const input = document.getElementById('court-user-input');
+      input.value = cmd;
+      input.focus();
+      handleInputDraft();
+    }
+
+    function toggleObjectionMenu(event) {
+      if (event) event.stopPropagation();
+      document.getElementById('objection-menu').classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', function(event) {
+      const objMenu = document.getElementById('objection-menu');
+      if (objMenu && !objMenu.contains(event.target)) {
+        objMenu.classList.add('hidden');
+      }
+
+      const autoMenu = document.getElementById('autocomplete-menu');
+      const inputField = document.getElementById('court-user-input');
+      if (autoMenu && !autoMenu.contains(event.target) && event.target !== inputField) {
+        autoMenu.classList.add('hidden');
+      }
+    });
 
     window.saveExhibitNote = function(exhibitId, value) {
       if (!exhibitId) return;
@@ -900,21 +950,12 @@
       sendCourtAction(initPrompt, true);
     }
 
-    function toggleObjectionMenu() { document.getElementById('objection-menu').classList.toggle('hidden'); }
     function selectObjection(ruleStr) {
       const input = document.getElementById('court-user-input');
       input.value = `OBJECTION: ${ruleStr} - `;
       document.getElementById('objection-menu').classList.add('hidden');
       input.focus();
     }
-    document.addEventListener('click', function(event) {
-      const objMenu = document.getElementById('objection-menu');
-      if (!objMenu.classList.contains('hidden') && !objMenu.contains(event.target) && event.target !== objMenu.previousElementSibling) { objMenu.classList.add('hidden'); }
-      
-      const autoMenu = document.getElementById('autocomplete-menu');
-      const inputField = document.getElementById('court-user-input');
-      if (!autoMenu.classList.contains('hidden') && !autoMenu.contains(event.target) && event.target !== inputField) { autoMenu.classList.add('hidden'); }
-    });
 
     function toggleAssistantsDrawer() { document.getElementById('assistants-drawer').classList.toggle('translate-x-full'); }
     
@@ -1155,11 +1196,6 @@
       feed.scrollTop = feed.scrollHeight;
     }
 
-    window.retryAction = function(encodedPrompt, isAssistant) {
-      const prompt = decodeURIComponent(encodedPrompt);
-      isAssistant ? sendAssistantAction(prompt, true) : sendCourtAction(prompt, false, true);
-    }
-
     function appendTranscriptMessage(sender, text, isUser = false) {
       if (!appState.transcript) appState.transcript = [];
       appState.transcript.push({ sender, text, isUser });
@@ -1222,7 +1258,6 @@
       }
     }
 
-    // BATCH 5: #16 Turn 1 Loading Overlay Logic
     function showLoadingScreen() {
       const overlay = document.getElementById('init-loading-overlay');
       const tipEl = document.getElementById('loading-tip-text');
@@ -1269,9 +1304,6 @@
 
     function handleCourtActionSubmit(e) { e.preventDefault(); const input = document.getElementById('court-user-input'); const val = input.value.trim(); if (!val) return; input.value = ""; document.getElementById('autocomplete-menu').classList.add('hidden'); sendCourtAction(val, false); }
     function handleAssistantSubmit(e) { e.preventDefault(); const input = document.getElementById('assistant-input'); const val = input.value.trim(); if (!val) return; input.value = ""; sendAssistantAction(val); }
-    function quickAction(cmd) { const input = document.getElementById('court-user-input'); input.value = cmd; input.focus(); handleInputDraft(); }
-
-    window.onload = initApp;
 
     async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
       const controller = new AbortController();
@@ -1309,7 +1341,6 @@
         trialHistory.splice(-2, 2);
       }
 
-      // BATCH 5: Route loading screen vs typing indicator
       if (isInit) showLoadingScreen();
       else toggleTypingIndicator('transcript-feed', true, 'Court is Deliberating');
 
@@ -1429,7 +1460,7 @@ Established Court Facts: ${factStr}`;
     }
 
     function processCourtResponse(rawText) {
-      const oldAp = appState.ap; // BATCH 5: Track previous AP
+      const oldAp = appState.ap;
       
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
       if (checkpointMatch && appState.hasActiveCase) {
@@ -1458,7 +1489,6 @@ Established Court Facts: ${factStr}`;
       const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
       appendTranscriptMessage("THE BENCH / RECORD", cleanText, false);
       
-      // BATCH 5: #10 AP Deduction Alert Injection
       if (appState.hasActiveCase && appState.ap < oldAp) {
          const apDiff = oldAp - appState.ap;
          const alertHtml = `
