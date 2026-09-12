@@ -24,7 +24,6 @@
             serif: ['Georgia', 'serif'],
             mono: ['Courier New', 'monospace']
           },
-          // BATCH 1: Added Keyframes for Marquee and Typing Indicator
           keyframes: {
             scrollMarquee: {
               '0%': { transform: 'translateX(100vw)' },
@@ -63,7 +62,6 @@
     </div>
   </header>
 
-  <!-- BATCH 1: #18 Header Marquee -->
   <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
     <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
       ⚖️ TIP: Every major move costs Action Points (AP). Plan carefully. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
@@ -125,7 +123,7 @@
             <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">4</span>
             <h3 class="text-white font-bold text-sm">Win & Decode Truth</h3>
           </div>
-          <p class="text-brand-muted leading-relaxed">Deliver your closing argument. After the verdict, unseal the Base64 hash in your Notebook to reveal the objective reality of the crime.</p>
+          <p class="text-brand-muted leading-relaxed">Deliver your closing argument. After the verdict, the hidden Truth Hash evaluates your performance and reveals the actual timeline.</p>
         </div>
       </div>
     </section>
@@ -144,7 +142,6 @@
         <div><span class="text-brand-muted">Turn </span><span id="term-turn" class="text-white font-bold">1</span></div>
         <div><span class="text-brand-muted">AP </span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
         <div><span class="text-brand-muted">Strikes </span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
-        <!-- BATCH 1: #4 Direct Toggle to Notebook -->
         <button onclick="switchTab('notebook')" class="hidden sm:inline-block text-[10px] text-brand-muted hover:text-white px-1.5 py-0.5 rounded border border-brand-border bg-brand-surface ml-2 transition">📁 Notebook</button>
         <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-1.5 py-0.5 rounded border border-rose-900/50">Delete</button>
       </div>
@@ -187,7 +184,6 @@
                 <button type="button" onclick="selectObjection('FRE 403: Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200">FRE 403: Prejudice</button>
               </div>
             </div>
-            <!-- BATCH 1: #17 Input Draft Persistence (added oninput listener) -->
             <input id="court-user-input" type="text" placeholder="Question client or object..." oninput="saveDraft()" class="flex-grow min-w-0 bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
             <button type="submit" id="court-submit-btn" class="bg-brand-gold text-brand-dark px-3 py-2 rounded text-xs font-mono font-bold uppercase shrink-0">Dispatch</button>
           </form>
@@ -216,7 +212,6 @@
           <span class="text-white border-l border-brand-border pl-3" id="nb-phase">Phase 1: Intake</span>
         </div>
         <div class="flex items-center gap-3">
-          <!-- BATCH 1: #4 Direct Toggle to Terminal -->
           <button onclick="switchTab('terminal')" class="text-[10px] text-brand-muted hover:text-white px-2 py-0.5 rounded border border-brand-border bg-brand-surface transition">💻 Terminal</button>
           <span class="text-brand-muted text-[10px] border-l border-brand-border pl-2">Auto-sync</span>
           <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
@@ -241,14 +236,11 @@
         <textarea id="attorney-notes" oninput="saveNotes()" placeholder="Draft cross-examinations or connect contradictions here..." class="w-full h-36 bg-brand-surface border border-brand-border rounded p-3 text-xs text-slate-200 font-mono outline-none focus:border-brand-gold/50 resize-none"></textarea>
       </section>
 
-      <section class="border border-emerald-900/50 rounded p-4 bg-emerald-950/10 space-y-3">
-        <div class="flex justify-between items-center border-b border-emerald-900/50 pb-2">
-          <h3 class="text-sm font-serif text-emerald-400 uppercase tracking-wider">Sealed Truth Vault</h3>
-          <span class="text-[10px] text-emerald-500 font-mono px-2 py-0.5 bg-emerald-950 rounded">Phase 4 Automated</span>
-        </div>
-        <p class="text-brand-muted text-[11px] font-sans">The Turn 2 Ground Truth hash is captured automatically. It decrypts here upon verdict.</p>
-        <div id="decoded-truth-output" class="hidden p-3 bg-brand-dark border border-emerald-900/50 rounded text-emerald-300 text-xs font-mono leading-relaxed whitespace-pre-wrap"></div>
-      </section>
+      <!-- BATCH 2: #11 Case Metadata Footer (Replaced Truth Vault per #12) -->
+      <div class="mt-8 border-t border-brand-border pt-4 flex justify-between items-center text-[10px] font-mono text-brand-muted">
+        <span>Trial Difficulty: <strong class="text-brand-gold" id="nb-diff">Normal</strong></span>
+        <span>Case Complexity: <strong class="text-brand-gold" id="nb-comp">Level 3</strong></span>
+      </div>
     </div>
   </main>
 
@@ -266,7 +258,7 @@
           <li><strong class="text-white">Phase 1 (Intake):</strong> You have limited turns to interview your client in holding. Ask precise questions to lock down their alibi. If you don't find the holes in their story, the DA will.</li>
           <li><strong class="text-white">Phase 2 (Pre-Trial):</strong> Direct Investigator Diaz. This is where you spend AP to subpoena bank records, trace IP logs, or file motions to suppress tainted discovery.</li>
           <li><strong class="text-white">Phase 3 (Trial):</strong> Cross-examine State witnesses. Use the `!` menu to object to improper DA questions in real-time. Introduce admitted exhibits to impeach lying witnesses.</li>
-          <li><strong class="text-white">Phase 4 (Verdict):</strong> Deliver a closing argument. The jury renders a verdict, and the "Truth Vault" in your Notebook decrypts to reveal what actually happened.</li>
+          <li><strong class="text-white">Phase 4 (Verdict):</strong> Deliver a closing argument. The jury renders a verdict, and the hidden Truth Hash evaluates your performance and reveals the actual timeline.</li>
         </ul>
       </section>
 
@@ -566,7 +558,9 @@
     let appState = {
       hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
-      transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '',
+      transcript: [], docket: [], facts: [], 
+      // BATCH 2: Added Metadata properties for Notebook
+      difficulty: 'Normal', complexity: 3, 
       selectedModel: 'gemini-3.6-flash'
     };
 
@@ -620,7 +614,6 @@
       const savedPartnerHistory = localStorage.getItem('rest_your_case_partner_history');
       if (savedPartnerHistory) { try { partnerHistory = JSON.parse(savedPartnerHistory); } catch (e) {} }
 
-      // BATCH 1: #17 Load Draft
       const savedDraft = localStorage.getItem('terminal_draft');
       if (savedDraft) document.getElementById('court-user-input').value = savedDraft;
 
@@ -631,7 +624,6 @@
       localStorage.setItem('rest_your_case_state', JSON.stringify(appState)); 
     }
 
-    // BATCH 1: #17 Save Draft dynamically
     function saveDraft() {
       localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);
     }
@@ -657,16 +649,16 @@
         document.getElementById('nb-casetitle').innerText = appState.profile.title || 'State v. Unknown';
         document.getElementById('nb-phase').innerText = appState.phase;
         document.getElementById('attorney-notes').value = appState.notes || '';
+        
+        // BATCH 2: #11 Apply Difficulty and Complexity variables to the footer
+        const diffSpan = document.getElementById('nb-diff');
+        const compSpan = document.getElementById('nb-comp');
+        if(diffSpan) diffSpan.innerText = appState.difficulty || 'Normal';
+        if(compSpan) compSpan.innerText = 'Level ' + (appState.complexity || 3);
+
         renderDocket(); 
         renderFactLedger();
         renderTerminalSidePanel();
-        
-        const truthOut = document.getElementById('decoded-truth-output');
-        if (appState.phase.includes('4') && appState.truthHash) {
-          try { truthOut.innerText = decodeURIComponent(atob(appState.truthHash).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); } 
-          catch(e) { truthOut.innerText = atob(appState.truthHash); }
-          truthOut.classList.remove('hidden');
-        } else { truthOut.classList.add('hidden'); }
       }
       renderTranscriptFeed();
     }
@@ -740,7 +732,9 @@
       appState = {
         hasActiveCase: true, profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
         phase: "Phase 1: Intake", turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
-        transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '',
+        transcript: [], docket: [], facts: [], 
+        // BATCH 2: #11 Save intake variables to app state
+        difficulty: diff, complexity: comp,
         selectedModel: 'gemini-3.6-flash'
       };
       trialHistory = [];
@@ -748,7 +742,6 @@
       localStorage.removeItem('rest_your_case_history');
       localStorage.removeItem('rest_your_case_partner_history');
       
-      // Batch 1: Reset draft on fresh start
       document.getElementById('court-user-input').value = "";
       localStorage.removeItem('terminal_draft');
 
@@ -777,7 +770,7 @@
     function closeWipeModal() { document.getElementById('wipe-modal').classList.add('hidden'); }
     function executeWipe() {
       if (document.getElementById('wipe-confirm-input').value === 'CONFIRM') {
-        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], truthHash: '', truthDecoded: '', selectedModel: 'gemini-3.6-flash' };
+        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, selectedModel: 'gemini-3.6-flash' };
         trialHistory = [];
         partnerHistory = [];
         localStorage.removeItem('rest_your_case_history');
@@ -800,7 +793,6 @@
       if (!appState.docket || appState.docket.length === 0) { container.innerHTML = `<div class="col-span-full p-4 border border-brand-border border-dashed rounded text-brand-muted text-xs font-mono text-center">No evidence discovered yet.</div>`; return; }
       appState.docket.forEach((item, index) => {
         const isSuppressed = item.status === 'SUPPRESSED';
-        // BATCH 1: #5 Action Tooltips embedded in buttons
         container.innerHTML += `
           <div class="p-3 rounded border ${isSuppressed ? 'bg-brand-surface/20 border-brand-border/40 opacity-50' : 'bg-brand-surface border-brand-border'} space-y-2 font-mono text-xs">
             <div class="flex justify-between items-start gap-2">
@@ -829,6 +821,13 @@
     }
 
     function parseTranscriptFormat(text) {
+      // BATCH 2: #9 Background parse - Strip the system dockets from the visible UI
+      text = text.replace(/`?\[(?:STATE|ROSTER|DOCKET):.*?\]`?/gim, '');
+      
+      // BATCH 2: #13 Filter Hex/Base64 Blocks
+      // Targets long uninterrupted strings (typical of base64 hashes) and replaces them
+      text = text.replace(/(?:[A-Za-z0-9+/]{4}){10,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?/g, '<span class="text-[10px] text-brand-muted italic bg-brand-dark px-2 py-0.5 rounded border border-brand-border">[ENCRYPTED TRUTH HASH HIDDEN FROM UI]</span>');
+
       let parsed = text.replace(/^###\s+/gm, ''); 
       parsed = parsed.replace(/^(?:\*\*)?\[?([A-Za-z\s\-\.\']+(?:Client|Counsel|Judge|Witness|DA|Defendant|Prosecut[a-z]+|Defen[a-z]+|Sterling|Vance|Diaz|Bench|Court)?)\]?(?:\*\*)?\s*:\s*/gim, (match, name) => {
          let color = 'text-brand-gold'; 
@@ -917,7 +916,6 @@
       feed.scrollTop = feed.scrollHeight;
     }
 
-    // BATCH 1: #1 Typing Indicator Function
     function toggleTypingIndicator(feedId, show, label = "Processing") {
       const feed = document.getElementById(feedId);
       if (!feed) return;
@@ -971,7 +969,6 @@
 
       if (!isInit && !isRetry) {
         appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
-        // BATCH 1: #17 Clear Draft when dispatched
         localStorage.removeItem('terminal_draft');
       } else if (isInit) {
         trialHistory = [];
@@ -982,7 +979,6 @@
         trialHistory.splice(-2, 2);
       }
 
-      // BATCH 1: #1 Start Typing Animation
       toggleTypingIndicator('transcript-feed', true, 'Court is Deliberating');
 
       const MAX_RETRIES = 2;
@@ -1027,7 +1023,6 @@
         }
       } finally {
         engineLocked = false;
-        // BATCH 1: #1 Stop Typing Animation
         toggleTypingIndicator('transcript-feed', false);
         if (statusBadge) statusBadge.innerText = "Active";
         if (submitBtn) submitBtn.disabled = false;
@@ -1043,7 +1038,6 @@
 
       if (!isRetry) appendPartnerMessage("YOU", userPrompt, true);
 
-      // BATCH 1: #1 Start Typing Animation
       toggleTypingIndicator('partner-feed', true, 'Senior Partner Reviewing');
 
       const MAX_RETRIES = 2;
@@ -1086,7 +1080,6 @@
         }
       } finally {
         engineLocked = false;
-        // BATCH 1: #1 Stop Typing Animation
         toggleTypingIndicator('partner-feed', false);
         if (submitBtn) submitBtn.disabled = false;
       }
@@ -1107,7 +1100,6 @@
           if (stateUpdate.clientName) appState.profile.client = stateUpdate.clientName; 
           if (stateUpdate.judge) appState.profile.judge = stateUpdate.judge;
           if (stateUpdate.da) appState.profile.da = stateUpdate.da;
-          if (stateUpdate.truthHash && !appState.truthHash) appState.truthHash = stateUpdate.truthHash;
           if (stateUpdate.docket) appState.docket = stateUpdate.docket;
           if (stateUpdate.facts) appState.facts = stateUpdate.facts;
         } catch (e) { console.error("Checkpoint parse error", e); }
