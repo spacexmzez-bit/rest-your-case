@@ -43,7 +43,7 @@
     }
   </script>
 </head>
-<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden">
+<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
   <!-- ================= TOP HUD NAV ================= -->
   <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
@@ -171,10 +171,15 @@
 
       <!-- Dialogue Section -->
       <section class="lg:col-span-8 flex flex-col h-full bg-[#0d0f12] overflow-hidden">
-        <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]"></div>
+        <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12] relative"></div>
 
         <div class="p-2.5 bg-brand-dark border-t border-brand-border shrink-0 z-20 space-y-2">
+          
           <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-1.5 w-full relative">
+            
+            <!-- BATCH 5: #8 Command Autocomplete Menu -->
+            <div id="autocomplete-menu" class="hidden absolute bottom-full mb-1 left-10 w-64 bg-brand-dark border border-brand-border rounded shadow-xl font-mono text-xs z-50 max-h-48 overflow-y-auto"></div>
+
             <div class="relative">
               <button type="button" onclick="toggleObjectionMenu()" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition">!</button>
               <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-60 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-56 overflow-y-auto">
@@ -184,7 +189,9 @@
                 <button type="button" onclick="selectObjection('FRE 403: Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200">FRE 403: Prejudice</button>
               </div>
             </div>
-            <input id="court-user-input" type="text" placeholder="Question client or object..." oninput="saveDraft()" class="flex-grow min-w-0 bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+            
+            <!-- BATCH 5: Input interceptor for Autocomplete -->
+            <input id="court-user-input" type="text" placeholder="Question client or object..." oninput="handleInputDraft()" class="flex-grow min-w-0 bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
             <button type="submit" id="court-submit-btn" class="bg-brand-gold text-brand-dark px-3 py-2 rounded text-xs font-mono font-bold uppercase shrink-0">Dispatch</button>
           </form>
           <div class="flex items-center gap-2 overflow-x-auto font-mono text-[10px] py-0.5">
@@ -226,7 +233,6 @@
         <div id="docket-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
       </section>
 
-      <!-- BATCH 4: Fact Archive & UI Ledgers -->
       <section class="space-y-4">
         <h2 class="text-lg font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">Active Court Record</h2>
         <div id="fact-ledger" class="bg-brand-surface border border-brand-border rounded p-4 font-mono text-xs text-slate-200 space-y-3 min-h-[100px]"></div>
@@ -369,7 +375,6 @@
             <h3 class="text-white font-bold font-mono text-sm">FRE 802: Hearsay</h3>
           </div>
           <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> A witness testifies about what someone else said out of court to prove it was true.</p>
-          <p class="text-xs text-slate-400 font-sans italic">"My neighbor told me he saw the defendant do it."</p>
           <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Exceptions: Present Sense Impression, Excited Utterance, Admissions.</p>
         </div>
 
@@ -378,7 +383,6 @@
             <h3 class="text-white font-bold font-mono text-sm">FRE 611(c): Leading (Direct)</h3>
           </div>
           <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The prosecutor feeds the answer to their own friendly witness in the question.</p>
-          <p class="text-xs text-slate-400 font-sans italic">"You saw him holding the bloody crowbar, didn't you?"</p>
           <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Force the DA to ask open "Who, what, where" questions.</p>
         </div>
 
@@ -387,7 +391,6 @@
             <h3 class="text-white font-bold font-mono text-sm">FRE 602: Speculation / Foundation</h3>
           </div>
           <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The witness guesses about something they didn't personally perceive, or guesses someone else's state of mind.</p>
-          <p class="text-xs text-slate-400 font-sans italic">"I think he was planning to sell the stolen files."</p>
           <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Demand the DA lay a foundation showing personal knowledge.</p>
         </div>
 
@@ -396,7 +399,6 @@
             <h3 class="text-white font-bold font-mono text-sm">FRE 404(b): Improper Character</h3>
           </div>
           <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The State mentions prior bad acts or past crimes to prove the defendant acted in accordance with that trait.</p>
-          <p class="text-xs text-slate-400 font-sans italic">"He's a known liar who cheated on his taxes five years ago."</p>
           <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Defense: Past crimes do not prove current guilt.</p>
         </div>
 
@@ -405,7 +407,6 @@
             <h3 class="text-white font-bold font-mono text-sm">FRE 403: Unfair Prejudice</h3>
           </div>
           <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The evidence's probative value is substantially outweighed by a danger of inflaming the jury's emotions.</p>
-          <p class="text-xs text-slate-400 font-sans italic">Introducing highly gruesome, unnecessary photos of a victim.</p>
         </div>
 
         <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
@@ -413,13 +414,38 @@
             <h3 class="text-white font-bold font-mono text-sm">Assumes Facts Not in Evidence</h3>
           </div>
           <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The question embeds an unproven allegation as an accepted premise to trap the witness.</p>
-          <p class="text-xs text-slate-400 font-sans italic">"When did you stop embezzling the company funds?"</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- BATCH 5: #15 Statutory Criminal Offenses -->
+    <section class="space-y-4 pt-4 border-t border-brand-border">
+      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">3. Statutory Criminal Offenses</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-sans">
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Murder (1st & 2nd Degree)</h3>
+          <p class="text-slate-300"><strong class="text-white">1st Degree:</strong> Premeditated and intentional. <strong class="text-white">2nd Degree:</strong> Intentional but not premeditated (heat of the moment or extreme reckless disregard).</p>
+          <p class="text-xs text-brand-muted">Defense: Self-defense, lack of intent (mens rea), or mistaken identity.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Manslaughter</h3>
+          <p class="text-slate-300"><strong class="text-white">Voluntary:</strong> Intentional killing committed under adequate provocation ("heat of passion"). <strong class="text-white">Involuntary:</strong> Unintentional killing caused by recklessness or criminal negligence.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Wire & Financial Fraud</h3>
+          <p class="text-slate-300">Intentionally devising a scheme to defraud another of money/property using electronic communications.</p>
+          <p class="text-xs text-brand-muted">Defense: Good faith belief in the truth of the statements (lack of fraudulent intent).</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Espionage / Cyber Intrusion</h3>
+          <p class="text-slate-300">Unauthorized access to classified/protected systems with intent to harm the nation or benefit a foreign entity.</p>
+          <p class="text-xs text-brand-muted">Defense: Lack of intent, authorized access, or mishandling vs. intentional espionage.</p>
         </div>
       </div>
     </section>
 
     <section class="bg-brand-surface border border-emerald-900/50 rounded p-6 space-y-3">
-      <h2 class="text-emerald-400 font-mono text-sm uppercase tracking-wider border-b border-emerald-900/50 pb-2">3. Cross-Examination Tactics</h2>
+      <h2 class="text-emerald-400 font-mono text-sm uppercase tracking-wider border-b border-emerald-900/50 pb-2">4. Cross-Examination Tactics</h2>
       <ul class="text-sm text-slate-300 space-y-3 font-sans list-disc pl-5">
         <li><strong class="text-white">Impeachment by Prior Statement:</strong> If a witness changes their story on the stand, confront them with their original police statement (found in your Phase 2 discovery). <em>"Isn't it true you told Detective Vance..."</em></li>
         <li><strong class="text-white">Financial Bias:</strong> Always ask cooperating witnesses or "experts" if they are being paid by the State for their testimony, or if they were offered a plea deal in exchange for testifying against your client.</li>
@@ -453,10 +479,6 @@
       <button id="tab-howtoplay-btn" onclick="navToTab('howtoplay')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">How to Play</button>
       <button id="tab-legal-btn" onclick="navToTab('legal')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Legal Library</button>
       <button id="tab-setup-btn" onclick="navToTab('setup')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Setup Guide</button>
-      <a href="https://ko-fi.com/Mazendev" target="_blank" rel="noopener noreferrer" class="w-full text-left px-3 py-2.5 rounded bg-brand-surface border border-brand-gold/40 text-brand-gold hover:text-white hover:border-brand-gold transition flex items-center justify-between font-mono text-xs">
-        <span>☕ Support / Tip</span>
-        <span class="text-[10px] text-brand-muted">Ko-fi</span>
-      </a>
     </nav>
   
     <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
@@ -478,12 +500,10 @@
       <button onclick="toggleAssistantsDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
     </div>
 
-    <!-- Partner Feed -->
     <div id="partner-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]">
       <div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private legal strategy channel. Consultations cost 0 AP.</div>
     </div>
 
-    <!-- Diaz Feed -->
     <div id="diaz-feed" class="hidden p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]">
       <div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private investigation channel. Discuss logistics or records.</div>
     </div>
@@ -540,7 +560,6 @@
     </div>
   </div>
 
-  <!-- ================= BATCH 4: TRASH WARNING MODAL ================= -->
   <div id="trash-warning-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-amber-900/50 rounded max-w-md w-full p-6 space-y-4">
       <div class="flex items-center gap-2 border-b border-brand-border pb-2">
@@ -557,7 +576,6 @@
     </div>
   </div>
 
-  <!-- ================= WIPE MODAL ================= -->
   <div id="wipe-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-rose-900/50 rounded max-w-md w-full p-6 space-y-4">
       <h3 class="text-rose-400 font-serif text-xl font-bold">Wipe Trial Data?</h3>
@@ -585,6 +603,20 @@
     </div>
   </div>
 
+  <!-- BATCH 5: #16 Turn 1 Loading Overlay -->
+  <div id="init-loading-overlay" class="hidden fixed inset-0 bg-brand-dark/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 text-center space-y-6">
+    <div class="text-brand-gold text-5xl animate-pulse">⚖</div>
+    <h2 class="text-2xl font-serif text-white uppercase tracking-widest">Generating Case File</h2>
+    <div class="flex items-center gap-2">
+      <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce" style="animation-delay: -0.32s"></div>
+      <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce" style="animation-delay: -0.16s"></div>
+      <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce"></div>
+    </div>
+    <div class="max-w-md h-16 flex items-center justify-center">
+      <p id="loading-tip-text" class="text-brand-muted text-sm font-mono leading-relaxed transition-opacity duration-500"></p>
+    </div>
+  </div>
+
   <footer class="border-t border-brand-border py-2 px-4 text-[10px] font-mono text-brand-muted max-w-7xl mx-auto w-full shrink-0">
     Rest Your Case &copy; 2026. Local-First Client Storage.
   </footer>
@@ -606,6 +638,16 @@
     let engineLocked = false;
     let pendingTrashFactId = null;
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
+
+    // BATCH 5: #16 Loading Tips Array
+    let loadingInterval;
+    const loadingTips = [
+      "TIP: Premeditation turns 2nd Degree Murder into 1st Degree.",
+      "TIP: A hostile witness cannot be lead on cross-examination... wait, yes they can.",
+      "TIP: Subpoenas cost 1 AP. Make sure you actually need the records.",
+      "TIP: Hearsay has exceptions. Excited utterances are often admissible.",
+      "TIP: Don't let the DA badger your client. Object aggressively."
+    ];
 
     function hashFact(str) {
       let hash = 0;
@@ -682,6 +724,35 @@
 
     function saveDraft() {
       localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);
+    }
+
+    // BATCH 5: #8 Command Autocomplete logic
+    function handleInputDraft() {
+      saveDraft();
+      const val = document.getElementById('court-user-input').value;
+      const menu = document.getElementById('autocomplete-menu');
+      
+      if (val.startsWith('/inspect')) {
+         const exhibits = (appState.docket || []).map(e => e.id || e.tag).filter(Boolean);
+         if (exhibits.length > 0) {
+           menu.innerHTML = exhibits.map(ex => `<button type="button" onclick="fillAutocomplete('/inspect ${ex}')" class="block w-full text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border last:border-0">${ex}</button>`).join('');
+           menu.classList.remove('hidden');
+         } else { menu.classList.add('hidden'); }
+      } else if (val.startsWith('/subpoena')) {
+         const targets = ["Cell Tower Dumps", "Bank Statements", "Surveillance Footage", "Medical Records", "IP Access Logs"];
+         menu.innerHTML = targets.map(t => `<button type="button" onclick="fillAutocomplete('/subpoena ${t}')" class="block w-full text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border last:border-0">${t}</button>`).join('');
+         menu.classList.remove('hidden');
+      } else {
+         menu.classList.add('hidden');
+      }
+    }
+
+    function fillAutocomplete(text) {
+      const input = document.getElementById('court-user-input');
+      input.value = text;
+      document.getElementById('autocomplete-menu').classList.add('hidden');
+      input.focus();
+      saveDraft();
     }
 
     window.saveExhibitNote = function(exhibitId, value) {
@@ -837,8 +908,12 @@
       input.focus();
     }
     document.addEventListener('click', function(event) {
-      const menu = document.getElementById('objection-menu');
-      if (!menu.classList.contains('hidden') && !menu.contains(event.target) && event.target !== menu.previousElementSibling) { menu.classList.add('hidden'); }
+      const objMenu = document.getElementById('objection-menu');
+      if (!objMenu.classList.contains('hidden') && !objMenu.contains(event.target) && event.target !== objMenu.previousElementSibling) { objMenu.classList.add('hidden'); }
+      
+      const autoMenu = document.getElementById('autocomplete-menu');
+      const inputField = document.getElementById('court-user-input');
+      if (!autoMenu.classList.contains('hidden') && !autoMenu.contains(event.target) && event.target !== inputField) { autoMenu.classList.add('hidden'); }
     });
 
     function toggleAssistantsDrawer() { document.getElementById('assistants-drawer').classList.toggle('translate-x-full'); }
@@ -1147,6 +1222,30 @@
       }
     }
 
+    // BATCH 5: #16 Turn 1 Loading Overlay Logic
+    function showLoadingScreen() {
+      const overlay = document.getElementById('init-loading-overlay');
+      const tipEl = document.getElementById('loading-tip-text');
+      overlay.classList.remove('hidden');
+      let tipIndex = 0;
+      tipEl.innerText = loadingTips[tipIndex];
+      tipEl.style.opacity = 1;
+      
+      loadingInterval = setInterval(() => {
+        tipEl.style.opacity = 0;
+        setTimeout(() => {
+          tipIndex = (tipIndex + 1) % loadingTips.length;
+          tipEl.innerText = loadingTips[tipIndex];
+          tipEl.style.opacity = 1;
+        }, 500);
+      }, 3500);
+    }
+
+    function hideLoadingScreen() {
+      document.getElementById('init-loading-overlay').classList.add('hidden');
+      clearInterval(loadingInterval);
+    }
+
     function toggleTypingIndicator(feedId, show, label = "Processing") {
       const feed = document.getElementById(feedId);
       if (!feed) return;
@@ -1168,9 +1267,9 @@
       }
     }
 
-    function handleCourtActionSubmit(e) { e.preventDefault(); const input = document.getElementById('court-user-input'); const val = input.value.trim(); if (!val) return; input.value = ""; sendCourtAction(val, false); }
+    function handleCourtActionSubmit(e) { e.preventDefault(); const input = document.getElementById('court-user-input'); const val = input.value.trim(); if (!val) return; input.value = ""; document.getElementById('autocomplete-menu').classList.add('hidden'); sendCourtAction(val, false); }
     function handleAssistantSubmit(e) { e.preventDefault(); const input = document.getElementById('assistant-input'); const val = input.value.trim(); if (!val) return; input.value = ""; sendAssistantAction(val); }
-    function quickAction(cmd) { const input = document.getElementById('court-user-input'); input.value = cmd; input.focus(); }
+    function quickAction(cmd) { const input = document.getElementById('court-user-input'); input.value = cmd; input.focus(); handleInputDraft(); }
 
     window.onload = initApp;
 
@@ -1210,7 +1309,9 @@
         trialHistory.splice(-2, 2);
       }
 
-      toggleTypingIndicator('transcript-feed', true, 'Court is Deliberating');
+      // BATCH 5: Route loading screen vs typing indicator
+      if (isInit) showLoadingScreen();
+      else toggleTypingIndicator('transcript-feed', true, 'Court is Deliberating');
 
       const MAX_RETRIES = 2;
       let attempt = 0;
@@ -1254,7 +1355,8 @@
         }
       } finally {
         engineLocked = false;
-        toggleTypingIndicator('transcript-feed', false);
+        if (isInit) hideLoadingScreen();
+        else toggleTypingIndicator('transcript-feed', false);
         if (statusBadge) statusBadge.innerText = "Active";
         if (submitBtn) submitBtn.disabled = false;
       }
@@ -1327,6 +1429,8 @@ Established Court Facts: ${factStr}`;
     }
 
     function processCourtResponse(rawText) {
+      const oldAp = appState.ap; // BATCH 5: Track previous AP
+      
       const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
       if (checkpointMatch && appState.hasActiveCase) {
         try {
@@ -1353,6 +1457,22 @@ Established Court Facts: ${factStr}`;
 
       const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
       appendTranscriptMessage("THE BENCH / RECORD", cleanText, false);
+      
+      // BATCH 5: #10 AP Deduction Alert Injection
+      if (appState.hasActiveCase && appState.ap < oldAp) {
+         const apDiff = oldAp - appState.ap;
+         const alertHtml = `
+          <div class="flex items-center justify-center my-4">
+            <div class="px-3 py-1 bg-amber-950/40 border border-amber-900/50 rounded-full flex items-center gap-2 shadow-sm">
+              <span class="text-amber-500 text-xs">⚡</span>
+              <span class="text-amber-400 font-mono text-[10px] font-bold tracking-widest uppercase">-${apDiff} AP Consumed (Remaining: ${appState.ap})</span>
+            </div>
+          </div>`;
+         const feed = document.getElementById('transcript-feed');
+         feed.insertAdjacentHTML('beforeend', alertHtml);
+         feed.scrollTop = feed.scrollHeight;
+      }
+      
       persist(); renderUI();
     }
   </script>
