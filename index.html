@@ -23,6 +23,21 @@
           fontFamily: {
             serif: ['Georgia', 'serif'],
             mono: ['Courier New', 'monospace']
+          },
+          // BATCH 1: Added Keyframes for Marquee and Typing Indicator
+          keyframes: {
+            scrollMarquee: {
+              '0%': { transform: 'translateX(100vw)' },
+              '100%': { transform: 'translateX(-100%)' }
+            },
+            typingBounce: {
+              '0%, 80%, 100%': { transform: 'scale(0)' },
+              '40%': { transform: 'scale(1)' }
+            }
+          },
+          animation: {
+            scrollMarquee: 'scrollMarquee 25s linear infinite',
+            typingBounce: 'typingBounce 1.4s infinite ease-in-out both'
           }
         }
       }
@@ -47,6 +62,16 @@
       </nav>
     </div>
   </header>
+
+  <!-- BATCH 1: #18 Header Marquee -->
+  <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
+    <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
+      ⚖️ TIP: Every major move costs Action Points (AP). Plan carefully. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: You cannot Admit an exhibit without laying a foundation first. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: Use /inspect on marked exhibits to uncover hidden details. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
+      ⚖️ TIP: Consult your Senior Partner for tactical advice without spending AP.
+    </div>
+  </div>
 
   <!-- ================= TAB 1: OVERVIEW ================= -->
   <main id="tab-dossier" class="max-w-5xl mx-auto px-4 py-8 space-y-12 flex-grow w-full">
@@ -119,6 +144,8 @@
         <div><span class="text-brand-muted">Turn </span><span id="term-turn" class="text-white font-bold">1</span></div>
         <div><span class="text-brand-muted">AP </span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
         <div><span class="text-brand-muted">Strikes </span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
+        <!-- BATCH 1: #4 Direct Toggle to Notebook -->
+        <button onclick="switchTab('notebook')" class="hidden sm:inline-block text-[10px] text-brand-muted hover:text-white px-1.5 py-0.5 rounded border border-brand-border bg-brand-surface ml-2 transition">📁 Notebook</button>
         <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-1.5 py-0.5 rounded border border-rose-900/50">Delete</button>
       </div>
     </div>
@@ -160,7 +187,8 @@
                 <button type="button" onclick="selectObjection('FRE 403: Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200">FRE 403: Prejudice</button>
               </div>
             </div>
-            <input id="court-user-input" type="text" placeholder="Question client or object..." class="flex-grow min-w-0 bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+            <!-- BATCH 1: #17 Input Draft Persistence (added oninput listener) -->
+            <input id="court-user-input" type="text" placeholder="Question client or object..." oninput="saveDraft()" class="flex-grow min-w-0 bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
             <button type="submit" id="court-submit-btn" class="bg-brand-gold text-brand-dark px-3 py-2 rounded text-xs font-mono font-bold uppercase shrink-0">Dispatch</button>
           </form>
           <div class="flex items-center gap-2 overflow-x-auto font-mono text-[10px] py-0.5">
@@ -188,7 +216,9 @@
           <span class="text-white border-l border-brand-border pl-3" id="nb-phase">Phase 1: Intake</span>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-brand-muted text-[10px]">Background auto-sync active</span>
+          <!-- BATCH 1: #4 Direct Toggle to Terminal -->
+          <button onclick="switchTab('terminal')" class="text-[10px] text-brand-muted hover:text-white px-2 py-0.5 rounded border border-brand-border bg-brand-surface transition">💻 Terminal</button>
+          <span class="text-brand-muted text-[10px] border-l border-brand-border pl-2">Auto-sync</span>
           <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
         </div>
       </div>
@@ -590,11 +620,20 @@
       const savedPartnerHistory = localStorage.getItem('rest_your_case_partner_history');
       if (savedPartnerHistory) { try { partnerHistory = JSON.parse(savedPartnerHistory); } catch (e) {} }
 
+      // BATCH 1: #17 Load Draft
+      const savedDraft = localStorage.getItem('terminal_draft');
+      if (savedDraft) document.getElementById('court-user-input').value = savedDraft;
+
       renderUI();
     }
     
     function persist() { 
       localStorage.setItem('rest_your_case_state', JSON.stringify(appState)); 
+    }
+
+    // BATCH 1: #17 Save Draft dynamically
+    function saveDraft() {
+      localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);
     }
 
     function renderUI() {
@@ -708,6 +747,10 @@
       partnerHistory = [];
       localStorage.removeItem('rest_your_case_history');
       localStorage.removeItem('rest_your_case_partner_history');
+      
+      // Batch 1: Reset draft on fresh start
+      document.getElementById('court-user-input').value = "";
+      localStorage.removeItem('terminal_draft');
 
       persist(); switchTab('terminal'); renderUI();
 
@@ -757,6 +800,7 @@
       if (!appState.docket || appState.docket.length === 0) { container.innerHTML = `<div class="col-span-full p-4 border border-brand-border border-dashed rounded text-brand-muted text-xs font-mono text-center">No evidence discovered yet.</div>`; return; }
       appState.docket.forEach((item, index) => {
         const isSuppressed = item.status === 'SUPPRESSED';
+        // BATCH 1: #5 Action Tooltips embedded in buttons
         container.innerHTML += `
           <div class="p-3 rounded border ${isSuppressed ? 'bg-brand-surface/20 border-brand-border/40 opacity-50' : 'bg-brand-surface border-brand-border'} space-y-2 font-mono text-xs">
             <div class="flex justify-between items-start gap-2">
@@ -766,9 +810,9 @@
             <p class="text-brand-muted text-[11px] font-sans">${item.facts || item.details || 'No forensic notes.'}</p>
             <div class="flex justify-between items-center pt-2 border-t border-brand-border/50">
               <div class="space-x-1 text-[10px]">
-                <button onclick="setExhibitStatus(${index}, 'Admitted')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-emerald-400">Admit</button>
-                <button onclick="setExhibitStatus(${index}, 'Marked')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-amber-400">Mark</button>
-                <button onclick="setExhibitStatus(${index}, 'SUPPRESSED')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-rose-400">Suppress</button>
+                <button title="Submits this exhibit to the Judge for official admission into the court record." onclick="setExhibitStatus(${index}, 'Admitted')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-emerald-400">Admit</button>
+                <button title="Marks this exhibit for identification so it can be referenced in witness questioning." onclick="setExhibitStatus(${index}, 'Marked')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-amber-400">Mark</button>
+                <button title="Files a formal motion to exclude this evidence from the trial entirely." onclick="setExhibitStatus(${index}, 'SUPPRESSED')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-rose-400">Suppress</button>
               </div><button onclick="deleteExhibit(${index})" class="text-brand-muted hover:text-rose-400 text-[10px]">Del</button>
             </div>
           </div>`;
@@ -873,6 +917,28 @@
       feed.scrollTop = feed.scrollHeight;
     }
 
+    // BATCH 1: #1 Typing Indicator Function
+    function toggleTypingIndicator(feedId, show, label = "Processing") {
+      const feed = document.getElementById(feedId);
+      if (!feed) return;
+      const existing = document.getElementById(feedId + '-typing');
+      if (show && !existing) {
+        const html = `
+          <div id="${feedId}-typing" class="flex flex-col space-y-1 mb-4">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">${label}</span>
+            <div class="text-slate-200 text-sm flex items-center gap-1 mt-1">
+              <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-typingBounce" style="animation-delay: -0.32s"></div>
+              <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-typingBounce" style="animation-delay: -0.16s"></div>
+              <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-typingBounce"></div>
+            </div>
+          </div>`;
+        feed.insertAdjacentHTML('beforeend', html);
+        feed.scrollTop = feed.scrollHeight;
+      } else if (!show && existing) {
+        existing.remove();
+      }
+    }
+
     function handleCourtActionSubmit(e) { e.preventDefault(); const input = document.getElementById('court-user-input'); const val = input.value.trim(); if (!val) return; input.value = ""; sendCourtAction(val, false); }
     function handlePartnerSubmit(e) { e.preventDefault(); const input = document.getElementById('partner-input'); const val = input.value.trim(); if (!val) return; input.value = ""; sendPartnerAction(val); }
     function quickAction(cmd) { const input = document.getElementById('court-user-input'); input.value = cmd; input.focus(); }
@@ -905,6 +971,8 @@
 
       if (!isInit && !isRetry) {
         appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
+        // BATCH 1: #17 Clear Draft when dispatched
+        localStorage.removeItem('terminal_draft');
       } else if (isInit) {
         trialHistory = [];
         localStorage.removeItem('rest_your_case_history');
@@ -913,6 +981,9 @@
       if (userPrompt.trim().toLowerCase().startsWith('/undo') && trialHistory.length >= 2) {
         trialHistory.splice(-2, 2);
       }
+
+      // BATCH 1: #1 Start Typing Animation
+      toggleTypingIndicator('transcript-feed', true, 'Court is Deliberating');
 
       const MAX_RETRIES = 2;
       let attempt = 0;
@@ -956,6 +1027,8 @@
         }
       } finally {
         engineLocked = false;
+        // BATCH 1: #1 Stop Typing Animation
+        toggleTypingIndicator('transcript-feed', false);
         if (statusBadge) statusBadge.innerText = "Active";
         if (submitBtn) submitBtn.disabled = false;
       }
@@ -969,6 +1042,9 @@
       if (submitBtn) submitBtn.disabled = true;
 
       if (!isRetry) appendPartnerMessage("YOU", userPrompt, true);
+
+      // BATCH 1: #1 Start Typing Animation
+      toggleTypingIndicator('partner-feed', true, 'Senior Partner Reviewing');
 
       const MAX_RETRIES = 2;
       let attempt = 0;
@@ -1010,6 +1086,8 @@
         }
       } finally {
         engineLocked = false;
+        // BATCH 1: #1 Stop Typing Animation
+        toggleTypingIndicator('partner-feed', false);
         if (submitBtn) submitBtn.disabled = false;
       }
     }
