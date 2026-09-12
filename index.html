@@ -62,12 +62,13 @@
     </div>
   </header>
 
+  <!-- BATCH 1: #18 Header Marquee -->
   <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
     <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
       ⚖️ TIP: Every major move costs Action Points (AP). Plan carefully. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
       ⚖️ TIP: You cannot Admit an exhibit without laying a foundation first. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
       ⚖️ TIP: Use /inspect on marked exhibits to uncover hidden details. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
-      ⚖️ TIP: Consult your Senior Partner for tactical advice without spending AP.
+      ⚖️ TIP: Consult your Senior Partner or Investigator Diaz without spending AP.
     </div>
   </div>
 
@@ -236,7 +237,7 @@
         <textarea id="attorney-notes" oninput="saveNotes()" placeholder="Draft cross-examinations or connect contradictions here..." class="w-full h-36 bg-brand-surface border border-brand-border rounded p-3 text-xs text-slate-200 font-mono outline-none focus:border-brand-gold/50 resize-none"></textarea>
       </section>
 
-      <!-- BATCH 2: #11 Case Metadata Footer (Replaced Truth Vault per #12) -->
+      <!-- BATCH 2: #11 Case Metadata Footer -->
       <div class="mt-8 border-t border-brand-border pt-4 flex justify-between items-center text-[10px] font-mono text-brand-muted">
         <span>Trial Difficulty: <strong class="text-brand-gold" id="nb-diff">Normal</strong></span>
         <span>Case Complexity: <strong class="text-brand-gold" id="nb-comp">Level 3</strong></span>
@@ -305,10 +306,10 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
-        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">5. Senior Partner Drawer</h2>
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">5. Legal Assistants Drawer</h2>
         <div class="text-sm text-slate-300 space-y-2 font-sans">
-          <p>Stuck? Click the floating <strong class="text-brand-gold uppercase text-[10px] tracking-wider">Partner</strong> tab on the right edge of the screen.</p>
-          <p>This opens a secure, independent chat thread with your firm's senior partner. You can ask for legal advice, bounce case theories around, or ask if a specific objection applies. <strong class="text-emerald-400">Consultations cost 0 AP and 0 Strikes.</strong></p>
+          <p>Stuck? Click the floating <strong class="text-brand-gold uppercase text-[10px] tracking-wider">Assistants</strong> tab on the right edge of the screen.</p>
+          <p>This opens a secure, independent consultation channel with your firm's Senior Partner and Investigator Diaz. You can switch between them with tabs. <strong class="text-emerald-400">Consultations cost 0 AP and 0 Strikes.</strong></p>
         </div>
       </section>
 
@@ -456,22 +457,33 @@
     </div>
   </aside>
 
-  <!-- ================= FLOATING PARTNER DRAWER UI ================= -->
-  <button onclick="togglePartnerDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 bg-brand-surface border border-r-0 border-brand-border hover:border-brand-gold text-brand-gold px-1.5 py-4 rounded-l-md font-mono text-xs z-50 shadow-xl flex items-center transition group">
-    <span class="transform -rotate-90 block whitespace-nowrap text-brand-gold font-bold tracking-widest text-[11px] group-hover:text-white uppercase">Partner</span>
+  <!-- ================= BATCH 3: UNIFIED ASSISTANTS DRAWER UI ================= -->
+  <button onclick="toggleAssistantsDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 bg-brand-surface border border-r-0 border-brand-border hover:border-brand-gold text-brand-gold px-1.5 py-4 rounded-l-md font-mono text-xs z-50 shadow-xl flex items-center transition group">
+    <span class="transform -rotate-90 block whitespace-nowrap text-brand-gold font-bold tracking-widest text-[11px] group-hover:text-white uppercase">Assistants</span>
   </button>
 
-  <div id="partner-drawer" class="fixed right-0 top-0 h-full w-full sm:w-96 bg-brand-dark border-l border-brand-border z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
-    <div class="px-4 py-3 bg-brand-surface border-b border-brand-border flex items-center justify-between">
-      <h3 class="text-xs font-mono font-bold text-brand-gold uppercase tracking-wider">Senior Partner Consultation</h3>
-      <button onclick="togglePartnerDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
+  <div id="assistants-drawer" class="fixed right-0 top-0 h-full w-full sm:w-96 bg-brand-dark border-l border-brand-border z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+    <div class="px-4 py-3 bg-brand-surface border-b border-brand-border flex items-center justify-between shrink-0">
+      <div class="flex gap-2 bg-brand-dark p-1 rounded border border-brand-border font-mono text-[10px]">
+        <button id="tab-partner" onclick="switchAssistantTab('partner')" class="px-3 py-1 rounded bg-brand-surface text-brand-gold font-bold border border-brand-gold/30">Senior Partner</button>
+        <button id="tab-diaz" onclick="switchAssistantTab('diaz')" class="px-3 py-1 rounded text-brand-muted hover:text-slate-200 border border-transparent">Inv. Diaz</button>
+      </div>
+      <button onclick="toggleAssistantsDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
     </div>
+
+    <!-- Partner Feed -->
     <div id="partner-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]">
-      <div class="text-brand-muted text-xs font-mono italic text-center mt-10">Private strategy channel. Consultations do not cost Action Points.</div>
+      <div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private legal strategy channel. Consultations cost 0 AP.</div>
     </div>
-    <form id="partner-form" onsubmit="handlePartnerSubmit(event)" class="p-3 bg-brand-dark border-t border-brand-border flex flex-col gap-2">
-      <input id="partner-input" type="text" placeholder="Ask for tactical advice or case theory..." class="w-full bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
-      <button type="submit" id="partner-submit-btn" class="w-full bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold py-2 rounded text-xs font-mono font-bold transition">Consult Partner</button>
+
+    <!-- Diaz Feed -->
+    <div id="diaz-feed" class="hidden p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]">
+      <div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private investigation channel. Discuss logistics or records.</div>
+    </div>
+
+    <form id="assistant-form" onsubmit="handleAssistantSubmit(event)" class="p-3 bg-brand-dark border-t border-brand-border flex flex-col gap-2 shrink-0">
+      <input id="assistant-input" type="text" placeholder="Ask for tactical advice..." class="w-full bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+      <button type="submit" id="assistant-submit-btn" class="w-full bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold py-2 rounded text-xs font-mono font-bold transition">Consult Partner</button>
     </form>
   </div>
 
@@ -558,14 +570,14 @@
     let appState = {
       hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
-      transcript: [], docket: [], facts: [], 
-      // BATCH 2: Added Metadata properties for Notebook
-      difficulty: 'Normal', complexity: 3, 
+      transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, 
       selectedModel: 'gemini-3.6-flash'
     };
 
     let trialHistory = [];
     let partnerHistory = [];
+    let diazHistory = [];
+    let activeAssistantTab = 'partner';
     let engineLocked = false;
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
@@ -614,10 +626,14 @@
       const savedPartnerHistory = localStorage.getItem('rest_your_case_partner_history');
       if (savedPartnerHistory) { try { partnerHistory = JSON.parse(savedPartnerHistory); } catch (e) {} }
 
+      const savedDiazHistory = localStorage.getItem('rest_your_case_diaz_history');
+      if (savedDiazHistory) { try { diazHistory = JSON.parse(savedDiazHistory); } catch (e) {} }
+
       const savedDraft = localStorage.getItem('terminal_draft');
       if (savedDraft) document.getElementById('court-user-input').value = savedDraft;
 
       renderUI();
+      renderAssistantFeeds();
     }
     
     function persist() { 
@@ -650,7 +666,6 @@
         document.getElementById('nb-phase').innerText = appState.phase;
         document.getElementById('attorney-notes').value = appState.notes || '';
         
-        // BATCH 2: #11 Apply Difficulty and Complexity variables to the footer
         const diffSpan = document.getElementById('nb-diff');
         const compSpan = document.getElementById('nb-comp');
         if(diffSpan) diffSpan.innerText = appState.difficulty || 'Normal';
@@ -732,18 +747,22 @@
       appState = {
         hasActiveCase: true, profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
         phase: "Phase 1: Intake", turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
-        transcript: [], docket: [], facts: [], 
-        // BATCH 2: #11 Save intake variables to app state
-        difficulty: diff, complexity: comp,
+        transcript: [], docket: [], facts: [], difficulty: diff, complexity: comp,
         selectedModel: 'gemini-3.6-flash'
       };
+      
       trialHistory = [];
       partnerHistory = [];
+      diazHistory = [];
+      
       localStorage.removeItem('rest_your_case_history');
       localStorage.removeItem('rest_your_case_partner_history');
-      
+      localStorage.removeItem('rest_your_case_diaz_history');
       document.getElementById('court-user-input').value = "";
       localStorage.removeItem('terminal_draft');
+
+      appendAssistantMessage('partner', 'SENIOR PARTNER', "I've reviewed the preliminary file. Let's coordinate. What's our angle?", false, true);
+      appendAssistantMessage('diaz', 'INV. DIAZ', "Diaz here. Give me a target, a name, or an address, and check your AP before sending me out.", false, true);
 
       persist(); switchTab('terminal'); renderUI();
 
@@ -764,7 +783,32 @@
       if (!menu.classList.contains('hidden') && !menu.contains(event.target) && event.target !== menu.previousElementSibling) { menu.classList.add('hidden'); }
     });
 
-    function togglePartnerDrawer() { document.getElementById('partner-drawer').classList.toggle('translate-x-full'); }
+    function toggleAssistantsDrawer() { document.getElementById('assistants-drawer').classList.toggle('translate-x-full'); }
+    
+    function switchAssistantTab(tabId) {
+      activeAssistantTab = tabId;
+      document.getElementById('partner-feed').classList.toggle('hidden', tabId !== 'partner');
+      document.getElementById('diaz-feed').classList.toggle('hidden', tabId !== 'diaz');
+      
+      const pBtn = document.getElementById('tab-partner');
+      const dBtn = document.getElementById('tab-diaz');
+      
+      if(tabId === 'partner') {
+        pBtn.className = "px-3 py-1 rounded bg-brand-surface text-brand-gold font-bold border border-brand-gold/30";
+        dBtn.className = "px-3 py-1 rounded text-brand-muted hover:text-slate-200 border border-transparent";
+        document.getElementById('assistant-submit-btn').innerText = "Consult Partner";
+        document.getElementById('assistant-input').placeholder = "Ask for tactical advice...";
+      } else {
+        dBtn.className = "px-3 py-1 rounded bg-brand-surface text-brand-gold font-bold border border-brand-gold/30";
+        pBtn.className = "px-3 py-1 rounded text-brand-muted hover:text-slate-200 border border-transparent";
+        document.getElementById('assistant-submit-btn').innerText = "Consult Diaz";
+        document.getElementById('assistant-input').placeholder = "Ask for records or alibi check...";
+      }
+      
+      const feed = document.getElementById(tabId + '-feed');
+      if (feed) feed.scrollTop = feed.scrollHeight;
+    }
+
     function saveNotes() { appState.notes = document.getElementById('attorney-notes').value; persist(); }
     function openWipeModal() { document.getElementById('wipe-confirm-input').value = ''; document.getElementById('wipe-modal').classList.remove('hidden'); }
     function closeWipeModal() { document.getElementById('wipe-modal').classList.add('hidden'); }
@@ -773,8 +817,10 @@
         appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, selectedModel: 'gemini-3.6-flash' };
         trialHistory = [];
         partnerHistory = [];
+        diazHistory = [];
         localStorage.removeItem('rest_your_case_history');
         localStorage.removeItem('rest_your_case_partner_history');
+        localStorage.removeItem('rest_your_case_diaz_history');
         persist(); closeWipeModal(); switchTab('dossier'); renderUI();
       } else { alert("Type exactly 'CONFIRM'"); }
     }
@@ -821,11 +867,7 @@
     }
 
     function parseTranscriptFormat(text) {
-      // BATCH 2: #9 Background parse - Strip the system dockets from the visible UI
       text = text.replace(/`?\[(?:STATE|ROSTER|DOCKET):.*?\]`?/gim, '');
-      
-      // BATCH 2: #13 Filter Hex/Base64 Blocks
-      // Targets long uninterrupted strings (typical of base64 hashes) and replaces them
       text = text.replace(/(?:[A-Za-z0-9+/]{4}){10,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?/g, '<span class="text-[10px] text-brand-muted italic bg-brand-dark px-2 py-0.5 rounded border border-brand-border">[ENCRYPTED TRUTH HASH HIDDEN FROM UI]</span>');
 
       let parsed = text.replace(/^###\s+/gm, ''); 
@@ -845,8 +887,8 @@
       return parsed.replace(/^(<br>)+/, ''); 
     }
 
-    function appendErrorAlert(rawError, lastPrompt, isPartner = false) {
-      const feedId = isPartner ? 'partner-feed' : 'transcript-feed';
+    function appendErrorAlert(rawError, lastPrompt, isAssistant = false) {
+      const feedId = isAssistant ? `${activeAssistantTab}-feed` : 'transcript-feed';
       const feed = document.getElementById(feedId);
       let humanError = "The server link dropped unexpectedly. Check worker availability or resubmit.";
       if (rawError.includes("503") || rawError.includes("high demand") || rawError.includes("UNAVAILABLE")) {
@@ -867,7 +909,7 @@
               <span class="text-rose-400 font-bold text-xs uppercase tracking-wider">Transmission Interrupted</span>
               <button onclick="document.getElementById('${errorId}').classList.toggle('hidden')" class="w-4 h-4 rounded-full bg-rose-900 text-rose-300 text-[10px] font-bold flex items-center justify-center hover:bg-rose-700 transition">!</button>
             </div>
-            <button onclick="retryAction('${encodeURIComponent(lastPrompt)}', ${isPartner})" class="px-2 py-1 bg-rose-900 hover:bg-rose-700 text-white rounded text-[10px] font-mono font-bold transition shadow">Retry</button>
+            <button onclick="retryAction('${encodeURIComponent(lastPrompt)}', ${isAssistant})" class="px-2 py-1 bg-rose-900 hover:bg-rose-700 text-white rounded text-[10px] font-mono font-bold transition shadow">Retry</button>
           </div>
           <p class="text-rose-200 text-xs font-sans">${humanError}</p>
           <div id="${errorId}" class="hidden mt-2 p-2 bg-brand-dark border border-rose-900/50 rounded text-[10px] font-mono text-rose-400 break-words"><strong>Raw Trace:</strong> ${rawError}</div>
@@ -876,9 +918,9 @@
       feed.scrollTop = feed.scrollHeight;
     }
 
-    window.retryAction = function(encodedPrompt, isPartner) {
+    window.retryAction = function(encodedPrompt, isAssistant) {
       const prompt = decodeURIComponent(encodedPrompt);
-      isPartner ? sendPartnerAction(prompt, true) : sendCourtAction(prompt, false, true);
+      isAssistant ? sendAssistantAction(prompt, true) : sendCourtAction(prompt, false, true);
     }
 
     function appendTranscriptMessage(sender, text, isUser = false) {
@@ -903,17 +945,44 @@
       feed.scrollTop = feed.scrollHeight;
     }
 
-    function appendPartnerMessage(sender, text, isUser = false) {
-      const feed = document.getElementById('partner-feed');
-      if (!feed) return;
-      const item = document.createElement('div');
-      item.className = "flex flex-col space-y-1 mb-4";
-      const tagColor = isUser ? "text-brand-muted" : "text-brand-gold";
-      const displayHtml = isUser ? text : parseTranscriptFormat(text);
-      item.innerHTML = `<span class="text-[10px] font-bold ${tagColor} uppercase tracking-wider font-mono">${sender}</span>
-                        <div class="text-slate-200 text-sm leading-relaxed ${isUser ? 'pl-2 border-l border-brand-muted/50 text-brand-muted' : ''}">${displayHtml}</div>`;
-      feed.appendChild(item);
-      feed.scrollTop = feed.scrollHeight;
+    function renderAssistantFeeds() {
+      ['partner', 'diaz'].forEach(tab => {
+        const feed = document.getElementById(`${tab}-feed`);
+        if (!feed) return;
+        const hist = tab === 'partner' ? partnerHistory : diazHistory;
+        
+        const headerText = tab === 'partner' 
+          ? '<div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private legal strategy channel. Consultations cost 0 AP.</div>'
+          : '<div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private investigation channel. Discuss logistics or records.</div>';
+          
+        feed.innerHTML = headerText;
+        
+        hist.forEach(entry => {
+          const isUser = entry.role === 'user';
+          let rawText = entry.parts[0].text;
+          rawText = rawText.replace(/\[(SENIOR PARTNER CONSULTATION|INVESTIGATOR CONSULTATION)\]:\s*/g, '');
+          
+          const senderName = isUser ? 'YOU' : (tab === 'partner' ? 'SENIOR PARTNER' : 'INV. DIAZ');
+          const item = document.createElement('div');
+          item.className = "flex flex-col space-y-1 mb-4";
+          const tagColor = isUser ? "text-brand-muted" : "text-brand-gold";
+          const displayHtml = isUser ? rawText : parseTranscriptFormat(rawText);
+          item.innerHTML = `<span class="text-[10px] font-bold ${tagColor} uppercase tracking-wider font-mono">${senderName}</span>
+                            <div class="text-slate-200 text-sm leading-relaxed ${isUser ? 'pl-2 border-l border-brand-muted/50 text-brand-muted' : ''}">${displayHtml}</div>`;
+          feed.appendChild(item);
+        });
+        feed.scrollTop = feed.scrollHeight;
+      });
+    }
+
+    function appendAssistantMessage(tabId, sender, text, isUser = false, isSeed = false) {
+      const hist = tabId === 'partner' ? partnerHistory : diazHistory;
+      if (isSeed) {
+        hist.push({ role: 'model', parts: [{ text }] });
+        localStorage.setItem(`rest_your_case_${tabId}_history`, JSON.stringify(hist));
+      } else {
+        renderAssistantFeeds();
+      }
     }
 
     function toggleTypingIndicator(feedId, show, label = "Processing") {
@@ -938,7 +1007,7 @@
     }
 
     function handleCourtActionSubmit(e) { e.preventDefault(); const input = document.getElementById('court-user-input'); const val = input.value.trim(); if (!val) return; input.value = ""; sendCourtAction(val, false); }
-    function handlePartnerSubmit(e) { e.preventDefault(); const input = document.getElementById('partner-input'); const val = input.value.trim(); if (!val) return; input.value = ""; sendPartnerAction(val); }
+    function handleAssistantSubmit(e) { e.preventDefault(); const input = document.getElementById('assistant-input'); const val = input.value.trim(); if (!val) return; input.value = ""; sendAssistantAction(val); }
     function quickAction(cmd) { const input = document.getElementById('court-user-input'); input.value = cmd; input.focus(); }
 
     window.onload = initApp;
@@ -997,7 +1066,7 @@
               body: JSON.stringify({ 
                 message: userPrompt, 
                 history: trialHistory, 
-                isInit: isInit,
+                targetPersona: 'court',
                 model: appState.selectedModel || 'gemini-3.6-flash'
               })
             }, 45000);
@@ -1029,58 +1098,68 @@
       }
     }
 
-    async function sendPartnerAction(userPrompt, isRetry = false) {
+    function buildContextCapsule() {
+      if (!appState.hasActiveCase) return "No active case.";
+      const docketStr = (appState.docket || []).map(d => `${d.id}(${d.status})`).join(', ') || 'None';
+      const factStr = (appState.facts || []).join('; ') || 'None established';
+      return `Case: ${appState.profile.title || 'Unknown'} | Phase: ${appState.phase} | Current AP: ${appState.ap} | Strikes: ${appState.strikes}
+Marked Docket: ${docketStr}
+Established Court Facts: ${factStr}`;
+    }
+
+    async function sendAssistantAction(userPrompt, isRetry = false) {
       if (engineLocked) return;
       engineLocked = true;
 
-      const submitBtn = document.getElementById('partner-submit-btn');
+      const submitBtn = document.getElementById('assistant-submit-btn');
       if (submitBtn) submitBtn.disabled = true;
 
-      if (!isRetry) appendPartnerMessage("YOU", userPrompt, true);
+      const tabId = activeAssistantTab;
+      const histArray = tabId === 'partner' ? partnerHistory : diazHistory;
+      const rolePrefix = tabId === 'partner' ? '[SENIOR PARTNER CONSULTATION]: ' : '[INVESTIGATOR CONSULTATION]: ';
+      const typingLabel = tabId === 'partner' ? 'Partner Reviewing' : 'Diaz Investigating';
 
-      toggleTypingIndicator('partner-feed', true, 'Senior Partner Reviewing');
+      if (!isRetry) {
+        histArray.push({ role: 'user', parts: [{ text: rolePrefix + userPrompt }] });
+        renderAssistantFeeds();
+      }
 
-      const MAX_RETRIES = 2;
-      let attempt = 0;
-      let success = false;
+      toggleTypingIndicator(`${tabId}-feed`, true, typingLabel);
 
+      let attempt = 0, success = false;
       try {
-        while (attempt <= MAX_RETRIES && !success) {
+        while (attempt <= 2 && !success) {
           attempt++;
           try {
             const response = await fetchWithTimeout(WORKER_URL, {
-              method: "POST",
+              method: "POST", 
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
-                message: "[SENIOR PARTNER CONSULTATION]: " + userPrompt, 
-                history: partnerHistory, 
-                isInit: false,
+                message: rolePrefix + userPrompt, 
+                history: histArray.slice(0, -1),
+                targetPersona: tabId,
+                capsule: buildContextCapsule(),
                 model: appState.selectedModel || 'gemini-3.6-flash'
               })
-            }, 45000);
+            }, 30000);
 
-            if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-            
+            if (!response.ok) throw new Error(`Worker HTTP ${response.status}`);
             const data = await response.json();
 
-            partnerHistory.push({ role: "user", parts: [{ text: "[SENIOR PARTNER CONSULTATION]: " + userPrompt }] });
-            partnerHistory.push({ role: "model", parts: [{ text: data.reply }] });
-            localStorage.setItem('rest_your_case_partner_history', JSON.stringify(partnerHistory));
-            appendPartnerMessage("SENIOR PARTNER", data.reply.replace(/<!--[\s\S]*?-->/g, "").trim(), false);
+            histArray.push({ role: "model", parts: [{ text: data.reply }] });
+            localStorage.setItem(`rest_your_case_${tabId}_history`, JSON.stringify(histArray));
+            
+            renderAssistantFeeds();
             success = true;
 
           } catch (err) {
-            console.warn(`Partner attempt ${attempt} failed: ${err.message}`);
-            if (attempt <= MAX_RETRIES) {
-              await new Promise(res => setTimeout(res, 1000));
-            } else {
-              appendErrorAlert(err.message, userPrompt, true);
-            }
+            if (attempt > 2) appendErrorAlert(err.message, userPrompt, true);
+            else await new Promise(res => setTimeout(res, 1000));
           }
         }
       } finally {
         engineLocked = false;
-        toggleTypingIndicator('partner-feed', false);
+        toggleTypingIndicator(`${tabId}-feed`, false);
         if (submitBtn) submitBtn.disabled = false;
       }
     }
