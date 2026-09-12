@@ -226,7 +226,7 @@
         <div id="docket-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
       </section>
 
-      <!-- BATCH 4: #6 & #7 Fact Archive & UI Ledgers -->
+      <!-- BATCH 4: Fact Archive & UI Ledgers -->
       <section class="space-y-4">
         <h2 class="text-lg font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">Active Court Record</h2>
         <div id="fact-ledger" class="bg-brand-surface border border-brand-border rounded p-4 font-mono text-xs text-slate-200 space-y-3 min-h-[100px]"></div>
@@ -596,7 +596,6 @@
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
       transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, 
       selectedModel: 'gemini-3.6-flash',
-      // BATCH 4: Added local UI tracking variables
       trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: false
     };
 
@@ -605,10 +604,9 @@
     let diazHistory = [];
     let activeAssistantTab = 'partner';
     let engineLocked = false;
-    let pendingTrashFactId = null; // Used for BATCH 4 modal warning
+    let pendingTrashFactId = null;
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
-    // BATCH 4: Simple string hasher for UI tracking
     function hashFact(str) {
       let hash = 0;
       for (let i = 0; i < str.length; i++) hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
@@ -656,7 +654,6 @@
         try { 
           const parsed = JSON.parse(saved); 
           appState = { ...appState, ...parsed }; 
-          // Ensure BATCH 4 arrays exist for older saves
           if (!appState.trashedFacts) appState.trashedFacts = [];
           if (!appState.hiddenFacts) appState.hiddenFacts = [];
           if (!appState.exhibitNotes) appState.exhibitNotes = {};
@@ -687,7 +684,6 @@
       localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);
     }
 
-    // BATCH 4: Save exhibit specific notes
     window.saveExhibitNote = function(exhibitId, value) {
       if (!exhibitId) return;
       appState.exhibitNotes[exhibitId] = value;
@@ -759,7 +755,6 @@
 
       const factList = document.getElementById('panel-fact-list');
       if (factList) {
-        // BATCH 4: Apply filters for hidden and trashed facts from UI Side Panel
         const visibleFacts = (appState.facts || []).filter(fact => {
           const id = hashFact(fact);
           return !appState.hiddenFacts.includes(id) && !appState.trashedFacts.includes(id);
@@ -768,9 +763,18 @@
         if (visibleFacts.length === 0) {
           factList.innerHTML = `<div class="text-[10px] text-brand-muted italic py-1">Awaiting preliminary statements.</div>`;
         } else {
-          factList.innerHTML = visibleFacts.map(fact => `
-            <div class="py-1 border-b border-brand-border/40 last:border-0">• ${fact}</div>
-          `).join('');
+          factList.innerHTML = visibleFacts.map(fact => {
+            const id = hashFact(fact);
+            return `
+              <div class="py-1 border-b border-brand-border/40 last:border-0 flex justify-between items-start gap-1">
+                <span class="leading-relaxed flex-grow">• ${fact}</span>
+                <div class="flex gap-1 shrink-0 pt-0.5">
+                  <button onclick="toggleFactVisibility('${id}')" class="text-brand-muted hover:text-white px-1 text-[10px]" title="Hide from Terminal">👁</button>
+                  <button onclick="trashFact('${id}')" class="text-brand-muted hover:text-rose-400 px-1 text-[10px]" title="Archive Fact">🗑</button>
+                </div>
+              </div>
+            `;
+          }).join('');
         }
       }
     }
@@ -864,6 +868,7 @@
     }
 
     function saveNotes() { appState.notes = document.getElementById('attorney-notes').value; persist(); }
+    
     function openWipeModal() { document.getElementById('wipe-confirm-input').value = ''; document.getElementById('wipe-modal').classList.remove('hidden'); }
     function closeWipeModal() { document.getElementById('wipe-modal').classList.add('hidden'); }
     function executeWipe() {
@@ -881,7 +886,6 @@
     function openAddExhibitModal() { document.getElementById('exhibit-modal').classList.remove('hidden'); }
     function closeAddExhibitModal() { document.getElementById('exhibit-modal').classList.add('hidden'); document.getElementById('modal-tag').value = ''; document.getElementById('modal-title').value = ''; document.getElementById('modal-details').value = ''; }
     
-    // BATCH 4: Assign isManual flag to preserve entries
     function saveNewExhibit() {
       appState.docket.push({ 
         id: document.getElementById('modal-tag').value.trim() || `Ex. ${appState.docket.length + 1}`, 
@@ -906,7 +910,6 @@
         const tag = item.id || item.tag || '';
         const notes = appState.exhibitNotes[tag] || '';
         
-        // BATCH 4: Lock backend exhibits from manual UI manipulation
         let controlsHtml = '';
         if (item.isManual) {
           controlsHtml = `
@@ -939,7 +942,6 @@
       renderTerminalSidePanel(); 
     }
 
-    // BATCH 4: Fact Visibility Toggles
     window.toggleFactVisibility = function(factId) {
       if (appState.hiddenFacts.includes(factId)) appState.hiddenFacts = appState.hiddenFacts.filter(f => f !== factId);
       else appState.hiddenFacts.push(factId);
@@ -989,7 +991,7 @@
       let activeCount = 0;
       let archiveCount = 0;
 
-      if (appState.facts) {
+      if (appState.facts && appState.facts.length > 0) {
         appState.facts.forEach(fact => {
           const id = hashFact(fact);
           const isHidden = appState.hiddenFacts.includes(id);
@@ -998,18 +1000,22 @@
           if (isTrashed) {
             archiveCount++;
             archiveContainer.innerHTML += `
-              <div class="pb-2 border-b border-brand-border/40 last:border-0 flex justify-between items-start group">
-                <span class="pr-2">• ${fact}</span>
-                <button onclick="restoreFact('${id}')" class="opacity-0 group-hover:opacity-100 text-brand-muted hover:text-emerald-400 text-xs transition" title="Restore to active record">Restore</button>
+              <div class="pb-2 border-b border-brand-border/40 last:border-0 flex justify-between items-start gap-2">
+                <span class="pr-2 line-through text-slate-500">• ${fact}</span>
+                <button onclick="restoreFact('${id}')" class="text-[10px] px-2 py-0.5 rounded border border-emerald-900/50 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900 transition shrink-0" title="Restore to active record">Restore</button>
               </div>`;
           } else {
             activeCount++;
             activeContainer.innerHTML += `
-              <div class="pb-2 border-b border-brand-border/50 last:border-0 flex justify-between items-start group">
-                <span class="pr-2 ${isHidden ? 'opacity-50 line-through' : ''}">• ${fact}</span>
-                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition shrink-0">
-                  <button onclick="toggleFactVisibility('${id}')" class="text-brand-muted hover:text-white" title="${isHidden ? 'Show in Terminal' : 'Hide from Terminal'}">👁</button>
-                  <button onclick="trashFact('${id}')" class="text-brand-muted hover:text-rose-400" title="Move to Archive">🗑</button>
+              <div class="pb-2 border-b border-brand-border/50 last:border-0 flex justify-between items-start gap-2">
+                <span class="pr-2 ${isHidden ? 'opacity-40 line-through' : ''}">• ${fact}</span>
+                <div class="flex gap-1.5 shrink-0 pt-0.5">
+                  <button onclick="toggleFactVisibility('${id}')" class="px-1.5 py-0.5 rounded border border-brand-border bg-brand-dark hover:border-brand-gold text-slate-300 hover:text-white transition text-xs" title="${isHidden ? 'Show in Terminal' : 'Hide from Terminal'}">
+                    ${isHidden ? '🙈' : '👁'}
+                  </button>
+                  <button onclick="trashFact('${id}')" class="px-1.5 py-0.5 rounded border border-brand-border bg-brand-dark hover:border-rose-700 text-slate-400 hover:text-rose-400 transition text-xs" title="Move to Archive">
+                    🗑
+                  </button>
                 </div>
               </div>`;
           }
@@ -1194,6 +1200,7 @@
 
       if (!isInit && !isRetry) {
         appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
+        localStorage.removeItem('terminal_draft');
       } else if (isInit) {
         trialHistory = [];
         localStorage.removeItem('rest_your_case_history');
@@ -1202,6 +1209,8 @@
       if (userPrompt.trim().toLowerCase().startsWith('/undo') && trialHistory.length >= 2) {
         trialHistory.splice(-2, 2);
       }
+
+      toggleTypingIndicator('transcript-feed', true, 'Court is Deliberating');
 
       const MAX_RETRIES = 2;
       let attempt = 0;
@@ -1251,7 +1260,6 @@
       }
     }
 
-    // BATCH 4: Note that we send ALL facts to the backend, ignoring UI trashed/hidden states.
     function buildContextCapsule() {
       if (!appState.hasActiveCase) return "No active case.";
       const docketStr = (appState.docket || []).map(d => `${d.id}(${d.status})`).join(', ') || 'None';
@@ -1335,7 +1343,6 @@ Established Court Facts: ${factStr}`;
           if (stateUpdate.da) appState.profile.da = stateUpdate.da;
           if (stateUpdate.facts) appState.facts = stateUpdate.facts;
           
-          // BATCH 4: Merge incoming backend docket with any existing manually-created items
           if (stateUpdate.docket) {
             const manualItems = (appState.docket || []).filter(d => d.isManual);
             const apiItems = stateUpdate.docket.map(d => ({ ...d, isApi: true }));
