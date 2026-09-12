@@ -62,7 +62,6 @@
     </div>
   </header>
 
-  <!-- BATCH 1: #18 Header Marquee -->
   <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
     <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
       ⚖️ TIP: Every major move costs Action Points (AP). Plan carefully. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
@@ -227,17 +226,25 @@
         <div id="docket-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
       </section>
 
+      <!-- BATCH 4: #6 & #7 Fact Archive & UI Ledgers -->
       <section class="space-y-4">
-        <h2 class="text-lg font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">Established Facts & Rulings</h2>
-        <div id="fact-ledger" class="bg-brand-surface border border-brand-border rounded p-4 font-mono text-xs text-slate-200 space-y-2 min-h-[100px]"></div>
+        <h2 class="text-lg font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">Active Court Record</h2>
+        <div id="fact-ledger" class="bg-brand-surface border border-brand-border rounded p-4 font-mono text-xs text-slate-200 space-y-3 min-h-[100px]"></div>
+        
+        <div class="mt-4">
+          <h3 class="text-sm font-serif text-brand-muted uppercase tracking-wider mb-2 flex items-center gap-2">
+            <span class="text-lg">🗑</span> Defense Archive
+          </h3>
+          <div id="fact-archive-ledger" class="bg-brand-dark border border-brand-border rounded p-4 font-mono text-xs text-brand-muted space-y-3 min-h-[50px] opacity-75"></div>
+        </div>
       </section>
 
       <section class="space-y-2">
-        <h3 class="text-sm font-serif text-white uppercase tracking-wider">Attorney Private Notes</h3>
-        <textarea id="attorney-notes" oninput="saveNotes()" placeholder="Draft cross-examinations or connect contradictions here..." class="w-full h-36 bg-brand-surface border border-brand-border rounded p-3 text-xs text-slate-200 font-mono outline-none focus:border-brand-gold/50 resize-none"></textarea>
+        <h3 class="text-sm font-serif text-white uppercase tracking-wider">Attorney General Theories</h3>
+        <textarea id="attorney-notes" oninput="saveNotes()" placeholder="Draft general cross-examinations or connect contradictions here. Specific exhibit notes can be attached directly to the exhibit card above." class="w-full h-36 bg-brand-surface border border-brand-border rounded p-3 text-xs text-slate-200 font-mono outline-none focus:border-brand-gold/50 resize-none"></textarea>
+        <p class="text-[10px] text-brand-muted font-mono italic">*Private notes. The Court does not recognize unproven defense theories until introduced via testimony or admitted exhibits.</p>
       </section>
 
-      <!-- BATCH 2: #11 Case Metadata Footer -->
       <div class="mt-8 border-t border-brand-border pt-4 flex justify-between items-center text-[10px] font-mono text-brand-muted">
         <span>Trial Difficulty: <strong class="text-brand-gold" id="nb-diff">Normal</strong></span>
         <span>Case Complexity: <strong class="text-brand-gold" id="nb-comp">Level 3</strong></span>
@@ -533,7 +540,24 @@
     </div>
   </div>
 
-  <!-- ================= WIPE & EXHIBIT MODALS ================= -->
+  <!-- ================= BATCH 4: TRASH WARNING MODAL ================= -->
+  <div id="trash-warning-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-brand-surface border border-amber-900/50 rounded max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center gap-2 border-b border-brand-border pb-2">
+        <span class="text-xl text-amber-500">⚠</span>
+        <h3 class="text-amber-500 font-serif text-xl font-bold">Judicial Record Notice</h3>
+      </div>
+      <p class="text-slate-300 text-sm font-sans leading-relaxed">
+        Trashing this fact only removes it from your active desk view. It remains established in the judicial record and can still be cited by the Prosecution or Judge.
+      </p>
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closeTrashWarning()" class="px-4 py-2 text-brand-muted hover:text-white font-mono text-xs">Cancel</button>
+        <button onclick="confirmTrashWarning()" class="px-4 py-2 bg-brand-gold text-brand-dark font-mono text-xs font-bold rounded hover:bg-white">Understood</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= WIPE MODAL ================= -->
   <div id="wipe-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-brand-surface border border-rose-900/50 rounded max-w-md w-full p-6 space-y-4">
       <h3 class="text-rose-400 font-serif text-xl font-bold">Wipe Trial Data?</h3>
@@ -571,7 +595,9 @@
       hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
       transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, 
-      selectedModel: 'gemini-3.6-flash'
+      selectedModel: 'gemini-3.6-flash',
+      // BATCH 4: Added local UI tracking variables
+      trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: false
     };
 
     let trialHistory = [];
@@ -579,7 +605,15 @@
     let diazHistory = [];
     let activeAssistantTab = 'partner';
     let engineLocked = false;
+    let pendingTrashFactId = null; // Used for BATCH 4 modal warning
     const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
+
+    // BATCH 4: Simple string hasher for UI tracking
+    function hashFact(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+      return hash.toString();
+    }
 
     function toggleNavDrawer() {
       document.getElementById('nav-drawer').classList.toggle('-translate-x-full');
@@ -618,7 +652,16 @@
 
     function initApp() {
       const saved = localStorage.getItem('rest_your_case_state');
-      if (saved) { try { appState = JSON.parse(saved); } catch (e) {} }
+      if (saved) { 
+        try { 
+          const parsed = JSON.parse(saved); 
+          appState = { ...appState, ...parsed }; 
+          // Ensure BATCH 4 arrays exist for older saves
+          if (!appState.trashedFacts) appState.trashedFacts = [];
+          if (!appState.hiddenFacts) appState.hiddenFacts = [];
+          if (!appState.exhibitNotes) appState.exhibitNotes = {};
+        } catch (e) {} 
+      }
       
       const savedHistory = localStorage.getItem('rest_your_case_history');
       if (savedHistory) { try { trialHistory = JSON.parse(savedHistory); } catch (e) {} }
@@ -642,6 +685,13 @@
 
     function saveDraft() {
       localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);
+    }
+
+    // BATCH 4: Save exhibit specific notes
+    window.saveExhibitNote = function(exhibitId, value) {
+      if (!exhibitId) return;
+      appState.exhibitNotes[exhibitId] = value;
+      persist();
     }
 
     function renderUI() {
@@ -709,10 +759,16 @@
 
       const factList = document.getElementById('panel-fact-list');
       if (factList) {
-        if (!appState.facts || appState.facts.length === 0) {
+        // BATCH 4: Apply filters for hidden and trashed facts from UI Side Panel
+        const visibleFacts = (appState.facts || []).filter(fact => {
+          const id = hashFact(fact);
+          return !appState.hiddenFacts.includes(id) && !appState.trashedFacts.includes(id);
+        });
+
+        if (visibleFacts.length === 0) {
           factList.innerHTML = `<div class="text-[10px] text-brand-muted italic py-1">Awaiting preliminary statements.</div>`;
         } else {
-          factList.innerHTML = appState.facts.map(fact => `
+          factList.innerHTML = visibleFacts.map(fact => `
             <div class="py-1 border-b border-brand-border/40 last:border-0">• ${fact}</div>
           `).join('');
         }
@@ -748,13 +804,11 @@
         hasActiveCase: true, profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
         phase: "Phase 1: Intake", turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
         transcript: [], docket: [], facts: [], difficulty: diff, complexity: comp,
-        selectedModel: 'gemini-3.6-flash'
+        selectedModel: 'gemini-3.6-flash',
+        trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: appState.hasSeenTrashWarning
       };
       
-      trialHistory = [];
-      partnerHistory = [];
-      diazHistory = [];
-      
+      trialHistory = []; partnerHistory = []; diazHistory = [];
       localStorage.removeItem('rest_your_case_history');
       localStorage.removeItem('rest_your_case_partner_history');
       localStorage.removeItem('rest_your_case_diaz_history');
@@ -814,22 +868,31 @@
     function closeWipeModal() { document.getElementById('wipe-modal').classList.add('hidden'); }
     function executeWipe() {
       if (document.getElementById('wipe-confirm-input').value === 'CONFIRM') {
-        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, selectedModel: 'gemini-3.6-flash' };
-        trialHistory = [];
-        partnerHistory = [];
-        diazHistory = [];
+        const warningState = appState.hasSeenTrashWarning;
+        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, selectedModel: 'gemini-3.6-flash', trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: warningState };
+        trialHistory = []; partnerHistory = []; diazHistory = [];
         localStorage.removeItem('rest_your_case_history');
         localStorage.removeItem('rest_your_case_partner_history');
         localStorage.removeItem('rest_your_case_diaz_history');
         persist(); closeWipeModal(); switchTab('dossier'); renderUI();
       } else { alert("Type exactly 'CONFIRM'"); }
     }
+    
     function openAddExhibitModal() { document.getElementById('exhibit-modal').classList.remove('hidden'); }
     function closeAddExhibitModal() { document.getElementById('exhibit-modal').classList.add('hidden'); document.getElementById('modal-tag').value = ''; document.getElementById('modal-title').value = ''; document.getElementById('modal-details').value = ''; }
+    
+    // BATCH 4: Assign isManual flag to preserve entries
     function saveNewExhibit() {
-      appState.docket.push({ id: document.getElementById('modal-tag').value.trim() || `Ex. ${appState.docket.length + 1}`, name: document.getElementById('modal-title').value.trim() || 'Untitled', facts: document.getElementById('modal-details').value.trim(), status: 'Admitted' });
+      appState.docket.push({ 
+        id: document.getElementById('modal-tag').value.trim() || `Ex. ${appState.docket.length + 1}`, 
+        name: document.getElementById('modal-title').value.trim() || 'Untitled', 
+        facts: document.getElementById('modal-details').value.trim(), 
+        status: 'Admitted',
+        isManual: true 
+      });
       renderDocket(); persist(); closeAddExhibitModal();
     }
+    
     function setExhibitStatus(index, newStatus) { appState.docket[index].status = newStatus; renderDocket(); persist(); }
     function deleteExhibit(index) { appState.docket.splice(index, 1); renderDocket(); persist(); }
 
@@ -837,32 +900,125 @@
       const container = document.getElementById('docket-list');
       if (!container) return; container.innerHTML = '';
       if (!appState.docket || appState.docket.length === 0) { container.innerHTML = `<div class="col-span-full p-4 border border-brand-border border-dashed rounded text-brand-muted text-xs font-mono text-center">No evidence discovered yet.</div>`; return; }
+      
       appState.docket.forEach((item, index) => {
         const isSuppressed = item.status === 'SUPPRESSED';
-        container.innerHTML += `
-          <div class="p-3 rounded border ${isSuppressed ? 'bg-brand-surface/20 border-brand-border/40 opacity-50' : 'bg-brand-surface border-brand-border'} space-y-2 font-mono text-xs">
-            <div class="flex justify-between items-start gap-2">
-              <span class="font-bold ${isSuppressed ? 'text-brand-muted line-through' : 'text-brand-gold'}">${item.id || item.tag}: ${item.name || item.title}</span>
-              <span class="text-[10px] px-2 py-0.5 rounded font-bold whitespace-nowrap ${item.status === 'Admitted' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : item.status === 'Marked' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}">${item.status || 'Logged'}</span>
-            </div>
-            <p class="text-brand-muted text-[11px] font-sans">${item.facts || item.details || 'No forensic notes.'}</p>
-            <div class="flex justify-between items-center pt-2 border-t border-brand-border/50">
+        const tag = item.id || item.tag || '';
+        const notes = appState.exhibitNotes[tag] || '';
+        
+        // BATCH 4: Lock backend exhibits from manual UI manipulation
+        let controlsHtml = '';
+        if (item.isManual) {
+          controlsHtml = `
+            <div class="flex justify-between items-center pt-2 border-t border-brand-border/50 mt-2">
               <div class="space-x-1 text-[10px]">
-                <button title="Submits this exhibit to the Judge for official admission into the court record." onclick="setExhibitStatus(${index}, 'Admitted')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-emerald-400">Admit</button>
-                <button title="Marks this exhibit for identification so it can be referenced in witness questioning." onclick="setExhibitStatus(${index}, 'Marked')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-amber-400">Mark</button>
-                <button title="Files a formal motion to exclude this evidence from the trial entirely." onclick="setExhibitStatus(${index}, 'SUPPRESSED')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-rose-400">Suppress</button>
+                <button title="Manually override to Admitted" onclick="setExhibitStatus(${index}, 'Admitted')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-emerald-400">Admit</button>
+                <button title="Manually override to Marked" onclick="setExhibitStatus(${index}, 'Marked')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-amber-400">Mark</button>
+                <button title="Manually override to Suppress" onclick="setExhibitStatus(${index}, 'SUPPRESSED')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-rose-400">Suppress</button>
               </div><button onclick="deleteExhibit(${index})" class="text-brand-muted hover:text-rose-400 text-[10px]">Del</button>
             </div>
+          `;
+        }
+
+        container.innerHTML += `
+          <div class="p-3 rounded border flex flex-col ${isSuppressed ? 'bg-brand-surface/20 border-brand-border/40 opacity-50' : 'bg-brand-surface border-brand-border'} space-y-2 font-mono text-xs">
+            <div class="flex justify-between items-start gap-2">
+              <span class="font-bold ${isSuppressed ? 'text-brand-muted line-through' : 'text-brand-gold'}">${item.id || item.tag}: ${item.name || item.title}</span>
+              <div class="flex flex-col items-end gap-1">
+                <span class="text-[9px] px-2 py-0.5 rounded font-bold whitespace-nowrap ${item.status === 'Admitted' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : item.status === 'Marked' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}">${item.status || 'Logged'}</span>
+                ${item.isApi ? '<span class="text-[8px] text-brand-muted uppercase tracking-widest" title="Generated by Court Engine">Locked</span>' : '<span class="text-[8px] text-brand-gold uppercase tracking-widest" title="Added Manually">Manual</span>'}
+              </div>
+            </div>
+            <p class="text-brand-muted text-[11px] font-sans flex-grow">${item.facts || item.details || 'No forensic notes.'}</p>
+            <div class="mt-2 pt-2 border-t border-brand-border/30">
+              <textarea placeholder="Defense Annotations..." data-exid="${tag}" onchange="saveExhibitNote(this.dataset.exid, this.value)" class="w-full bg-brand-dark border border-brand-border rounded p-1.5 text-slate-300 text-[10px] font-mono outline-none resize-none focus:border-brand-gold" rows="2">${notes}</textarea>
+            </div>
+            ${controlsHtml}
           </div>`;
       });
       renderTerminalSidePanel(); 
     }
 
+    // BATCH 4: Fact Visibility Toggles
+    window.toggleFactVisibility = function(factId) {
+      if (appState.hiddenFacts.includes(factId)) appState.hiddenFacts = appState.hiddenFacts.filter(f => f !== factId);
+      else appState.hiddenFacts.push(factId);
+      persist(); renderUI();
+    }
+
+    window.trashFact = function(factId) {
+      if (!appState.hasSeenTrashWarning) {
+        pendingTrashFactId = factId;
+        document.getElementById('trash-warning-modal').classList.remove('hidden');
+      } else {
+        executeTrashFact(factId);
+      }
+    }
+
+    window.closeTrashWarning = function() {
+      pendingTrashFactId = null;
+      document.getElementById('trash-warning-modal').classList.add('hidden');
+    }
+
+    window.confirmTrashWarning = function() {
+      appState.hasSeenTrashWarning = true;
+      document.getElementById('trash-warning-modal').classList.add('hidden');
+      if (pendingTrashFactId) executeTrashFact(pendingTrashFactId);
+      pendingTrashFactId = null;
+    }
+
+    window.executeTrashFact = function(factId) {
+      if (!appState.trashedFacts.includes(factId)) appState.trashedFacts.push(factId);
+      appState.hiddenFacts = appState.hiddenFacts.filter(f => f !== factId);
+      persist(); renderUI();
+    }
+
+    window.restoreFact = function(factId) {
+      appState.trashedFacts = appState.trashedFacts.filter(f => f !== factId);
+      persist(); renderUI();
+    }
+
     function renderFactLedger() {
-      const container = document.getElementById('fact-ledger');
-      if (!container) return; container.innerHTML = '';
-      if (!appState.facts || appState.facts.length === 0) { container.innerHTML = `<span class="text-brand-muted italic">Awaiting witness statements and rulings...</span>`; return; }
-      appState.facts.forEach(fact => { container.innerHTML += `<div class="pb-2 border-b border-brand-border/50 last:border-0 mb-2">• ${fact}</div>`; });
+      const activeContainer = document.getElementById('fact-ledger');
+      const archiveContainer = document.getElementById('fact-archive-ledger');
+      if (!activeContainer || !archiveContainer) return; 
+      
+      activeContainer.innerHTML = '';
+      archiveContainer.innerHTML = '';
+      
+      let activeCount = 0;
+      let archiveCount = 0;
+
+      if (appState.facts) {
+        appState.facts.forEach(fact => {
+          const id = hashFact(fact);
+          const isHidden = appState.hiddenFacts.includes(id);
+          const isTrashed = appState.trashedFacts.includes(id);
+
+          if (isTrashed) {
+            archiveCount++;
+            archiveContainer.innerHTML += `
+              <div class="pb-2 border-b border-brand-border/40 last:border-0 flex justify-between items-start group">
+                <span class="pr-2">• ${fact}</span>
+                <button onclick="restoreFact('${id}')" class="opacity-0 group-hover:opacity-100 text-brand-muted hover:text-emerald-400 text-xs transition" title="Restore to active record">Restore</button>
+              </div>`;
+          } else {
+            activeCount++;
+            activeContainer.innerHTML += `
+              <div class="pb-2 border-b border-brand-border/50 last:border-0 flex justify-between items-start group">
+                <span class="pr-2 ${isHidden ? 'opacity-50 line-through' : ''}">• ${fact}</span>
+                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition shrink-0">
+                  <button onclick="toggleFactVisibility('${id}')" class="text-brand-muted hover:text-white" title="${isHidden ? 'Show in Terminal' : 'Hide from Terminal'}">👁</button>
+                  <button onclick="trashFact('${id}')" class="text-brand-muted hover:text-rose-400" title="Move to Archive">🗑</button>
+                </div>
+              </div>`;
+          }
+        });
+      }
+
+      if (activeCount === 0) activeContainer.innerHTML = `<span class="text-brand-muted italic">Awaiting witness statements and rulings...</span>`;
+      if (archiveCount === 0) archiveContainer.innerHTML = `<span class="text-brand-muted/50 italic">Archive empty.</span>`;
+      
       renderTerminalSidePanel(); 
     }
 
@@ -1038,7 +1194,6 @@
 
       if (!isInit && !isRetry) {
         appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
-        localStorage.removeItem('terminal_draft');
       } else if (isInit) {
         trialHistory = [];
         localStorage.removeItem('rest_your_case_history');
@@ -1047,8 +1202,6 @@
       if (userPrompt.trim().toLowerCase().startsWith('/undo') && trialHistory.length >= 2) {
         trialHistory.splice(-2, 2);
       }
-
-      toggleTypingIndicator('transcript-feed', true, 'Court is Deliberating');
 
       const MAX_RETRIES = 2;
       let attempt = 0;
@@ -1098,6 +1251,7 @@
       }
     }
 
+    // BATCH 4: Note that we send ALL facts to the backend, ignoring UI trashed/hidden states.
     function buildContextCapsule() {
       if (!appState.hasActiveCase) return "No active case.";
       const docketStr = (appState.docket || []).map(d => `${d.id}(${d.status})`).join(', ') || 'None';
@@ -1179,8 +1333,14 @@ Established Court Facts: ${factStr}`;
           if (stateUpdate.clientName) appState.profile.client = stateUpdate.clientName; 
           if (stateUpdate.judge) appState.profile.judge = stateUpdate.judge;
           if (stateUpdate.da) appState.profile.da = stateUpdate.da;
-          if (stateUpdate.docket) appState.docket = stateUpdate.docket;
           if (stateUpdate.facts) appState.facts = stateUpdate.facts;
+          
+          // BATCH 4: Merge incoming backend docket with any existing manually-created items
+          if (stateUpdate.docket) {
+            const manualItems = (appState.docket || []).filter(d => d.isManual);
+            const apiItems = stateUpdate.docket.map(d => ({ ...d, isApi: true }));
+            appState.docket = [...apiItems, ...manualItems];
+          }
         } catch (e) { console.error("Checkpoint parse error", e); }
       } else if (appState.hasActiveCase) { appState.turn++; }
 
