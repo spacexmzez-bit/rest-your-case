@@ -271,6 +271,7 @@
 
       <div class="mt-8 border-t border-brand-border pt-4 flex justify-between items-center text-[10px] font-mono text-brand-muted">
         <span>Trial Difficulty: <strong class="text-brand-gold" id="nb-diff">Normal</strong></span>
+        <span>Active Model: <strong class="text-brand-gold" id="nb-model">3.8 Flash</strong></span>
         <span>Case Complexity: <strong class="text-brand-gold" id="nb-comp">Level 3</strong></span>
       </div>
     </div>
@@ -750,6 +751,16 @@
           statusBadge.innerText = `Active (${text})`;
         } else {
           statusBadge.innerText = "Active";
+        }
+      }
+
+      const modelSpan = document.getElementById('nb-model');
+      if (modelSpan) {
+        if (appState.selectedModel) {
+          let clean = appState.selectedModel.replace('gemini-', '').replace('-flash', ' Flash').replace('-pro', ' Pro');
+          modelSpan.innerText = clean;
+        } else {
+          modelSpan.innerText = "3.8 Flash";
         }
       }
     }
