@@ -1,1 +1,603 @@
-empty
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Rest Your Case | Legal Reference Manual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#C5A880',
+              crimson: '#8B263E',
+              dark: '#0B0D10',
+              surface: '#15191E',
+              border: '#232932',
+              muted: '#7E8B9B'
+            }
+          },
+          fontFamily: {
+            serif: ['Georgia', 'serif'],
+            mono: ['Courier New', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B0D10;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #232932;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #C5A880;
+    }
+  </style>
+</head>
+<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden">
+
+  <!-- ================= TOP HUD NAV ================= -->
+  <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
+    <div class="max-w-7xl mx-auto px-4 min-h-14 py-2 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <span class="text-brand-gold text-lg">⚖</span>
+        <div>
+          <span class="font-serif tracking-wide text-white uppercase text-sm font-bold block leading-none">Rest Your Case</span>
+          <span class="text-[10px] font-mono text-brand-gold uppercase tracking-widest">Legal Reference Manual</span>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2 font-mono text-xs">
+        <a href="index.html" class="px-3 py-1.5 rounded bg-brand-surface border border-brand-border text-brand-muted hover:text-white hover:border-brand-gold transition flex items-center gap-1.5 shadow-sm">
+          <span>←</span>
+          <span>Courtroom Bench</span>
+        </a>
+        <button onclick="window.close()" class="px-2.5 py-1.5 rounded bg-brand-dark border border-brand-border text-brand-muted hover:text-rose-400 hover:border-rose-900 transition" title="Close Reference Tab">
+          ✕ Close
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= SEARCH & CATEGORY CONTROLS ================= -->
+  <div class="border-b border-brand-border bg-[#0e1115] sticky top-14 z-30 py-3 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3">
+      <!-- Search Input -->
+      <div class="relative w-full md:max-w-md">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-brand-muted text-xs font-mono">🔍</span>
+        <input 
+          id="search-input" 
+          type="text" 
+          placeholder="Search rules, amendments, charges, or keywords (e.g. FRE 802, hearsay, 4th, murder)..." 
+          oninput="handleSearch()"
+          class="w-full bg-brand-surface border border-brand-border rounded pl-8 pr-8 py-2 text-xs text-white font-mono outline-none focus:border-brand-gold transition shadow-inner placeholder-slate-500"
+        />
+        <button 
+          id="search-clear" 
+          onclick="clearSearch()" 
+          class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-white font-mono text-xs">
+          ✕
+        </button>
+      </div>
+
+      <!-- Filter Category Buttons -->
+      <div class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto font-mono text-[11px] pb-1 md:pb-0">
+        <button onclick="setCategory('all')" id="btn-cat-all" class="cat-btn px-2.5 py-1 rounded bg-brand-border text-white border border-brand-gold/40 transition whitespace-nowrap">All Items</button>
+        <button onclick="setCategory('fre')" id="btn-cat-fre" class="cat-btn px-2.5 py-1 rounded bg-brand-surface border border-brand-border text-brand-muted hover:text-white hover:border-brand-gold transition whitespace-nowrap">Evidence (FRE)</button>
+        <button onclick="setCategory('const')" id="btn-cat-const" class="cat-btn px-2.5 py-1 rounded bg-brand-surface border border-brand-border text-brand-muted hover:text-white hover:border-brand-gold transition whitespace-nowrap">Constitutional</button>
+        <button onclick="setCategory('statute')" id="btn-cat-statute" class="cat-btn px-2.5 py-1 rounded bg-brand-surface border border-brand-border text-brand-muted hover:text-white hover:border-brand-gold transition whitespace-nowrap">Statutory Crimes</button>
+        <button onclick="setCategory('tactics')" id="btn-cat-tactics" class="cat-btn px-2.5 py-1 rounded bg-brand-surface border border-brand-border text-brand-muted hover:text-white hover:border-brand-gold transition whitespace-nowrap">Trial Tactics</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN CONTENT MANUAL ================= -->
+  <main class="max-w-7xl mx-auto px-4 py-8 space-y-10 flex-grow w-full">
+
+    <!-- Active Result Count Notice -->
+    <div id="filter-status" class="hidden text-xs font-mono text-brand-gold flex items-center justify-between border-b border-brand-border pb-2">
+      <span id="filter-count-text">Found 0 matching reference entries</span>
+      <button onclick="clearAllFilters()" class="text-brand-muted hover:text-white underline">Reset Filters</button>
+    </div>
+
+    <!-- Empty State Message -->
+    <div id="no-results-view" class="hidden py-16 text-center space-y-3 font-mono">
+      <div class="text-4xl text-brand-muted">⚖</div>
+      <h3 class="text-white text-base">No matching legal references found</h3>
+      <p class="text-brand-muted text-xs max-w-md mx-auto">Try searching for a rule number (e.g., "802", "403"), a legal concept ("speculation", "fruit"), or reset your category filter.</p>
+      <button onclick="clearAllFilters()" class="mt-2 px-3 py-1.5 bg-brand-surface border border-brand-gold text-brand-gold text-xs rounded hover:bg-brand-gold hover:text-brand-dark transition">Clear Filters</button>
+    </div>
+
+    <!-- SECTION 1: CONSTITUTIONAL & PROCEDURAL PROTECTIONS -->
+    <section id="section-const" class="reference-section space-y-4">
+      <div class="border-b border-brand-border pb-2 flex justify-between items-end">
+        <div>
+          <h2 class="text-xl font-serif text-white uppercase tracking-wider">1. Constitutional & Procedural Safeguards</h2>
+          <p class="text-xs text-brand-muted font-mono mt-0.5">Foundational standards governing criminal prosecutions under the Bill of Rights.</p>
+        </div>
+        <span class="text-brand-gold font-mono text-[10px] uppercase tracking-widest hidden sm:inline">Defense Prerogatives</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Burden of Proof Card -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-2 flex flex-col justify-between" data-category="const" data-keywords="burden proof innocence state reasonable doubt presumption in dubio pro reo">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase tracking-wide">Burden of Proof</h3>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-dark border border-brand-border text-brand-muted">Core Standard</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">The defense carries zero legal obligation to prove innocence. The prosecution bears the unwavering burden to prove every statutory element <em class="text-white font-semibold">beyond a reasonable doubt</em>.</p>
+          </div>
+          <div class="pt-2 border-t border-brand-border/40 text-[10px] font-mono text-brand-muted">
+            Tactical Mandate: Focus on dismantling the coherence of the State's narrative rather than manufacturing complex alternative timelines.
+          </div>
+        </article>
+
+        <!-- Exclusionary Rule Card -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-2 flex flex-col justify-between" data-category="const" data-keywords="exclusionary rule fruit poisonous tree 4th fourth amendment warrant illegal warrantless search suppression motion">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase tracking-wide">Fourth Amendment: Search & Seizure</h3>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-dark border border-brand-border text-brand-muted">4th Amend.</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">Protects against unreasonable government searches. Evidence obtained without probable cause, a valid warrant, or an established exception constitutes <em class="text-white">Fruit of the Poisonous Tree</em>.</p>
+          </div>
+          <div class="pt-2 border-t border-brand-border/40 text-[10px] font-mono text-brand-muted">
+            Procedural Tool: File a formal Pre-Trial Motion to Suppress to excise tainted discovery from the jury docket.
+          </div>
+        </article>
+
+        <!-- Brady Material Card -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-2 flex flex-col justify-between" data-category="const" data-keywords="brady material exculpatory evidence disclosure violation giglio impeachment prosecution due process 14th fourteenth">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase tracking-wide">Brady Material (Due Process)</h3>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-dark border border-brand-border text-brand-muted">14th Amend.</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">The prosecution is constitutionally mandated under <em class="text-white">Brady v. Maryland</em> to surrender all exculpatory or impeachment evidence favorable to the defense upon receipt.</p>
+          </div>
+          <div class="pt-2 border-t border-brand-border/40 text-[10px] font-mono text-brand-muted">
+            Remedy: Intentional withholding warrants immediate Judicial Sanctions, evidence exclusion, or dismissal with prejudice.
+          </div>
+        </article>
+
+        <!-- Fifth Amendment Card -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-2 flex flex-col justify-between" data-category="const" data-keywords="fifth amendment 5th miranda silence confession self incrimination coercion interrogation holding custody">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase tracking-wide">Fifth Amendment: Self-Incrimination</h3>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-dark border border-brand-border text-brand-muted">5th Amend.</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">Bars coerced confessions and protects the defendant's absolute right to remain silent. Custodial interrogations conducted absent voluntary <em class="text-white">Miranda waivers</em> are inadmissible in the State's case-in-chief.</p>
+          </div>
+          <div class="pt-2 border-t border-brand-border/40 text-[10px] font-mono text-brand-muted">
+            Trial Note: The prosecutor cannot comment on or invite the jury to draw negative inferences from a defendant's silence.
+          </div>
+        </article>
+
+        <!-- Sixth Amendment Card -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-2 flex flex-col justify-between" data-category="const" data-keywords="sixth amendment 6th confrontation clause cross examination counsel witness face to face testimonial hearsay crawford">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase tracking-wide">Sixth Amendment: Confrontation Clause</h3>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-dark border border-brand-border text-brand-muted">6th Amend.</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">Guarantees the accused the constitutional right to confront and cross-examine adverse witnesses face-to-face. Out-of-court testimonial statements cannot substitute for live cross-examination (<em class="text-white">Crawford v. Washington</em>).</p>
+          </div>
+          <div class="pt-2 border-t border-brand-border/40 text-[10px] font-mono text-brand-muted">
+            Strategic Deploy: Strike recorded police interviews of non-testifying co-defendants or absent accusers.
+          </div>
+        </article>
+
+        <!-- Chain of Custody Card -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-2 flex flex-col justify-between" data-category="const" data-keywords="chain custody tampering forensic evidence authenticity integrity lab locker contamination handling">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase tracking-wide">Evidentiary Chain of Custody</h3>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-dark border border-brand-border text-brand-muted">Forensic Rule</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">The State must establish an unbroken custodial chain accounting for every officer, technician, and vault keeper who possessed physical evidence from initial seizure to courtroom introduction.</p>
+          </div>
+          <div class="pt-2 border-t border-brand-border/40 text-[10px] font-mono text-brand-muted">
+            Command Directive: Run `/inspect` on marked forensic exhibits to expose logging lapses or unsealed locker transfers.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SECTION 2: FEDERAL RULES OF EVIDENCE & OBJECTION MATRIX -->
+    <section id="section-fre" class="reference-section space-y-4 pt-4 border-t border-brand-border">
+      <div class="border-b border-brand-border pb-2 flex justify-between items-end">
+        <div>
+          <h2 class="text-xl font-serif text-white uppercase tracking-wider">2. Federal Rules of Evidence (FRE Matrix)</h2>
+          <p class="text-xs text-brand-muted font-mono mt-0.5">Statutory courtroom objection triggers. Deployable via the `!` button in the Live Terminal.</p>
+        </div>
+        <span class="text-brand-gold font-mono text-[10px] uppercase tracking-widest hidden sm:inline">Active Objection Keys</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- FRE 802 Hearsay -->
+        <article class="reference-card bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md flex flex-col justify-between" data-category="fre" data-keywords="fre 801 802 hearsay out of court statement truth of the matter asserted declarant excited utterance present sense impression business records">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-white font-bold font-mono text-sm">FRE 801 / 802: Hearsay</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-900">High Frequency</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed"><strong class="text-brand-gold">Trigger:</strong> A witness recounts an oral or written statement made outside the courtroom by a third party, offered specifically to prove the factual truth of what was asserted.</p>
+            <p class="text-xs text-brand-muted font-sans"><strong class="text-white">State Rebuttals / Exceptions:</strong> Present Sense Impression (FRE 803(1)), Excited Utterance under stress (FRE 803(2)), Opposing Party Admission (FRE 801(d)(2)), or Regularly Kept Business Records (FRE 803(6)).</p>
+          </div>
+          <div class="text-[10px] text-brand-gold font-mono pt-2 border-t border-brand-border mt-2">
+            Defense Action: Force the prosecutor to articulate the exact statutory exception or strike the testimony.
+          </div>
+        </article>
+
+        <!-- FRE 611(c) Leading -->
+        <article class="reference-card bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md flex flex-col justify-between" data-category="fre" data-keywords="fre 611 611c leading direct examination suggestion feeding answers hostile witness">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-white font-bold font-mono text-sm">FRE 611(c): Leading on Direct</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-surface text-brand-gold border border-brand-border">Form Objection</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed"><strong class="text-brand-gold">Trigger:</strong> On direct examination of their own friendly witness, the prosecutor frames a question that suggests or embeds the desired factual answer.</p>
+            <p class="text-xs text-brand-muted font-sans"><strong class="text-white">Rule Dynamics:</strong> Leading is prohibited on direct examination except for introductory foundational background. Leading is explicitly <em>permitted</em> during defense cross-examination.</p>
+          </div>
+          <div class="text-[10px] text-brand-gold font-mono pt-2 border-t border-brand-border mt-2">
+            Defense Action: Compel the DA to ask neutral, open-ended interrogatories ("Who, what, when, where, describe").
+          </div>
+        </article>
+
+        <!-- FRE 602 Speculation / Lack of Personal Knowledge -->
+        <article class="reference-card bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md flex flex-col justify-between" data-category="fre" data-keywords="fre 602 speculation personal knowledge perception sensory foundation guess state of mind">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-white font-bold font-mono text-sm">FRE 602: Speculation / Lack of Foundation</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-surface text-brand-gold border border-brand-border">Competency</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed"><strong class="text-brand-gold">Trigger:</strong> The witness testifies to matters beyond their direct first-hand sensory perception, guesses motives, or attempts to read another person's subjective state of mind.</p>
+            <p class="text-xs text-brand-muted font-sans"><strong class="text-white">Rule Dynamics:</strong> A witness may only testify to facts they personally observed through sight, hearing, smell, or physical presence.</p>
+          </div>
+          <div class="text-[10px] text-brand-gold font-mono pt-2 border-t border-brand-border mt-2">
+            Defense Action: "Objection, lack of foundation. The witness has shown no personal knowledge of the defendant's thoughts."
+          </div>
+        </article>
+
+        <!-- FRE 403 Unfair Prejudice -->
+        <article class="reference-card bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md flex flex-col justify-between" data-category="fre" data-keywords="fre 403 prejudice unfair inflammatory gruesome sensational misleading confusion waste time balancing test probative value">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-white font-bold font-mono text-sm">FRE 403: Unfair Prejudice vs. Probative Value</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-900">Exclusionary</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed"><strong class="text-brand-gold">Trigger:</strong> The proffered exhibit or testimony carries slight genuine evidentiary value, but serves overwhelmingly to inflame the passions, bias, or disgust of the jury.</p>
+            <p class="text-xs text-brand-muted font-sans"><strong class="text-white">Balancing Standard:</strong> Excluded if its probative weight is substantially outweighed by danger of unfair prejudice, confusing the issues, or misleading the panel.</p>
+          </div>
+          <div class="text-[10px] text-brand-gold font-mono pt-2 border-t border-brand-border mt-2">
+            Defense Action: Block inflammatory autopsy imagery or unrelated sensational conduct through bench side-bars.
+          </div>
+        </article>
+
+        <!-- FRE 404(b) Character Evidence -->
+        <article class="reference-card bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md flex flex-col justify-between" data-category="fre" data-keywords="fre 404 404b improper character propensity prior bad acts past criminal records arrest history propensity rule">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-white font-bold font-mono text-sm">FRE 404(b): Improper Character / Propensity</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-surface text-brand-gold border border-brand-border">Character Rule</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed"><strong class="text-brand-gold">Trigger:</strong> The prosecution attempts to introduce previous arrests, convictions, or uncharged immoral deeds to argue the defendant has a criminal disposition and must be guilty here.</p>
+            <p class="text-xs text-brand-muted font-sans"><strong class="text-white">Exceptions (MIMIC):</strong> Prior bad acts may only be introduced to demonstrate Motive, Intent, Mistake absence, Identity, or Common Scheme.</p>
+          </div>
+          <div class="text-[10px] text-brand-gold font-mono pt-2 border-t border-brand-border mt-2">
+            Defense Action: Demand an immediate curative limiting instruction or move for mistrial if character prejudice is fatal.
+          </div>
+        </article>
+
+        <!-- FRE 401/402 Relevance -->
+        <article class="reference-card bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md flex flex-col justify-between" data-category="fre" data-keywords="fre 401 402 relevance irrelevance probative material consequential fact tend to prove">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-white font-bold font-mono text-sm">FRE 401 / 402: Irrelevance</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-surface text-brand-gold border border-brand-border">Relevance</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed"><strong class="text-brand-gold">Trigger:</strong> The question or evidence fails to make any consequential fact in dispute more or less probable than it would be without the evidence.</p>
+            <p class="text-xs text-brand-muted font-sans"><strong class="text-white">Rule Dynamics:</strong> Irrelevant evidence is strictly inadmissible. Tangential distractions introduced to waste court time must be shut down quickly.</p>
+          </div>
+          <div class="text-[10px] text-brand-gold font-mono pt-2 border-t border-brand-border mt-2">
+            Defense Action: "Objection, relevance. The witness's personal financial debt has no bearing on this traffic stop."
+          </div>
+        </article>
+
+        <!-- Assumes Facts Not in Evidence -->
+        <article class="reference-card bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md flex flex-col justify-between" data-category="fre" data-keywords="assumes facts not in evidence improper premise trick question badgering unproven allegation trap">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-white font-bold font-mono text-sm">Assumes Facts Not in Evidence</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-surface text-brand-gold border border-brand-border">Form Objection</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed"><strong class="text-brand-gold">Trigger:</strong> The examiner embeds an unproven, contested factual conclusion into the premise of the question (e.g., <em>"When did you stop tampering with the server logs?"</em>).</p>
+            <p class="text-xs text-brand-muted font-sans"><strong class="text-white">Mechanism:</strong> Traps the witness into unintentionally ratifying an unproven crime element regardless of whether they answer affirmatively or negatively.</p>
+          </div>
+          <div class="text-[10px] text-brand-gold font-mono pt-2 border-t border-brand-border mt-2">
+            Defense Action: Object immediately before your client or witness attempts to answer the loaded compound premise.
+          </div>
+        </article>
+
+        <!-- FRE 701/702 Expert vs Lay Opinion -->
+        <article class="reference-card bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md flex flex-col justify-between" data-category="fre" data-keywords="fre 701 702 expert opinion lay witness scientific technical qualification daubert method">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-white font-bold font-mono text-sm">FRE 701 / 702: Improper Expert Opinion</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-surface text-brand-gold border border-brand-border">Witness Qualification</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed"><strong class="text-brand-gold">Trigger:</strong> A lay witness (such as an arresting officer or bystander) offers specialized scientific, medical, or ballistic conclusions without being qualified as an expert under <em class="text-white">Daubert standards</em>.</p>
+            <p class="text-xs text-brand-muted font-sans"><strong class="text-white">Rule Dynamics:</strong> Lay witnesses are restricted to rational perceptions (speed, odor, emotional demeanor). Scientific causation requires qualified methodology.</p>
+          </div>
+          <div class="text-[10px] text-brand-gold font-mono pt-2 border-t border-brand-border mt-2">
+            Defense Action: Move to strike unqualified forensics and demand a voir dire examination of the expert's credentials.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SECTION 3: STATUTORY CHARGE GRADES & ELEMENTS -->
+    <section id="section-statute" class="reference-section space-y-4 pt-4 border-t border-brand-border">
+      <div class="border-b border-brand-border pb-2 flex justify-between items-end">
+        <div>
+          <h2 class="text-xl font-serif text-white uppercase tracking-wider">3. Statutory Charge Grades & Crimes</h2>
+          <p class="text-xs text-brand-muted font-mono mt-0.5">Statutory elements required for conviction, grading thresholds, and common defense counter-theories.</p>
+        </div>
+        <span class="text-brand-gold font-mono text-[10px] uppercase tracking-widest hidden sm:inline">Penal Code Compendium</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-sans">
+        <!-- First Degree Murder -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-3 flex flex-col justify-between" data-category="statute" data-keywords="homicide murder 1st first degree premeditation deliberation intent malice aforethought felony murder">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Homicide: Murder in the First Degree</h3>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-900">Class A Felony</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong class="text-white">Required Elements:</strong> (1) Unlawful killing of a human being, (2) With malice aforethought, (3) Perpetrated with <em class="text-white">premeditation and specific intent deliberation</em>, OR committed in the perpetration of an enumerated felony.</p>
+            <p class="text-xs text-brand-muted"><strong class="text-slate-300">Defense Battleground:</strong> Attacking premeditation. Proving the defendant had no pre-formed reflective design reduces the charge immediately to 2nd Degree or Manslaughter.</p>
+          </div>
+          <div class="text-[10px] font-mono text-brand-gold pt-2 border-t border-brand-border">
+            Key Vectors: Lack of planning evidence, impulsive physical struggle, intoxication negating specific intent.
+          </div>
+        </article>
+
+        <!-- Second Degree Murder -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-3 flex flex-col justify-between" data-category="statute" data-keywords="homicide murder 2nd second degree malice aforethought depraved heart reckless indifference intent">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Homicide: Murder in the Second Degree</h3>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-dark text-slate-300 border border-brand-border">Class B Felony</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong class="text-white">Required Elements:</strong> (1) Unlawful killing, (2) Committed with malice aforethought, but <em class="text-white">lacking premeditation</em>, OR resulting from reckless conduct evidencing a depraved indifference to human life.</p>
+            <p class="text-xs text-brand-muted"><strong class="text-slate-300">Defense Battleground:</strong> Mistaken identity, justifiable self-defense, or absence of depraved indifference.</p>
+          </div>
+          <div class="text-[10px] font-mono text-brand-gold pt-2 border-t border-brand-border">
+            Key Vectors: Proving reasonable perception of imminent physical threat to establish self-defense justification.
+          </div>
+        </article>
+
+        <!-- Manslaughter -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-3 flex flex-col justify-between" data-category="statute" data-keywords="manslaughter voluntary involuntary heat of passion adequate provocation gross negligence reckless vehicular">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Manslaughter (Voluntary & Involuntary)</h3>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-dark text-slate-300 border border-brand-border">Class C Felony</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong class="text-white">Voluntary:</strong> Intentional homicide committed in the sudden heat of passion caused by <em class="text-white">adequate legal provocation</em> without a cooling-off interval.</p>
+            <p class="text-xs text-slate-300"><strong class="text-white">Involuntary:</strong> Unintentional killing resulting from criminal recklessness, gross negligence, or during the commission of an unlawful misdemeanor.</p>
+          </div>
+          <div class="text-[10px] font-mono text-brand-gold pt-2 border-t border-brand-border">
+            Key Vectors: Complete absence of gross deviation from standard of care; accident without criminal negligence.
+          </div>
+        </article>
+
+        <!-- Wire & Financial Fraud -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-3 flex flex-col justify-between" data-category="statute" data-keywords="wire fraud bank securities white collar false pretenses interstate electronic transfers 1343 1341 good faith">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Wire & Financial Fraud (18 U.S.C. § 1343)</h3>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-dark text-slate-300 border border-brand-border">Federal Felony</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong class="text-white">Required Elements:</strong> (1) Having devised or intended to devise a scheme to defraud, (2) False representations material to the transaction, (3) Use of interstate wire communications, (4) Specific fraudulent intent (<em class="text-white">mens rea</em>).</p>
+            <p class="text-xs text-brand-muted"><strong class="text-slate-300">Defense Affirmative:</strong> Good-faith business failure. An erroneous forecast or bankrupt venture does not constitute criminal intent.</p>
+          </div>
+          <div class="text-[10px] font-mono text-brand-gold pt-2 border-t border-brand-border">
+            Key Vectors: Subpoena internal compliance logs with Diaz to show client acted under professional legal advice.
+          </div>
+        </article>
+
+        <!-- Grand Larceny & Theft -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-3 flex flex-col justify-between" data-category="statute" data-keywords="larceny grand theft embezzlement conversion permanent deprivation valuation property threshold stolen goods">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Grand Larceny & Embezzlement</h3>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-dark text-slate-300 border border-brand-border">Property Felony</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong class="text-white">Required Elements:</strong> (1) Unlawful taking and carrying away of another's personal property, (2) Value exceeding the statutory threshold (e.g., $1,000+), (3) With the specific intent to <em class="text-white">permanently deprive</em> the owner thereof.</p>
+            <p class="text-xs text-brand-muted"><strong class="text-slate-300">Defense Battleground:</strong> Claim of right held in good faith; dispute regarding inflated asset valuation by the State.</p>
+          </div>
+          <div class="text-[10px] font-mono text-brand-gold pt-2 border-t border-brand-border">
+            Key Vectors: Contest whether value exceeds the grand larceny threshold; demonstrate lawful possessory title.
+          </div>
+        </article>
+
+        <!-- Contraband & Controlled Substances -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-3 flex flex-col justify-between" data-category="statute" data-keywords="contraband controlled substances possession distribution trafficking constructive actual nexus vehicle dominion control">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Contraband & Narcotics Distribution</h3>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-dark text-slate-300 border border-brand-border">Statutory Class A/B</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong class="text-white">Required Elements:</strong> (1) Knowing and unlawful possession or trafficking of a proscribed substance, (2) With actual knowledge of its illicit character, (3) Possession demonstrated as either <em class="text-white">actual</em> or <em class="text-white">constructive</em>.</p>
+            <p class="text-xs text-brand-muted"><strong class="text-slate-300">Defense Battleground:</strong> Mere proximity is not possession. In multi-passenger vehicles or shared apartments, the State must prove conscious dominion and control.</p>
+          </div>
+          <div class="text-[10px] font-mono text-brand-gold pt-2 border-t border-brand-border">
+            Key Vectors: Challenge lack of fingerprints on packaging and attack the forensic drug testing chemistry chain.
+          </div>
+        </article>
+
+        <!-- Espionage & Cyber Intrusion -->
+        <article class="reference-card bg-brand-surface border border-brand-border p-4 rounded space-y-3 flex flex-col justify-between md:col-span-2" data-category="statute" data-keywords="espionage cyber intrusion computer fraud abuse cfaa 1030 classified security national defense ip address server spoofing">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Cyber Intrusion & Espionage (18 U.S.C. § 1030 / CFAA)</h3>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-900">National Security</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong class="text-white">Required Elements:</strong> (1) Intentionally accessing a protected government or corporate computer without authorization or exceeding authorized access, (2) Obtaining sensitive or classified records, (3) Transmitting or communicating said data with intent to harm the United States or benefit a foreign principal.</p>
+            <p class="text-xs text-brand-muted"><strong class="text-slate-300">Defense Battleground:</strong> IP address attribution does not prove human identity behind the keyboard. Subpoena router logs to expose open Wi-Fi relays, compromised credentials, or automated spoofing scripts.</p>
+          </div>
+          <div class="text-[10px] font-mono text-brand-gold pt-2 border-t border-brand-border">
+            Key Vectors: Prove lack of encryption bypass; establish client had explicit administrative clearance or shared credentials.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SECTION 4: CROSS-EXAMINATION STRATEGIES & TACTICS -->
+    <section id="section-tactics" class="reference-section bg-brand-surface border border-emerald-900/40 rounded p-6 space-y-4">
+      <div class="border-b border-emerald-900/50 pb-2 flex justify-between items-end">
+        <div>
+          <h2 class="text-emerald-400 font-mono text-sm uppercase tracking-wider">4. Cross-Examination Directives & Tactical Playbook</h2>
+          <p class="text-xs text-brand-muted font-sans mt-0.5">Techniques to impeach State witnesses and systematically generate reasonable doubt.</p>
+        </div>
+        <span class="text-emerald-400 font-mono text-[10px] uppercase tracking-widest hidden sm:inline">Courtroom Art</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-sans text-xs">
+        <article class="reference-card bg-brand-dark/80 border border-brand-border rounded p-3.5 space-y-2" data-category="tactics" data-keywords="impeachment prior inconsistent statement deposition police report interview 613 transcript cross confrontation">
+          <h3 class="text-white font-mono font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
+            <span class="text-brand-gold">⚖</span> Prior Inconsistent Statements
+          </h3>
+          <p class="text-slate-300 leading-relaxed">If a witness deviates from their original statements in the Phase 2 discovery file, pin them down immediately: <em>"You testified today that the jacket was black, correct? Isn't it true that on the night of the arrest, you stated to Det. Vance that the jacket was navy blue?"</em></p>
+          <div class="text-[10px] font-mono text-brand-gold pt-1">Reference FRE 613 impeachment foundation rules.</div>
+        </article>
+
+        <article class="reference-card bg-brand-dark/80 border border-brand-border rounded p-3.5 space-y-2" data-category="tactics" data-keywords="financial bias deal plea cooperator expert fee money motive immunity cross bias">
+          <h3 class="text-white font-mono font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
+            <span class="text-brand-gold">⚖</span> Financial Bias & Plea Deals
+          </h3>
+          <p class="text-slate-300 leading-relaxed">Expose cooperator bias. Inquire whether the witness was offered dropped counts, reduced jail time, or immunity in exchange for their trial testimony. For paid expert witnesses, highlight their substantial consultation fees.</p>
+          <div class="text-[10px] font-mono text-brand-gold pt-1">Never let an informant present themselves as an altruistic citizen.</div>
+        </article>
+
+        <article class="reference-card bg-brand-dark/80 border border-brand-border rounded p-3.5 space-y-2" data-category="tactics" data-keywords="sensory limitations sight distance lighting perception rain darkness glasses reaction time cross">
+          <h3 class="text-white font-mono font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
+            <span class="text-brand-gold">⚖</span> Sensory Perception Limitations
+          </h3>
+          <p class="text-slate-300 leading-relaxed">Attack observation conditions: <em>"It was 2:00 AM, raining heavily, you were standing over 90 feet away across a 4-lane intersection, and you were not wearing your corrective lenses, correct?"</em></p>
+          <div class="text-[10px] font-mono text-brand-gold pt-1">Undermine certainty without calling the witness an intentional liar.</div>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-brand-border py-3 px-4 text-[10px] font-mono text-brand-muted max-w-7xl mx-auto w-full flex flex-col sm:flex-row justify-between items-center gap-2 shrink-0">
+    <div>Rest Your Case &copy; 2026. Standalone Reference System.</div>
+    <div class="flex items-center gap-4">
+      <a href="index.html" class="text-brand-gold hover:underline">← Courtroom Engine</a>
+      <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="hover:text-white">Back to Top ↑</button>
+    </div>
+  </footer>
+
+  <!-- ================= INTERACTIVE FILTER SCRIPT ================= -->
+  <script>
+    let activeCategory = 'all';
+
+    function setCategory(cat) {
+      activeCategory = cat;
+      
+      // Update Button Styles
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.className = "cat-btn px-2.5 py-1 rounded bg-brand-surface border border-brand-border text-brand-muted hover:text-white hover:border-brand-gold transition whitespace-nowrap";
+      });
+      
+      const activeBtn = document.getElementById(`btn-cat-${cat}`);
+      if (activeBtn) {
+        activeBtn.className = "cat-btn px-2.5 py-1 rounded bg-brand-border text-white border border-brand-gold/40 transition whitespace-nowrap font-bold";
+      }
+
+      applyFilter();
+    }
+
+    function handleSearch() {
+      const query = document.getElementById('search-input').value.trim();
+      document.getElementById('search-clear').classList.toggle('hidden', query.length === 0);
+      applyFilter();
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('search-input');
+      input.value = '';
+      document.getElementById('search-clear').classList.add('hidden');
+      applyFilter();
+      input.focus();
+    }
+
+    function clearAllFilters() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('search-clear').classList.add('hidden');
+      setCategory('all');
+    }
+
+    function applyFilter() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.reference-card');
+      const sections = document.querySelectorAll('.reference-section');
+      let visibleCardCount = 0;
+
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-category');
+        const keywords = (card.getAttribute('data-keywords') || '').toLowerCase();
+        const textContent = card.innerText.toLowerCase();
+
+        const matchesCat = (activeCategory === 'all' || cat === activeCategory);
+        const matchesQuery = (query === '' || keywords.includes(query) || textContent.includes(query));
+
+        if (matchesCat && matchesQuery) {
+          card.classList.remove('hidden');
+          visibleCardCount++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      // Show/Hide Parent Section Headers if all children within that section are hidden
+      sections.forEach(section => {
+        const hasVisibleChild = Array.from(section.querySelectorAll('.reference-card')).some(c => !c.classList.contains('hidden'));
+        section.classList.toggle('hidden', !hasVisibleChild);
+      });
+
+      // Update Result Bar & Empty State
+      const filterStatus = document.getElementById('filter-status');
+      const filterText = document.getElementById('filter-count-text');
+      const noResultsView = document.getElementById('no-results-view');
+
+      if (query.length > 0 || activeCategory !== 'all') {
+        filterStatus.classList.remove('hidden');
+        filterText.innerText = `Displaying ${visibleCardCount} legal item${visibleCardCount === 1 ? '' : 's'} matching criteria`;
+      } else {
+        filterStatus.classList.add('hidden');
+      }
+
+      noResultsView.classList.toggle('hidden', visibleCardCount > 0);
+    }
+  </script>
+</body>
+</html>
