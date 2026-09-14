@@ -956,6 +956,7 @@
         renderTerminalSidePanel();
       }
       renderTranscriptFeed();
+      updateActiveModelDisplay();
     }
 
     function renderTerminalSidePanel() {
@@ -1484,18 +1485,23 @@
             }, 45000);
 
             let data;
-            if (!response.ok) {
-              if (response.status === 429) {
-                const cloned = response.clone();
-                try { data = await response.json(); } catch(e) { data = null; }
-                if (!data || data.error !== "QUOTA_EXHAUSTED") {
-                  throw new Error(`Worker HTTP ${response.status}: ${await cloned.text()}`);
-                }
-              } else {
-                throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-              }
-            } else {
+            try {
               data = await response.json();
+            } catch (e) {
+              data = null;
+            }
+
+            if (response.status === 429 && data?.error === "QUOTA_EXHAUSTED") {
+              if (data.activeModel) {
+                appState.selectedModel = data.activeModel;
+              }
+              appendTranscriptMessage("THE BENCH / RECORD", data.reply, false);
+              success = true;
+              break;
+            }
+
+            if (!response.ok) {
+              throw new Error(`Worker HTTP ${response.status}: ${data ? JSON.stringify(data) : 'Unknown error'}`);
             }
 
             if (data && data.activeModel) {
@@ -1545,6 +1551,7 @@ Established Court Facts: ${factStr}`;
       const tabId = activeAssistantTab;
       const histArray = tabId === 'partner' ? partnerHistory : diazHistory;
       const rolePrefix = tabId === 'partner' ? '[SENIOR PARTNER CONSULTATION]: ' : '[INVESTIGATOR CONSULTATION]: ';
+      const senderName = tabId === 'partner' ? 'SENIOR PARTNER' : 'INV. DIAZ';
       const typingLabel = tabId === 'partner' ? 'Partner Reviewing' : 'Diaz Investigating';
 
       if (!isRetry) {
@@ -1577,18 +1584,24 @@ Established Court Facts: ${factStr}`;
             }, 30000);
 
             let data;
-            if (!response.ok) {
-              if (response.status === 429) {
-                const cloned = response.clone();
-                try { data = await response.json(); } catch(e) { data = null; }
-                if (!data || data.error !== "QUOTA_EXHAUSTED") {
-                  throw new Error(`Worker HTTP ${response.status}: ${await cloned.text()}`);
-                }
-              } else {
-                throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-              }
-            } else {
+            try {
               data = await response.json();
+            } catch (e) {
+              data = null;
+            }
+
+            if (response.status === 429 && data?.error === "QUOTA_EXHAUSTED") {
+              if (data.activeModel) {
+                appState.selectedModel = data.activeModel;
+              }
+              appendAssistantMessage(tabId, senderName, data.reply, false, true);
+              renderAssistantFeeds();
+              success = true;
+              break;
+            }
+
+            if (!response.ok) {
+              throw new Error(`Worker HTTP ${response.status}`);
             }
 
             if (data && data.activeModel) {
