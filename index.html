@@ -677,7 +677,7 @@
       hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
       transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, 
-      selectedModel: 'gemini-3.6-flash',
+      selectedModel: 'gemini-3.8-flash',
       trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: false
     };
 
@@ -739,6 +739,19 @@
     function navToTab(tabId) {
       switchTab(tabId);
       toggleNavDrawer();
+    }
+
+    function updateActiveModelDisplay() {
+      const statusBadge = document.getElementById('engine-status');
+      if (statusBadge && !engineLocked) {
+        if (appState.selectedModel) {
+          let text = appState.selectedModel.replace('gemini-', '').replace('-', ' ');
+          text = text.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          statusBadge.innerText = `Active (${text})`;
+        } else {
+          statusBadge.innerText = "Active";
+        }
+      }
     }
 
     // =====================================
@@ -819,6 +832,7 @@
 
       renderUI();
       renderAssistantFeeds();
+      updateActiveModelDisplay();
     }
     
     function persist() { 
@@ -1028,7 +1042,7 @@
         hasActiveCase: true, profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
         phase: "Phase 1: Intake", turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
         transcript: [], docket: [], facts: [], difficulty: diff, complexity: comp,
-        selectedModel: 'gemini-3.6-flash',
+        selectedModel: 'gemini-3.8-flash',
         trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: appState.hasSeenTrashWarning
       };
       
@@ -1042,7 +1056,7 @@
       appendAssistantMessage('partner', 'SENIOR PARTNER', "I've reviewed the preliminary file. Let's coordinate. What's our angle?", false, true);
       appendAssistantMessage('diaz', 'INV. DIAZ', "Diaz here. Give me a target, a name, or an address, and check your AP before sending me out.", false, true);
 
-      persist(); switchTab('terminal'); renderUI();
+      persist(); switchTab('terminal'); renderUI(); updateActiveModelDisplay();
 
       const initPrompt = `/start --mode=web --difficulty=${diff} --complexity=${comp} --category="${cat}"\n\nFAST-START MANDATE:\n1. Roll Roster (Judge, DA, Client).\n2. Generate Case Title and a 1-sentence crime summary.\n3. Mark exactly TWO starting exhibits in the docket.\n4. Output 2 lines of dialogue from the Client in holding.\n5. Enclose all state in the checkpoint block and keep the total output under 200 words.`;
       
@@ -1089,12 +1103,12 @@
     function executeWipe() {
       if (document.getElementById('wipe-confirm-input').value === 'CONFIRM') {
         const warningState = appState.hasSeenTrashWarning;
-        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, selectedModel: 'gemini-3.6-flash', trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: warningState };
+        appState = { hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, selectedModel: 'gemini-3.8-flash', trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: warningState };
         trialHistory = []; partnerHistory = []; diazHistory = [];
         localStorage.removeItem('rest_your_case_history');
         localStorage.removeItem('rest_your_case_partner_history');
         localStorage.removeItem('rest_your_case_diaz_history');
-        persist(); closeWipeModal(); switchTab('dossier'); renderUI();
+        persist(); closeWipeModal(); switchTab('dossier'); renderUI(); updateActiveModelDisplay();
       } else { alert("Type exactly 'CONFIRM'"); }
     }
     
@@ -1465,14 +1479,28 @@
               body: JSON.stringify({ 
                 message: userPrompt, 
                 history: trialHistory, 
-                targetPersona: 'court',
-                model: appState.selectedModel || 'gemini-3.6-flash'
+                targetPersona: 'court'
               })
             }, 45000);
 
-            if (!response.ok) throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
-            
-            const data = await response.json();
+            let data;
+            if (!response.ok) {
+              if (response.status === 429) {
+                const cloned = response.clone();
+                try { data = await response.json(); } catch(e) { data = null; }
+                if (!data || data.error !== "QUOTA_EXHAUSTED") {
+                  throw new Error(`Worker HTTP ${response.status}: ${await cloned.text()}`);
+                }
+              } else {
+                throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
+              }
+            } else {
+              data = await response.json();
+            }
+
+            if (data && data.activeModel) {
+              appState.selectedModel = data.activeModel;
+            }
             
             trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
             trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
@@ -1493,7 +1521,7 @@
         engineLocked = false;
         if (isInit) hideLoadingScreen();
         else toggleTypingIndicator('transcript-feed', false);
-        if (statusBadge) statusBadge.innerText = "Active";
+        updateActiveModelDisplay();
         if (submitBtn) submitBtn.disabled = false;
       }
     }
@@ -1544,13 +1572,28 @@ Established Court Facts: ${factStr}`;
                 message: rolePrefix + userPrompt, 
                 history: histArray.slice(0, -1),
                 targetPersona: tabId,
-                capsule: buildContextCapsule(),
-                model: appState.selectedModel || 'gemini-3.6-flash'
+                capsule: buildContextCapsule()
               })
             }, 30000);
 
-            if (!response.ok) throw new Error(`Worker HTTP ${response.status}`);
-            const data = await response.json();
+            let data;
+            if (!response.ok) {
+              if (response.status === 429) {
+                const cloned = response.clone();
+                try { data = await response.json(); } catch(e) { data = null; }
+                if (!data || data.error !== "QUOTA_EXHAUSTED") {
+                  throw new Error(`Worker HTTP ${response.status}: ${await cloned.text()}`);
+                }
+              } else {
+                throw new Error(`Worker HTTP ${response.status}: ${await response.text()}`);
+              }
+            } else {
+              data = await response.json();
+            }
+
+            if (data && data.activeModel) {
+              appState.selectedModel = data.activeModel;
+            }
 
             histArray.push({ role: "model", parts: [{ text: data.reply }] });
             localStorage.setItem(`rest_your_case_${tabId}_history`, JSON.stringify(histArray));
@@ -1566,6 +1609,7 @@ Established Court Facts: ${factStr}`;
       } finally {
         engineLocked = false;
         toggleTypingIndicator(`${tabId}-feed`, false);
+        updateActiveModelDisplay();
         if (submitBtn) submitBtn.disabled = false;
       }
     }
