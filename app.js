@@ -1,4 +1,4 @@
-// app.js
+// app.js 
 let appState = {
   hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' },
   phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '',
