@@ -1,0 +1,322 @@
+<!-- library.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Rest Your Case | Legal Library</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#C5A880',
+              crimson: '#8B263E',
+              dark: '#0B0D10',
+              surface: '#15191E',
+              border: '#232932',
+              muted: '#7E8B9B'
+            }
+          },
+          fontFamily: {
+            serif: ['Georgia', 'serif'],
+            mono: ['Courier New', 'monospace']
+          },
+          keyframes: {
+            scrollMarquee: {
+              '0%': { transform: 'translateX(100vw)' },
+              '100%': { transform: 'translateX(-100%)' }
+            }
+          },
+          animation: {
+            scrollMarquee: 'scrollMarquee 25s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
+
+  <!-- ================= TOP HUD NAV ================= -->
+  <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
+    <div class="max-w-7xl mx-auto px-4 min-h-14 py-2 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="text-brand-gold text-lg">⚖</span>
+        <span class="font-serif tracking-wide text-white uppercase text-sm font-bold">Rest Your Case</span>
+      </div>
+      
+      <nav class="flex items-center gap-2">
+        <!-- BYOK Indicator & Settings Button -->
+        <button onclick="openKeyModal()" class="flex items-center gap-1.5 px-2 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold transition shadow-sm" title="API Key Settings">
+          <span id="nav-key-indicator" class="w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300"></span>
+          <span class="text-[11px] font-mono text-brand-muted uppercase hidden sm:inline tracking-widest">Key</span>
+          <span class="text-brand-gold text-xs">⚙</span>
+        </button>
+
+        <button onclick="toggleNavDrawer()" class="px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border text-brand-gold hover:text-white transition flex items-center gap-2 font-mono text-xs shadow-sm hover:border-brand-gold/50">
+          <span class="text-base leading-none">☰</span>
+          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Menu</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
+    <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
+      ⚖️ TIP: Every major move costs Action Points (AP). Plan carefully. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: You cannot Admit an exhibit without laying a foundation first. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: Use /inspect on marked exhibits to uncover hidden details. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: Consult your Senior Partner or Investigator Diaz without spending AP.
+    </div>
+  </div>
+
+  <!-- ================= TAB 5: LEGAL LIBRARY CONTENT ================= -->
+  <main class="max-w-5xl mx-auto px-4 py-8 space-y-10 flex-grow w-full">
+    <div class="border-b border-brand-border pb-4">
+      <h1 class="text-3xl font-serif text-white font-semibold">Legal Library</h1>
+      <p class="text-brand-muted text-sm mt-2">Compendium of Criminal Defense tactics and Federal Rules of Evidence.</p>
+    </div>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">1. Criminal Defense Standards</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Burden of Proof</h3>
+          <p class="text-xs text-slate-300 font-sans">The defense does not have to prove innocence. The State must prove guilt <em class="text-white">beyond a reasonable doubt</em>. Poke holes in their narrative rather than inventing your own.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Exclusionary Rule</h3>
+          <p class="text-xs text-slate-300 font-sans">Evidence obtained through a violation of the 4th Amendment (warrantless/illegal searches) is tainted. File a motion to suppress to exclude "fruits of the poisonous tree."</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Brady Material</h3>
+          <p class="text-xs text-slate-300 font-sans">The prosecution is constitutionally required to turn over any exculpatory evidence (evidence favorable to the defendant). If they hide it, demand a mistrial.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">2. Complete Objection Matrix</h2>
+      <p class="text-xs text-brand-muted font-mono mb-4">Use the `!` button in the Terminal to rapidly deploy these during cross-examination.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 802: Hearsay</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> A witness testifies about what someone else said out of court to prove it was true.</p>
+          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Exceptions: Present Sense Impression, Excited Utterance, Admissions.</p>
+        </div>
+
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 611(c): Leading (Direct)</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The prosecutor feeds the answer to their own friendly witness in the question.</p>
+          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Force the DA to ask open "Who, what, where" questions.</p>
+        </div>
+
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 602: Speculation / Foundation</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The witness guesses about something they didn't personally perceive, or guesses someone else's state of mind.</p>
+          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Demand the DA lay a foundation showing personal knowledge.</p>
+        </div>
+
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 404(b): Improper Character</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The State mentions prior bad acts or past crimes to prove the defendant acted in accordance with that trait.</p>
+          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Defense: Past crimes do not prove current guilt.</p>
+        </div>
+
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">FRE 403: Unfair Prejudice</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The evidence's probative value is substantially outweighed by a danger of inflaming the jury's emotions.</p>
+        </div>
+
+        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-white font-bold font-mono text-sm">Assumes Facts Not in Evidence</h3>
+          </div>
+          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The question embeds an unproven allegation as an accepted premise to trap the witness.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Statutory Criminal Offenses -->
+    <section class="space-y-4 pt-4 border-t border-brand-border">
+      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">3. Statutory Criminal Offenses</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-sans">
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Murder (1st & 2nd Degree)</h3>
+          <p class="text-slate-300"><strong class="text-white">1st Degree:</strong> Premeditated and intentional. <strong class="text-white">2nd Degree:</strong> Intentional but not premeditated (heat of the moment or extreme reckless disregard).</p>
+          <p class="text-xs text-brand-muted">Defense: Self-defense, lack of intent (mens rea), or mistaken identity.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Manslaughter</h3>
+          <p class="text-slate-300"><strong class="text-white">Voluntary:</strong> Intentional killing committed under adequate provocation ("heat of passion"). <strong class="text-white">Involuntary:</strong> Unintentional killing caused by recklessness or criminal negligence.</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Wire & Financial Fraud</h3>
+          <p class="text-slate-300">Intentionally devising a scheme to defraud another of money/property using electronic communications.</p>
+          <p class="text-xs text-brand-muted">Defense: Good faith belief in the truth of the statements (lack of fraudulent intent).</p>
+        </div>
+        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
+          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Espionage / Cyber Intrusion</h3>
+          <p class="text-slate-300">Unauthorized access to classified/protected systems with intent to harm the nation or benefit a foreign entity.</p>
+          <p class="text-xs text-brand-muted">Defense: Lack of intent, authorized access, or mishandling vs. intentional espionage.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cross-Examination Tactics -->
+    <section class="bg-brand-surface border border-emerald-900/50 rounded p-6 space-y-3">
+      <h2 class="text-emerald-400 font-mono text-sm uppercase tracking-wider border-b border-emerald-900/50 pb-2">4. Cross-Examination Tactics</h2>
+      <ul class="text-sm text-slate-300 space-y-3 font-sans list-disc pl-5">
+        <li><strong class="text-white">Impeachment by Prior Statement:</strong> If a witness changes their story on the stand, confront them with their original police statement (found in your Phase 2 discovery). <em>"Isn't it true you told Detective Vance..."</em></li>
+        <li><strong class="text-white">Financial Bias:</strong> Always ask cooperating witnesses or "experts" if they are being paid by the State for their testimony, or if they were offered a plea deal in exchange for testifying against your client.</li>
+        <li><strong class="text-white">Sensory Limitations:</strong> Attack the conditions of perception. <em>"It was midnight, raining, and you were 100 feet away without your glasses, correct?"</em></li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- ================= NAVIGATION SIDEBAR DRAWER ================= -->
+  <div id="nav-drawer-backdrop" onclick="toggleNavDrawer()" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"></div>
+  
+  <aside id="nav-drawer" class="fixed left-0 top-0 h-full w-72 sm:w-80 bg-brand-dark border-r border-brand-border z-50 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+    <div class="px-4 py-3 bg-brand-surface border-b border-brand-border flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-brand-gold text-base">⚖</span>
+        <span class="font-serif text-white uppercase text-xs font-bold tracking-wider">Rest Your Case</span>
+      </div>
+      <button onclick="toggleNavDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
+    </div>
+  
+    <nav class="p-4 flex flex-col space-y-2 font-mono text-xs overflow-y-auto flex-grow">
+      <a href="index.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Overview</a>
+      <a id="drawer-terminal-link" href="game.html#terminal" class="hidden w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Live Terminal</a>
+      <a href="game.html#notebook" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Notebook</a>
+      <a href="info.html#howtoplay" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">How to Play</a>
+      <a href="library.html" class="w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition block">Legal Library</a>
+      <a href="info.html#setup" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Setup Guide</a>
+    </nav>
+  
+    <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
+      Procedural Engine &copy; 2026
+    </div>
+  </aside>
+
+  <!-- ================= BYOK CONFIGURATION MODAL ================= -->
+  <div id="key-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+      <div class="border-b border-brand-border pb-2">
+        <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide">API Configuration</h3>
+        <p class="text-brand-muted text-[11px] font-mono">Run the engine on your own Gemini credentials.</p>
+      </div>
+      
+      <div class="space-y-3">
+        <div class="flex justify-between items-end">
+          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Google AI Studio Key</label>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-brand-muted hover:text-white underline font-mono">Get a Free Key ↗</a>
+        </div>
+        <div class="relative">
+          <input id="key-input" type="password" placeholder="AIza..." class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold font-mono text-xs pr-10" autocomplete="off" />
+          <button type="button" onclick="toggleKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted hover:text-white text-xs">👁</button>
+        </div>
+        <p class="text-[9px] font-mono text-emerald-500/70 leading-relaxed border-l-2 border-emerald-900 pl-2">
+          🔒 Your key is stored strictly in your browser's local storage. It is never saved to an external database.
+        </p>
+      </div>
+      
+      <div class="flex justify-between items-center pt-3 border-t border-brand-border">
+        <button onclick="clearCustomKey()" class="text-[10px] font-mono text-brand-muted hover:text-rose-400 transition">Use System Default</button>
+        <div class="flex gap-2">
+          <button onclick="closeKeyModal()" class="px-3 py-1.5 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
+          <button onclick="saveCustomKey()" class="px-3 py-1.5 bg-brand-gold text-brand-dark font-bold font-mono text-xs rounded hover:bg-white transition shadow">Save Key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-brand-border py-2 px-4 text-[10px] font-mono text-brand-muted max-w-7xl mx-auto w-full shrink-0">
+    Rest Your Case &copy; 2026. Local-First Client Storage.
+  </footer>
+
+  <script>
+    let customGeminiKey = localStorage.getItem('rest_your_case_custom_gemini_key') || null;
+
+    function toggleNavDrawer() {
+      document.getElementById('nav-drawer').classList.toggle('-translate-x-full');
+      document.getElementById('nav-drawer-backdrop').classList.toggle('hidden');
+    }
+
+    function updateKeyIndicator() {
+      const indicator = document.getElementById('nav-key-indicator');
+      if (indicator) {
+        indicator.className = customGeminiKey 
+          ? 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)] transition-colors duration-300' 
+          : 'w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300';
+      }
+    }
+
+    function openKeyModal() {
+      document.getElementById('key-input').value = customGeminiKey || '';
+      document.getElementById('key-input').type = 'password';
+      document.getElementById('key-modal').classList.remove('hidden');
+    }
+
+    function closeKeyModal() {
+      document.getElementById('key-modal').classList.add('hidden');
+    }
+
+    function toggleKeyVisibility() {
+      const input = document.getElementById('key-input');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    function saveCustomKey() {
+      const val = document.getElementById('key-input').value.trim();
+      if (val) {
+        localStorage.setItem('rest_your_case_custom_gemini_key', val);
+        customGeminiKey = val;
+      } else {
+        localStorage.removeItem('rest_your_case_custom_gemini_key');
+        customGeminiKey = null;
+      }
+      updateKeyIndicator();
+      closeKeyModal();
+    }
+
+    function clearCustomKey() {
+      localStorage.removeItem('rest_your_case_custom_gemini_key');
+      customGeminiKey = null;
+      document.getElementById('key-input').value = '';
+      updateKeyIndicator();
+      closeKeyModal();
+    }
+
+    (function initLibrary() {
+      updateKeyIndicator();
+      const saved = localStorage.getItem('rest_your_case_state');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.hasActiveCase) {
+            const termLink = document.getElementById('drawer-terminal-link');
+            if (termLink) termLink.classList.remove('hidden');
+          }
+        } catch (e) {}
+      }
+    })();
+  </script>
+</body>
+</html>
