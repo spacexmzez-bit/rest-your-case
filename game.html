@@ -72,10 +72,10 @@
 
   <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
     <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
-      ⚖️ TIP: Every major move costs Action Points (AP). Plan carefully. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: You cannot Admit an exhibit without laying a foundation first. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: Use /inspect on marked exhibits to uncover hidden details. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: Consult your Senior Partner or Investigator Diaz without spending AP.
+      ⚖️ TIP: Every major move costs Action Points (AP). Maximum investigative action is strictly capped at 2 AP. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: Watch the DA for FRE 404(b) character smears and FRE 611 compound traps. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: Use /inspect on marked exhibits to uncover chain of custody defects. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: Consult your Senior Partner (/consult) or Investigator Diaz without spending AP.
     </div>
   </div>
 
@@ -127,18 +127,21 @@
           
           <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-1.5 w-full relative">
             <div class="relative">
-              <button type="button" onclick="toggleObjectionMenu(event)" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition">!</button>
-              <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-60 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-56 overflow-y-auto">
+              <button type="button" onclick="toggleObjectionMenu(event)" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition" title="Interpose FRE Objection">!</button>
+              <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-64 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-64 overflow-y-auto">
+                <button type="button" onclick="selectObjection('FRE 404(b): Improper Character / Propensity')" class="text-left px-3 py-2 hover:bg-brand-surface text-amber-300 border-b border-brand-border">FRE 404(b): Propensity Trap</button>
+                <button type="button" onclick="selectObjection('FRE 611(a): Assuming Facts Not in Evidence / Compound')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 611: Compound / Assumes Facts</button>
+                <button type="button" onclick="selectObjection('FRE 701: Improper Lay Opinion / Speculation')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 701: Improper Lay Opinion</button>
                 <button type="button" onclick="selectObjection('FRE 802: Hearsay')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 802: Hearsay</button>
-                <button type="button" onclick="selectObjection('FRE 611c: Leading')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 611c: Leading</button>
-                <button type="button" onclick="selectObjection('FRE 602: Speculation')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 602: Speculation</button>
-                <button type="button" onclick="selectObjection('FRE 403: Prejudice')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200">FRE 403: Prejudice</button>
+                <button type="button" onclick="selectObjection('FRE 611(c): Leading Question on Direct')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 611(c): Leading (Direct)</button>
+                <button type="button" onclick="selectObjection('FRE 403: Substantially More Prejudicial Than Probative')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 403: Unfair Prejudice</button>
+                <button type="button" onclick="selectObjection('Brady Violation: Undisclosed Consideration / Deal')" class="text-left px-3 py-2 hover:bg-brand-surface text-rose-300">Brady Violation: Concealed Deal</button>
               </div>
             </div>
             
             <div class="relative flex-grow min-w-0">
               <div id="autocomplete-menu" class="hidden absolute bottom-full mb-2 left-0 right-0 bg-brand-dark border border-brand-border rounded shadow-2xl font-mono text-xs z-50 max-h-52 overflow-y-auto divide-y divide-brand-border/40"></div>
-              <input id="court-user-input" type="text" placeholder="Question client or object..." oninput="handleInputDraft()" class="w-full bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
+              <input id="court-user-input" type="text" placeholder="Question client, object, or present exhibit..." oninput="handleInputDraft()" class="w-full bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
             </div>
 
             <button type="submit" id="court-submit-btn" class="bg-brand-gold text-brand-dark px-3 py-2 rounded text-xs font-mono font-bold uppercase shrink-0">Dispatch</button>
@@ -146,7 +149,8 @@
           <div class="flex items-center gap-2 overflow-x-auto font-mono text-[10px] py-0.5">
             <button type="button" onclick="quickAction('/recap', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-gold whitespace-nowrap">/recap</button>
             <button type="button" onclick="quickAction('/inspect ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/inspect</button>
-            <button type="button" onclick="quickAction('/subpoena ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/subpoena</button>
+            <button type="button" onclick="quickAction('/subpoena ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/subpoena (1 AP)</button>
+            <button type="button" onclick="quickAction('Motion to Suppress ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-rose-400 whitespace-nowrap">Suppress [Ex]</button>
           </div>
         </div>
       </section>
@@ -169,7 +173,7 @@
         </div>
         <div class="flex items-center gap-3">
           <button onclick="switchTab('terminal')" class="text-[10px] text-brand-muted hover:text-white px-2 py-0.5 rounded border border-brand-border bg-brand-surface transition">💻 Terminal</button>
-          <span class="text-brand-muted text-[10px] border-l border-brand-border pl-2">Auto-sync</span>
+          <span class="text-brand-muted text-[10px] border-l border-brand-border pl-2">Local-First</span>
           <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
         </div>
       </div>
@@ -253,7 +257,7 @@
     </div>
 
     <div id="diaz-feed" class="hidden p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]">
-      <div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private investigation channel. Discuss logistics or records.</div>
+      <div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private investigation channel. Max 2 AP per action.</div>
     </div>
 
     <form id="assistant-form" onsubmit="handleAssistantSubmit(event)" class="p-3 bg-brand-dark border-t border-brand-border flex flex-col gap-2 shrink-0">
@@ -299,6 +303,12 @@
       <div class="space-y-3 font-mono text-xs">
         <input id="modal-tag" type="text" placeholder="Ex. 1 (Tag)" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none" />
         <input id="modal-title" type="text" placeholder="Title" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none" />
+        <select id="modal-type" class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none">
+          <option value="Documentary">Documentary</option>
+          <option value="Physical">Physical</option>
+          <option value="Digital">Digital</option>
+          <option value="Forensic">Forensic</option>
+        </select>
         <textarea id="modal-details" rows="3" placeholder="Forensic Notes..." class="w-full bg-brand-dark border border-brand-border rounded p-2 text-white outline-none resize-none"></textarea>
       </div>
       <div class="flex justify-end gap-2 font-mono text-xs">
@@ -311,7 +321,7 @@
   <!-- ================= TURN 1 LOADING OVERLAY ================= -->
   <div id="init-loading-overlay" class="hidden fixed inset-0 bg-brand-dark/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 text-center space-y-6">
     <div class="text-brand-gold text-5xl animate-pulse">⚖</div>
-    <h2 class="text-2xl font-serif text-white uppercase tracking-widest">Generating Case File</h2>
+    <h2 class="text-2xl font-serif text-white uppercase tracking-widest">Synthesizing Case File</h2>
     <div class="flex items-center gap-2">
       <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce" style="animation-delay: -0.32s"></div>
       <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce" style="animation-delay: -0.16s"></div>
@@ -358,6 +368,9 @@
     Rest Your Case &copy; 2026. Local-First Client Storage.
   </footer>
 
+  <!-- Scripts in execution order: Master Data -> Scout Pipeline -> Game Engine -->
+  <script src="data.js"></script>
+  <script src="scout_prompt.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
