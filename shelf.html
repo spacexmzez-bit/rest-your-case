@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Rest Your Case | Case Files Shelf</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#C5A880',
+              crimson: '#8B263E',
+              dark: '#0B0D10',
+              surface: '#15191E',
+              border: '#232932',
+              muted: '#7E8B9B'
+            }
+          },
+          fontFamily: {
+            serif: ['Georgia', 'serif'],
+            mono: ['Courier New', 'monospace']
+          },
+          keyframes: {
+            scrollMarquee: {
+              '0%': { transform: 'translateX(100vw)' },
+              '100%': { transform: 'translateX(-100%)' }
+            }
+          },
+          animation: {
+            scrollMarquee: 'scrollMarquee 25s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
+
+  <!-- ================= TOP HUD NAV ================= -->
+  <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
+    <div class="max-w-7xl mx-auto px-4 min-h-14 py-2 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="text-brand-gold text-lg">⚖</span>
+        <span class="font-serif tracking-wide text-white uppercase text-sm font-bold">Rest Your Case</span>
+      </div>
+      
+      <nav class="flex items-center gap-2">
+        <!-- Shelf indicator pill -->
+        <a href="shelf.html" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-brand-surface border border-brand-gold/60 text-brand-gold text-xs font-mono shadow-sm">
+          <span>🗄️</span>
+          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Shelf</span>
+          <span id="nav-shelf-badge" class="px-1.5 py-0.2 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold">0</span>
+        </a>
+
+        <!-- BYOK Indicator & Settings Button -->
+        <button onclick="openKeyModal()" class="flex items-center gap-1.5 px-2 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold transition shadow-sm" title="API Key Settings">
+          <span id="nav-key-indicator" class="w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300"></span>
+          <span class="text-[11px] font-mono text-brand-muted uppercase hidden sm:inline tracking-widest">Key</span>
+          <span class="text-brand-gold text-xs">⚙</span>
+        </button>
+
+        <button onclick="toggleNavDrawer()" class="px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border text-brand-gold hover:text-white transition flex items-center gap-2 font-mono text-xs shadow-sm hover:border-brand-gold/50">
+          <span class="text-base leading-none">☰</span>
+          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Menu</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Marquee Tips Bar -->
+  <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
+    <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
+      🗄️ ARCHIVE: Case files discovered during intake are preserved on your Shelf for later trial. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: Accepting a case from the Shelf will ask for confirmation if an active trial is underway. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      🗄️️ STORAGE: Shelf holds up to 30 cases locally on this device.
+    </div>
+  </div>
+
+  <!-- ================= SHELF WORKSPACE ================= -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full space-y-6">
+    
+    <!-- Header & Difficulty Calibration -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-brand-border pb-4">
+      <div class="space-y-1">
+        <div class="text-brand-gold font-mono text-xs uppercase tracking-widest flex items-center gap-2">
+          <span>Firm Archives</span>
+          <span class="text-brand-muted">/</span>
+          <span id="shelf-count-text">0 Case Files Stored</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-serif text-white font-semibold">Case Files Shelf</h1>
+        <p class="text-brand-muted text-xs md:text-sm max-w-xl">
+          Pending intake files and archived dossiers discovered by Diaz. Select an archived case below to review preliminary discovery and commence trial proceedings.
+        </p>
+      </div>
+
+      <!-- Difficulty Selector -->
+      <div class="bg-brand-surface border border-brand-border rounded p-2.5 flex items-center gap-3 shrink-0">
+        <label for="shelf-diff" class="text-brand-gold font-mono text-xs uppercase tracking-wider">Trial Rules:</label>
+        <select id="shelf-diff" onchange="handleDifficultyChange(this.value)" class="bg-brand-dark border border-brand-border text-white text-xs font-mono rounded px-2.5 py-1.5 outline-none focus:border-brand-gold cursor-pointer">
+          <option value="Easy">Easy (6 AP, 4 Strikes)</option>
+          <option value="Normal" selected>Normal (4 AP, 3 Strikes)</option>
+          <option value="Hard">Hard (3 AP, 2 Strikes)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Grid of Cases -->
+    <div id="shelf-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Injected via renderShelf() -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="shelf-empty" class="hidden flex-col items-center justify-center py-20 text-center space-y-4 border border-dashed border-brand-border rounded bg-brand-surface/30">
+      <div class="text-5xl">🗄️</div>
+      <h3 class="text-lg font-serif text-white">The Shelf is Empty</h3>
+      <p class="text-brand-muted text-xs max-w-md font-sans leading-relaxed">
+        You have no archived case files saved. Head to the Overview intake room to have Investigator Diaz generate and scout new case dossiers.
+      </p>
+      <a href="index.html" class="px-5 py-2.5 bg-brand-gold text-brand-dark font-mono font-bold text-xs rounded uppercase tracking-wider hover:bg-white transition shadow mt-2">
+        Open Intake Room
+      </a>
+    </div>
+  </main>
+
+  <!-- ================= NAVIGATION SIDEBAR DRAWER ================= -->
+  <div id="nav-drawer-backdrop" onclick="toggleNavDrawer()" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"></div>
+  
+  <aside id="nav-drawer" class="fixed left-0 top-0 h-full w-72 sm:w-80 bg-brand-dark border-r border-brand-border z-50 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+    <div class="px-4 py-3 bg-brand-surface border-b border-brand-border flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-brand-gold text-base">⚖</span>
+        <span class="font-serif text-white uppercase text-xs font-bold tracking-wider">Rest Your Case</span>
+      </div>
+      <button onclick="toggleNavDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
+    </div>
+  
+    <nav class="p-4 flex flex-col space-y-2 font-mono text-xs overflow-y-auto flex-grow">
+      <a href="index.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Overview</a>
+      <a id="drawer-terminal-link" href="game.html#terminal" class="hidden w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Live Terminal</a>
+      <a href="game.html#notebook" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Notebook</a>
+      <a href="shelf.html" class="w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition flex items-center justify-between">
+        <span>Case Shelf</span>
+        <span id="drawer-shelf-count" class="px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold text-[10px] font-bold">0</span>
+      </a>
+      <a href="info.html#howtoplay-section" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">How to Play</a>
+      <a href="library.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Legal Library</a>
+      <a href="info.html#setup-section" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Setup Guide</a>
+    </nav>
+  
+    <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
+      Procedural Engine &copy; 2026
+    </div>
+  </aside>
+
+  <!-- ================= BYOK CONFIGURATION MODAL ================= -->
+  <div id="key-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+      <div class="border-b border-brand-border pb-2">
+        <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide">API Configuration</h3>
+        <p class="text-brand-muted text-[11px] font-mono">Run the engine on your own Gemini credentials.</p>
+      </div>
+      
+      <div class="space-y-3">
+        <div class="flex justify-between items-end">
+          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Google AI Studio Key</label>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-brand-muted hover:text-white underline font-mono">Get a Free Key ↗</a>
+        </div>
+        <div class="relative">
+          <input id="key-input" type="password" placeholder="AIza..." class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold font-mono text-xs pr-10" autocomplete="off" />
+          <button type="button" onclick="toggleKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted hover:text-white text-xs">👁</button>
+        </div>
+        <p class="text-[9px] font-mono text-emerald-500/70 leading-relaxed border-l-2 border-emerald-900 pl-2">
+          🔒 Your key is stored strictly in your browser's local storage. It is never saved to an external database.
+        </p>
+      </div>
+      
+      <div class="flex justify-between items-center pt-3 border-t border-brand-border">
+        <button onclick="clearCustomKey()" class="text-[10px] font-mono text-brand-muted hover:text-rose-400 transition">Use System Default</button>
+        <div class="flex gap-2">
+          <button onclick="closeKeyModal()" class="px-3 py-1.5 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
+          <button onclick="saveCustomKey()" class="px-3 py-1.5 bg-brand-gold text-brand-dark font-bold font-mono text-xs rounded hover:bg-white transition shadow">Save Key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-brand-border py-2 px-4 text-[10px] font-mono text-brand-muted max-w-7xl mx-auto w-full shrink-0">
+    Rest Your Case &copy; 2026. Local-First Client Storage.
+  </footer>
+
+  <!-- Scripts -->
+  <script src="data.js?v=1"></script>
+  <script src="scout_prompt.js?v=1"></script>
+  <script src="cases.js?v=1"></script>
+  <script>
+    let customGeminiKey = localStorage.getItem('rest_your_case_custom_gemini_key') || null;
+    let selectedDifficulty = 'Normal';
+    let pendingDeletionId = null;
+
+    function toggleNavDrawer() {
+      document.getElementById('nav-drawer').classList.toggle('-translate-x-full');
+      document.getElementById('nav-drawer-backdrop').classList.toggle('hidden');
+    }
+
+    function updateKeyIndicator() {
+      const indicator = document.getElementById('nav-key-indicator');
+      if (indicator) {
+        indicator.className = customGeminiKey 
+          ? 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)] transition-colors duration-300' 
+          : 'w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300';
+      }
+    }
+
+    function openKeyModal() {
+      document.getElementById('key-input').value = customGeminiKey || '';
+      document.getElementById('key-input').type = 'password';
+      document.getElementById('key-modal').classList.remove('hidden');
+    }
+
+    function closeKeyModal() {
+      document.getElementById('key-modal').classList.add('hidden');
+    }
+
+    function toggleKeyVisibility() {
+      const input = document.getElementById('key-input');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    function saveCustomKey() {
+      const val = document.getElementById('key-input').value.trim();
+      if (val) {
+        localStorage.setItem('rest_your_case_custom_gemini_key', val);
+        customGeminiKey = val;
+      } else {
+        localStorage.removeItem('rest_your_case_custom_gemini_key');
+        customGeminiKey = null;
+      }
+      updateKeyIndicator();
+      closeKeyModal();
+    }
+
+    function clearCustomKey() {
+      localStorage.removeItem('rest_your_case_custom_gemini_key');
+      customGeminiKey = null;
+      document.getElementById('key-input').value = '';
+      updateKeyIndicator();
+      closeKeyModal();
+    }
+
+    function handleDifficultyChange(diff) {
+      selectedDifficulty = diff;
+    }
+
+    function formatTimeAgo(timestamp) {
+      if (!timestamp) return 'Just now';
+      const diffSec = Math.floor((Date.now() - timestamp) / 1000);
+      if (diffSec < 60) return 'Just now';
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffHr = Math.floor(diffMin / 60);
+      if (diffHr < 24) return `${diffHr}h ago`;
+      const diffDay = Math.floor(diffHr / 24);
+      return `${diffDay}d ago`;
+    }
+
+    function renderShelf() {
+      // Archive any leftover pending cases so nothing is lost
+      archivePending();
+
+      const shelf = getShelfCases();
+      const count = shelf.length;
+
+      // Update HUD count labels
+      document.getElementById('nav-shelf-badge').innerText = count;
+      document.getElementById('drawer-shelf-count').innerText = count;
+      document.getElementById('shelf-count-text').innerText = `${count} / 30 Case Files Stored`;
+
+      const grid = document.getElementById('shelf-grid');
+      const emptyState = document.getElementById('shelf-empty');
+
+      if (count === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      emptyState.classList.remove('flex');
+
+      grid.innerHTML = shelf.map(caseObj => {
+        const seed = caseObj.seed;
+        const scout = caseObj.scout;
+        const exhibits = (scout.starterExhibits || []).map(e => e.name || e.id).join(', ');
+        const isConfirmingDelete = pendingDeletionId === caseObj.id;
+
+        return `
+          <div class="bg-brand-surface border border-brand-border rounded p-4 flex flex-col justify-between space-y-4 hover:border-brand-gold/40 transition shadow-lg">
+            <div class="space-y-3">
+              <div class="flex items-start justify-between gap-2 border-b border-brand-border/60 pb-2">
+                <div class="space-y-0.5">
+                  <span class="text-[10px] font-mono text-brand-gold uppercase tracking-wider block">${seed.meta.genre_name}</span>
+                  <h3 class="text-base font-serif text-white font-bold">${scout.caseTitle}</h3>
+                </div>
+                <span class="text-[10px] font-mono text-brand-muted bg-brand-dark px-2 py-0.5 rounded border border-brand-border shrink-0">
+                  ${formatTimeAgo(caseObj.timestamp)}
+                </span>
+              </div>
+
+              <div class="text-xs space-y-1 font-mono">
+                <div><span class="text-brand-muted">Charge: </span><span class="text-rose-300 font-bold">${seed.charge.charge}</span></div>
+                <div><span class="text-brand-muted">Client: </span><span class="text-slate-200">${seed.roster.client.name}</span></div>
+                <div><span class="text-brand-muted">Judge: </span><span class="text-slate-200">${seed.roster.judge.name}</span></div>
+                <div><span class="text-brand-muted">DA: </span><span class="text-rose-300">${seed.roster.da.name}</span></div>
+              </div>
+
+              <p class="text-slate-300 text-xs font-sans leading-relaxed line-clamp-3 bg-brand-dark/50 p-2.5 rounded border border-brand-border/40">
+                "${scout.crimeSummary}"
+              </p>
+
+              <div class="text-[11px] font-mono text-brand-muted truncate">
+                <span class="text-brand-gold">Discovery: </span>${exhibits || '2 Initial Exhibits'}
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-brand-border/60 flex items-center justify-between gap-2">
+              <span class="text-[10px] font-mono bg-brand-dark px-2 py-1 rounded border border-brand-border text-slate-300">
+                Complexity: <strong class="text-brand-gold">${seed.meta.complexity}/5</strong>
+              </span>
+
+              <div class="flex items-center gap-2">
+                ${isConfirmingDelete ? `
+                  <button onclick="confirmDelete('${caseObj.id}')" class="px-2.5 py-1.5 bg-rose-950 hover:bg-rose-900 border border-rose-800 text-rose-300 text-[10px] font-mono font-bold rounded transition">
+                    Confirm?
+                  </button>
+                  <button onclick="cancelDelete()" class="px-2 py-1.5 text-brand-muted hover:text-white text-[10px] font-mono">
+                    Cancel
+                  </button>
+                ` : `
+                  <button onclick="requestDelete('${caseObj.id}')" class="px-2.5 py-1.5 bg-brand-dark hover:bg-rose-950/40 border border-brand-border hover:border-rose-900/60 text-brand-muted hover:text-rose-300 text-[10px] font-mono rounded transition" title="Expunge case from shelf">
+                    Expunge
+                  </button>
+                  <button onclick="acceptShelfCase('${caseObj.id}')" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-mono font-bold text-xs rounded transition uppercase tracking-wider shadow">
+                    Start Trial
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function requestDelete(caseId) {
+      pendingDeletionId = caseId;
+      renderShelf();
+    }
+
+    function cancelDelete() {
+      pendingDeletionId = null;
+      renderShelf();
+    }
+
+    function confirmDelete(caseId) {
+      const shelf = getShelfCases().filter(c => c.id !== caseId);
+      saveShelfCases(shelf);
+      pendingDeletionId = null;
+      renderShelf();
+    }
+
+    function acceptShelfCase(caseId) {
+      const shelf = getShelfCases();
+      const targetCase = shelf.find(c => c.id === caseId);
+      if (!targetCase) return;
+
+      // Assign the currently selected difficulty
+      targetCase.difficulty = selectedDifficulty;
+
+      startTrialWithCase(targetCase);
+    }
+
+    // Initialize Page
+    (function initShelfPage() {
+      updateKeyIndicator();
+      
+      // Check for active trial link in drawer
+      const saved = localStorage.getItem('rest_your_case_state');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.hasActiveCase) {
+            const link = document.getElementById('drawer-terminal-link');
+            if (link) link.classList.remove('hidden');
+          }
+        } catch (e) {}
+      }
+
+      renderShelf();
+    })();
+  </script>
+</body>
+</html>
