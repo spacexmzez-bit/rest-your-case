@@ -4,25 +4,16 @@
  * 
  * Takes the randomized seed packet produced by `sampleCaseDocket()` 
  * and formats the prompt for the fast model (Flash) to synthesize 
- * the narrative background, starter discovery, and sealed Base64 truth.
+ * the narrative background, starter discovery, and the unvarnished truth.
  */
 
-const SCOUT_SYSTEM_INSTRUCTION = `You are the Fast Scout narrative synthesizer for "Rest Your Case", a fair-play procedural legal mystery simulation.
-Your sole job is to take raw procedural case seeds and assemble them into a coherent, realistic criminal case file.
-
-CORE GENERATION RULES:
-1. FAIR-PLAY HARMONY: The Venue, Evidence Anchor, Constitutional Flaw, Witness Friction, and Client Complication must weave together logically.
-2. DIRTY HANDS / CULPABILITY LEVEL:
-   - Level 1-2: Client is factually innocent; prosecution relies on mistaken identity or faulty forensics.
-   - Level 3: Client is innocent of the primary charge, but was engaged in an uncharged illicit act explaining their suspicious actions or timeline gaps.
-   - Level 4: Client committed the physical act, but the statutory charge is an overreach (e.g. lack of premeditation or heat of passion).
-   - Level 5: Client is factually guilty; the case relies on constitutional suppression of tainted evidence.
-3. OUTPUT FORMAT: Respond strictly with a valid JSON object matching the exact schema provided. Do not enclose in markdown code fences unless required.`;
+// Note: SCOUT_SYSTEM_INSTRUCTION is securely housed in the Cloudflare Worker.
+// It is no longer duplicated here to ensure a single source of truth.
 
 /**
  * Builds the user prompt payload sent to the Scout model
  * @param {object} caseSeed - Output from sampleCaseDocket()
- * @returns {string} Fully articulated synthesis prompt
+ * @returns {string} Fully articulated synthesis prompt with strict word limits
  */
 function buildScoutPrompt(caseSeed) {
   return `Generate a complete criminal defense case docket based on these randomized trial parameters:
@@ -41,60 +32,65 @@ PARAMETERS:
 - Witness Friction: ${caseSeed.narrative_seeds.witness_friction.friction}
 - Client Complication: ${caseSeed.narrative_seeds.client_complication.complication}
 
-MANDATORY JSON OUTPUT SCHEMA:
+MANDATORY JSON OUTPUT SCHEMA AND WORD LIMITS:
 {
   "case_title": "State v. [Defendant Last Name]",
-  "crime_summary": "A 1-2 sentence punchy factual allegation summarizing what the State claims occurred.",
+  "crime_summary": "A 1-2 sentence punchy factual allegation summarizing what the State claims occurred (Max 40 words).",
   "starter_exhibits": [
     {
       "id": "Ex. 1",
       "name": "[Title of Evidence Anchor Item]",
       "type": "${caseSeed.narrative_seeds.primary_evidence_anchor.type}",
       "status": "Marked",
-      "details": "Precise chain of custody log, timestamps, and physical description containing the subtle procedural or factual flaw."
+      "details": "Precise chain of custody log, timestamps, and physical description containing the subtle procedural or factual flaw (Max 25 words)."
     },
     {
       "id": "Ex. 2",
       "name": "[Title of Corroborating Report, Dispatch, or Photo]",
       "type": "Documentary",
       "status": "Marked",
-      "details": "Preliminary police report, coroner note, or witness statement setting the state's timeline."
+      "details": "Preliminary police report, coroner note, or witness statement setting the state's timeline (Max 25 words)."
     }
   ],
-  "unencrypted_truth": "The absolute, unvarnished reality of what actually occurred at the venue, who actually did it, the client's actual actions, and how the flaw explains the police mistake.",
+  "unencrypted_truth": "The absolute, unvarnished reality of what actually occurred at the venue, who did it, and how the flaw explains the police mistake (Max 50 words).",
   "client_opening_dialogue": "Exactly two direct sentences spoken by the defendant in holding to Lead Defense Counsel to open Phase 1 intake."
 }`;
 }
 
 /**
- * Normalizes the Scout model's JSON response and encodes the Base64 Ground Truth
+ * Normalizes the Scout model's JSON response and validates all required keys.
  * @param {string|object} rawResponse - The text or parsed JSON returned by the model
  * @returns {object} Clean case brief ready for local client hydration and Main Engine handshake
+ * @throws {Error} If the JSON is malformed or missing required schema keys
  */
 function parseScoutResponse(rawResponse) {
   let parsed;
   if (typeof rawResponse === "string") {
-    // Strip accidental markdown fences if returned
+    // Strip accidental markdown fences if returned despite JSON mode
     const cleanJson = rawResponse.replace(/```(?:json)?/gi, "").trim();
-    parsed = JSON.parse(cleanJson);
+    try {
+      parsed = JSON.parse(cleanJson);
+    } catch (e) {
+      throw new Error("Failed to parse Scout response. Model returned malformed JSON.");
+    }
   } else {
     parsed = rawResponse;
   }
 
-  // Encode the ground truth into Base64 (browser window.btoa or Node Buffer)
-  const truthText = parsed.unencrypted_truth || "No ground truth specified.";
-  let base64Truth = "";
-  if (typeof btoa === "function") {
-    base64Truth = btoa(unescape(encodeURIComponent(truthText)));
-  } else if (typeof Buffer !== "undefined") {
-    base64Truth = Buffer.from(truthText, "utf-8").toString("base64");
+  // Strict Validation: Ensure all requested keys exist so the engine doesn't crash on Turn 1
+  if (!parsed.case_title || !parsed.crime_summary || !parsed.starter_exhibits || !parsed.unencrypted_truth || !parsed.client_opening_dialogue) {
+    throw new Error("Model returned incomplete JSON schema. Missing required case fields.");
+  }
+
+  if (!Array.isArray(parsed.starter_exhibits) || parsed.starter_exhibits.length < 2) {
+    throw new Error("Model failed to generate the required starter exhibits.");
   }
 
   return {
     caseTitle: parsed.case_title,
     crimeSummary: parsed.crime_summary,
     starterExhibits: parsed.starter_exhibits,
-    groundTruthBase64: base64Truth,
+    unencryptedTruth: parsed.unencrypted_truth, // Returned as plain text for the engine payload
     clientDialogue: parsed.client_opening_dialogue
   };
 }
@@ -102,7 +98,6 @@ function parseScoutResponse(rawResponse) {
 // Module export for Node or Browser inclusion
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    SCOUT_SYSTEM_INSTRUCTION,
     buildScoutPrompt,
     parseScoutResponse
   };
