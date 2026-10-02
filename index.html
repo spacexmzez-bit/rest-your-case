@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,6 +54,13 @@
       </div>
       
       <nav class="flex items-center gap-2">
+        <!-- Shelf indicator pill -->
+        <a href="shelf.html" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold text-xs font-mono shadow-sm transition" title="Case Files Shelf">
+          <span>🗄️</span>
+          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Shelf</span>
+          <span id="nav-shelf-badge" class="px-1.5 py-0.2 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold">0</span>
+        </a>
+
         <!-- BYOK Indicator & Settings Button -->
         <button onclick="openKeyModal()" class="flex items-center gap-1.5 px-2 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold transition shadow-sm" title="API Key Settings">
           <span id="nav-key-indicator" class="w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300"></span>
@@ -73,9 +79,8 @@
   <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
     <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
       ⚖️ TIP: Every major move costs Action Points (AP). Plan carefully. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: You cannot Admit an exhibit without laying a foundation first. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: Use /inspect on marked exhibits to uncover hidden details. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: Consult your Senior Partner or Investigator Diaz without spending AP.
+      ⚖️ TIP: Review case dossiers in Intake or pull archived files from your Shelf. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
+      ⚖️ TIP: Consult your Senior Partner (/consult) or Investigator Diaz without spending AP.
     </div>
   </div>
 
@@ -93,8 +98,9 @@
         <button id="overview-start-btn" onclick="startOrResumeTrial()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-6 py-3 rounded font-mono font-bold uppercase transition text-sm shadow text-center w-full sm:w-auto">
           Start Live Trial
         </button>
-        <a href="info.html#setup" class="bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold px-6 py-3 rounded font-mono font-bold transition text-sm text-center w-full sm:w-auto whitespace-nowrap inline-block">
-          Wanna play on your own?
+        <a href="shelf.html" class="bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold px-6 py-3 rounded font-mono font-bold transition text-sm text-center w-full sm:w-auto whitespace-nowrap inline-flex items-center justify-center gap-2">
+          <span>🗄️ Case Shelf</span>
+          <span id="overview-shelf-count" class="px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold text-xs font-bold">0</span>
         </a>
       </div>
 
@@ -165,9 +171,13 @@
       <a href="index.html" class="w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition block">Overview</a>
       <a id="drawer-terminal-link" href="game.html#terminal" class="hidden w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Live Terminal</a>
       <a href="game.html#notebook" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Notebook</a>
-      <a href="info.html#howtoplay" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">How to Play</a>
+      <a href="shelf.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition flex items-center justify-between">
+        <span>Case Shelf</span>
+        <span id="drawer-shelf-count" class="px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold text-[10px] font-bold">0</span>
+      </a>
+      <a href="info.html#howtoplay-section" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">How to Play</a>
       <a href="library.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Legal Library</a>
-      <a href="info.html#setup" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Setup Guide</a>
+      <a href="info.html#setup-section" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Setup Guide</a>
     </nav>
   
     <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
@@ -175,48 +185,132 @@
     </div>
   </aside>
 
-  <!-- ================= INTAKE MODAL ================= -->
-  <div id="intake-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-6 space-y-5 shadow-2xl">
-      <div class="border-b border-brand-border pb-2">
-        <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide">Case Parameters</h3>
-        <p class="text-brand-muted text-[11px] font-mono">Calibrate the legal engine before intake.</p>
+  <!-- ================= INTAKE & CASE DOSSIER FOLDER MODAL ================= -->
+  <div id="intake-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-brand-surface border border-brand-border rounded max-w-xl w-full p-5 sm:p-6 space-y-5 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
+      
+      <!-- Modal Header -->
+      <div class="border-b border-brand-border pb-3 flex items-center justify-between">
+        <div>
+          <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide flex items-center gap-2">
+            <span>🗂️</span> Case Intake Docket
+          </h3>
+          <p class="text-brand-muted text-[11px] font-mono">Calibrate criteria and review prospective dossiers.</p>
+        </div>
+        <button onclick="closeIntakeModal()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
       </div>
-      <div class="space-y-4 font-sans text-sm text-slate-200">
-        <div class="space-y-1">
-          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Trial Difficulty</label>
-          <select id="intake-diff" class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold cursor-pointer">
-            <option value="Easy">Easy (6 AP, 4 Strikes)</option>
-            <option value="Normal" selected>Normal (4 AP, 3 Strikes)</option>
-            <option value="Hard">Hard (3 AP, 2 Strikes)</option>
+
+      <!-- Parameters Bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-brand-dark/80 p-3 rounded border border-brand-border text-xs font-mono">
+        <div>
+          <label class="text-brand-gold text-[10px] uppercase block mb-1">Trial Rules</label>
+          <select id="intake-diff" class="w-full bg-brand-surface border border-brand-border p-1.5 rounded text-white outline-none focus:border-brand-gold">
+            <option value="Easy">Easy (6 AP)</option>
+            <option value="Normal" selected>Normal (4 AP)</option>
+            <option value="Hard">Hard (3 AP)</option>
           </select>
         </div>
-        <div class="space-y-1">
-          <div class="flex justify-between items-end">
-            <div class="flex items-center gap-2">
-              <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Case Complexity</label>
-              <button type="button" onclick="document.getElementById('comp-info-drawer').classList.toggle('hidden')" class="w-4 h-4 rounded-full bg-brand-surface border border-brand-border text-brand-gold text-[10px] font-bold flex items-center justify-center hover:bg-brand-gold hover:text-white transition">!</button>
-            </div>
-            <span id="comp-val" class="text-white font-bold text-xs bg-brand-dark px-2 rounded border border-brand-border">Level 3</span>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-brand-gold text-[10px] uppercase">Complexity</label>
+            <span id="comp-label" class="text-white text-[10px] font-bold">Lvl 3</span>
           </div>
-          <input id="intake-comp" type="range" min="1" max="5" value="3" step="1" class="w-full accent-brand-gold cursor-pointer" oninput="updateComplexityInfo(this.value)">
-          <div id="comp-info-drawer" class="hidden mt-2 p-2.5 bg-brand-dark border border-brand-border rounded font-mono text-[10px] text-slate-300 shadow-inner">
-             <span id="comp-desc-text" class="leading-relaxed">Level 3 (Layered): Client conceals timeline gaps, conflicting witness testimony, requires subpoena verification (moderate AP pressure).</span>
-          </div>
+          <input id="intake-comp" type="range" min="1" max="5" value="3" step="1" oninput="handleComplexitySlider(this.value)" class="w-full accent-brand-gold cursor-pointer" />
         </div>
-        <div class="space-y-1">
-          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Charge Category</label>
-          <select id="intake-cat" class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold cursor-pointer">
+
+        <div>
+          <label class="text-brand-gold text-[10px] uppercase block mb-1">Charge Genre</label>
+          <select id="intake-cat" class="w-full bg-brand-surface border border-brand-border p-1.5 rounded text-white outline-none focus:border-brand-gold">
             <option value="Violent Felony">Violent Felony</option>
             <option value="White-Collar Fraud">White-Collar Fraud</option>
-            <option value="Cybercrime / Espionage">Cybercrime / Espionage</option>
-            <option value="Random Case File" selected>Random Case File</option>
+            <option value="Cybercrime / Espionage">Cybercrime</option>
+            <option value="Substance / Narcotics">Substance / Narcotics</option>
+            <option value="Overcharge / Manslaughter">Overcharge</option>
+            <option value="Random Case File" selected>Random Genre</option>
           </select>
         </div>
       </div>
-      <div class="flex justify-end gap-3 pt-3 border-t border-brand-border">
-        <button onclick="closeIntakeModal()" class="px-4 py-2 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
-        <button onclick="confirmIntake()" class="px-4 py-2 bg-brand-gold text-brand-dark font-bold font-mono text-xs rounded hover:bg-white transition shadow">Accept Case File</button>
+
+      <!-- Case Dossier Viewport -->
+      <div id="dossier-container" class="space-y-3 flex-grow">
+        <!-- Initial prompt before searching -->
+        <div id="dossier-idle" class="border border-dashed border-brand-border p-8 rounded text-center space-y-3 bg-brand-dark/40">
+          <span class="text-3xl block">🔍</span>
+          <p class="text-sm font-serif text-white">No active case dossier pulled.</p>
+          <p class="text-xs text-brand-muted font-sans max-w-sm mx-auto">
+            Direct Investigator Diaz to scout court filings and police dispatch logs matching your criteria.
+          </p>
+        </div>
+
+        <!-- Searching Animation View -->
+        <div id="dossier-searching" class="hidden border border-brand-gold/40 p-8 rounded text-center space-y-4 bg-brand-dark/60">
+          <div class="flex justify-center items-center gap-1.5">
+            <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce" style="animation-delay: -0.32s"></div>
+            <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce" style="animation-delay: -0.16s"></div>
+            <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce"></div>
+          </div>
+          <p class="text-xs font-mono text-brand-gold tracking-wider uppercase">
+            Inv. Diaz is pulling docket filings & discovery...
+          </p>
+          <p class="text-[11px] text-brand-muted font-sans">Synthesizing narrative seeds via Fast Scout engine.</p>
+        </div>
+
+        <!-- Inline Error Banner -->
+        <div id="dossier-error" class="hidden p-3 rounded bg-rose-950/40 border border-rose-900 text-rose-300 text-xs font-mono flex items-center justify-between">
+          <span id="dossier-error-text">Failed to pull case file.</span>
+          <button onclick="handleFindCaseClick()" class="px-2 py-1 bg-rose-900 hover:bg-rose-800 text-white rounded text-[10px] font-bold">Try Again</button>
+        </div>
+
+        <!-- Active Card Preview -->
+        <div id="dossier-card" class="hidden border border-brand-gold/50 rounded p-4 bg-brand-dark/90 space-y-3 shadow-inner">
+          <div class="flex items-center justify-between border-b border-brand-border pb-2">
+            <div>
+              <span id="card-genre" class="text-[10px] font-mono text-brand-gold uppercase tracking-wider block">Violent Felony</span>
+              <h4 id="card-title" class="text-base font-serif text-white font-bold">State v. Doe</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="card-counter" class="text-[10px] font-mono text-brand-muted bg-brand-surface px-2 py-0.5 rounded border border-brand-border">Case 1 of 1</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs font-mono text-slate-300">
+            <div><span class="text-brand-muted">Charge: </span><span id="card-charge" class="text-rose-300 font-bold">Murder 1st</span></div>
+            <div><span class="text-brand-muted">Client: </span><span id="card-client" class="text-slate-200">Defendant</span></div>
+            <div><span class="text-brand-muted">Judge: </span><span id="card-judge" class="text-slate-200">Hon. Vance</span></div>
+            <div><span class="text-brand-muted">Prosecutor: </span><span id="card-da" class="text-rose-300">ADA Miller</span></div>
+          </div>
+
+          <div class="space-y-1">
+            <span class="text-[10px] font-mono text-brand-muted uppercase block">Police Allegation</span>
+            <p id="card-summary" class="text-xs text-slate-300 font-sans leading-relaxed bg-brand-surface/60 p-2.5 rounded border border-brand-border/60">
+              The State claims the defendant was found near the scene.
+            </p>
+          </div>
+
+          <div class="text-[11px] font-mono">
+            <span class="text-brand-gold">Starter Exhibits: </span>
+            <span id="card-exhibits" class="text-slate-300">Ex. 1 Glove, Ex. 2 CAD Log</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons Footer -->
+      <div class="border-t border-brand-border pt-3 flex flex-wrap items-center justify-between gap-2">
+        <!-- Pagination controls -->
+        <div id="dossier-pagination" class="hidden items-center gap-1.5 font-mono text-xs">
+          <button onclick="prevDossierCase()" class="px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold text-white disabled:opacity-30 disabled:pointer-events-none" id="btn-prev-case">◀</button>
+          <button onclick="nextDossierCase()" class="px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold text-white disabled:opacity-30 disabled:pointer-events-none" id="btn-next-case">▶</button>
+        </div>
+
+        <div class="flex items-center gap-2 ml-auto">
+          <button id="btn-find-case" onclick="handleFindCaseClick()" class="px-3.5 py-2 rounded bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold text-xs font-mono font-bold transition">
+            Find Case
+          </button>
+          <button id="btn-accept-case" onclick="handleAcceptCaseClick()" class="hidden px-4 py-2 rounded bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-mono font-bold uppercase tracking-wider transition shadow">
+            Accept Retainer
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -257,8 +351,14 @@
     Rest Your Case &copy; 2026. Local-First Client Storage.
   </footer>
 
+  <!-- Scripts loaded in execution order with cache busting -->
+  <script src="data.js?v=1"></script>
+  <script src="scout_prompt.js?v=1"></script>
+  <script src="cases.js?v=1"></script>
   <script>
     let customGeminiKey = localStorage.getItem('rest_your_case_custom_gemini_key') || null;
+    let currentDossierIndex = 0;
+    let activeSearchAbortController = null;
 
     function toggleNavDrawer() {
       document.getElementById('nav-drawer').classList.toggle('-translate-x-full');
@@ -310,16 +410,20 @@
       closeKeyModal();
     }
 
-    function updateComplexityInfo(val) {
-      document.getElementById('comp-val').innerText = 'Level ' + val;
-      const texts = [
-        "Level 1 (Straightforward): Cooperative client, single direct suspect, minimal forensic conflicting paths. Baseline AP efficiency.",
-        "Level 2 (Standard): Mild inconsistencies, single credible alternative theory, standard AP consumption.",
-        "Level 3 (Layered): Client conceals timeline gaps, conflicting witness testimony, requires subpoena verification (moderate AP pressure).",
-        "Level 4 (Deceptive): Multiple false alibis, tainted forensic custody, heavy AP demand for investigation.",
-        "Level 5 (Full Conspiracy): Hostile client deception, layered institutional cover-ups, high AP risk where checking false leads causes procedural exhaustion."
-      ];
-      document.getElementById('comp-desc-text').innerText = texts[val - 1];
+    function updateShelfBadges() {
+      const shelf = getShelfCases();
+      const count = shelf.length;
+      const navBadge = document.getElementById('nav-shelf-badge');
+      const drawerBadge = document.getElementById('drawer-shelf-count');
+      const ovCount = document.getElementById('overview-shelf-count');
+      
+      if (navBadge) navBadge.innerText = count;
+      if (drawerBadge) drawerBadge.innerText = count;
+      if (ovCount) ovCount.innerText = count;
+    }
+
+    function handleComplexitySlider(val) {
+      document.getElementById('comp-label').innerText = 'Lvl ' + val;
     }
 
     function startOrResumeTrial() {
@@ -333,58 +437,161 @@
           }
         } catch (e) {}
       }
-      document.getElementById('intake-modal').classList.remove('hidden');
+      openIntakeModal();
+    }
+
+    function openIntakeModal() {
+      const modal = document.getElementById('intake-modal');
+      modal.classList.remove('hidden');
+      renderDossierView();
     }
 
     function closeIntakeModal() {
+      // Abort any ongoing search
+      if (activeSearchAbortController) {
+        activeSearchAbortController.abort();
+        activeSearchAbortController = null;
+      }
+      // Archive pending cases so they are preserved on the shelf
+      archivePending();
+      updateShelfBadges();
       document.getElementById('intake-modal').classList.add('hidden');
     }
 
-    function confirmIntake() {
-      const diff = document.getElementById('intake-diff').value;
-      const comp = document.getElementById('intake-comp').value;
-      const cat = document.getElementById('intake-cat').value;
-      
-      closeIntakeModal();
-      
-      let startingAP = (diff === 'Easy') ? 6 : (diff === 'Hard') ? 3 : 4;
-      let strikesMax = (diff === 'Easy') ? 4 : (diff === 'Hard') ? 2 : 3;
+    function renderDossierView() {
+      const pending = getPendingCases();
+      const idleEl = document.getElementById('dossier-idle');
+      const cardEl = document.getElementById('dossier-card');
+      const searchEl = document.getElementById('dossier-searching');
+      const paginationEl = document.getElementById('dossier-pagination');
+      const btnAccept = document.getElementById('btn-accept-case');
+      const btnFind = document.getElementById('btn-find-case');
 
-      let prevWarning = false;
-      const existing = localStorage.getItem('rest_your_case_state');
-      if (existing) {
-        try { prevWarning = JSON.parse(existing).hasSeenTrashWarning || false; } catch(e) {}
+      if (pending.length === 0) {
+        idleEl.classList.remove('hidden');
+        cardEl.classList.add('hidden');
+        paginationEl.classList.add('hidden');
+        btnAccept.classList.add('hidden');
+        btnFind.innerText = "Find Case";
+        return;
       }
 
-      const freshState = {
-        hasActiveCase: true, profile: { title: "Assigning Case...", client: "TBD", judge: "", da: "" },
-        phase: "Phase 1: Intake", turn: 1, ap: startingAP, strikes: 0, maxStrikes: strikesMax, notes: '',
-        transcript: [], docket: [], facts: [], difficulty: diff, complexity: comp,
-        selectedModel: 'gemini-3.8-flash',
-        trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: prevWarning
-      };
+      idleEl.classList.add('hidden');
+      cardEl.classList.remove('hidden');
+      paginationEl.classList.remove('hidden');
+      paginationEl.classList.add('flex');
+      btnAccept.classList.remove('hidden');
+      btnFind.innerText = "Find Another";
+
+      // Bound index
+      if (currentDossierIndex >= pending.length) currentDossierIndex = pending.length - 1;
+      if (currentDossierIndex < 0) currentDossierIndex = 0;
+
+      const currentCase = pending[currentDossierIndex];
+      const scout = currentCase.scout;
+      const seed = currentCase.seed;
+
+      document.getElementById('card-genre').innerText = `${seed.meta.genre_name} (Complexity ${seed.meta.complexity}/5)`;
+      document.getElementById('card-title').innerText = scout.caseTitle;
+      document.getElementById('card-charge').innerText = seed.charge.charge;
+      document.getElementById('card-client').innerText = seed.roster.client.name;
+      document.getElementById('card-judge').innerText = seed.roster.judge.name;
+      document.getElementById('card-da').innerText = seed.roster.da.name;
+      document.getElementById('card-summary').innerText = `"${scout.crimeSummary}"`;
       
-      localStorage.setItem('rest_your_case_state', JSON.stringify(freshState));
-      localStorage.removeItem('rest_your_case_history');
-      localStorage.removeItem('rest_your_case_partner_history');
-      localStorage.removeItem('rest_your_case_diaz_history');
-      localStorage.removeItem('terminal_draft');
+      const exhibits = (scout.starterExhibits || []).map(e => e.name || e.id).join(', ');
+      document.getElementById('card-exhibits').innerText = exhibits || '2 Initial Exhibits Marked';
 
-      // Seed Assistants
-      const partnerSeed = [{ role: 'model', parts: [{ text: "I've reviewed the preliminary file. Let's coordinate. What's our angle?" }] }];
-      const diazSeed = [{ role: 'model', parts: [{ text: "Diaz here. Give me a target, a name, or an address, and check your AP before sending me out." }] }];
-      localStorage.setItem('rest_your_case_partner_history', JSON.stringify(partnerSeed));
-      localStorage.setItem('rest_your_case_diaz_history', JSON.stringify(diazSeed));
-
-      // Flag for game.html to send /start prompt on load
-      sessionStorage.setItem('trigger_intake_start', JSON.stringify({ diff, comp, cat }));
-
-      window.location.href = 'game.html#terminal';
+      document.getElementById('card-counter').innerText = `Case ${currentDossierIndex + 1} of ${pending.length}`;
+      document.getElementById('btn-prev-case').disabled = (currentDossierIndex === 0);
+      document.getElementById('btn-next-case').disabled = (currentDossierIndex === pending.length - 1);
     }
 
-    // Init UI State
+    function prevDossierCase() {
+      if (currentDossierIndex > 0) {
+        currentDossierIndex--;
+        renderDossierView();
+      }
+    }
+
+    function nextDossierCase() {
+      const pending = getPendingCases();
+      if (currentDossierIndex < pending.length - 1) {
+        currentDossierIndex++;
+        renderDossierView();
+      }
+    }
+
+    async function handleFindCaseClick() {
+      const diff = document.getElementById('intake-diff').value;
+      const comp = parseInt(document.getElementById('intake-comp').value, 10);
+      const cat = document.getElementById('intake-cat').value;
+
+      const searchEl = document.getElementById('dossier-searching');
+      const errEl = document.getElementById('dossier-error');
+      const btnFind = document.getElementById('btn-find-case');
+
+      errEl.classList.add('hidden');
+      searchEl.classList.remove('hidden');
+      btnFind.disabled = true;
+
+      // Create new abort signal
+      activeSearchAbortController = new AbortController();
+
+      try {
+        await generateCase(diff, comp, cat, activeSearchAbortController.signal);
+        // Switch to the newly discovered case (last in array)
+        const pending = getPendingCases();
+        currentDossierIndex = pending.length - 1;
+        renderDossierView();
+      } catch (err) {
+        if (err.message !== "Search cancelled.") {
+          document.getElementById('dossier-error-text').innerText = err.message;
+          errEl.classList.remove('hidden');
+        }
+      } finally {
+        searchEl.classList.add('hidden');
+        btnFind.disabled = false;
+        activeSearchAbortController = null;
+      }
+    }
+
+    function handleAcceptCaseClick() {
+      const pending = getPendingCases();
+      const chosenCase = pending[currentDossierIndex];
+      if (!chosenCase) return;
+
+      // Abort any pending background search
+      if (activeSearchAbortController) {
+        activeSearchAbortController.abort();
+        activeSearchAbortController = null;
+      }
+
+      // Apply currently chosen difficulty from the dropdown
+      chosenCase.difficulty = document.getElementById('intake-diff').value;
+
+      // Archive remaining unchosen cases to the Shelf
+      const others = pending.filter((_, idx) => idx !== currentDossierIndex);
+      if (others.length > 0) {
+        const shelf = getShelfCases();
+        saveShelfCases([...others.reverse(), ...shelf]);
+      }
+      savePendingCases([]);
+
+      startTrialWithCase(chosenCase);
+    }
+
+    // Auto-archive pending cases if user exits page
+    window.addEventListener('beforeunload', () => {
+      archivePending();
+    });
+
+    // Page initialization
     (function initLauncher() {
       updateKeyIndicator();
+      archivePending(); // Ensure any previous dangling intakes are saved to shelf
+      updateShelfBadges();
+
       const saved = localStorage.getItem('rest_your_case_state');
       let hasActive = false;
       if (saved) {
@@ -393,6 +600,7 @@
           hasActive = !!parsed.hasActiveCase;
         } catch (e) {}
       }
+
       const ovBtn = document.getElementById('overview-start-btn');
       if (ovBtn) {
         ovBtn.innerText = hasActive ? "Resume Active Trial" : "Start Live Trial";
@@ -400,6 +608,7 @@
           ? "bg-brand-surface border border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-dark px-6 py-3 rounded font-mono font-bold uppercase transition text-sm shadow text-center w-full sm:w-auto"
           : "bg-emerald-700 hover:bg-emerald-600 text-white px-6 py-3 rounded font-mono font-bold uppercase transition text-sm shadow text-center w-full sm:w-auto";
       }
+
       const termLink = document.getElementById('drawer-terminal-link');
       if (termLink && hasActive) {
         termLink.classList.remove('hidden');
