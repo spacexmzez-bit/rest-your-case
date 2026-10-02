@@ -15,7 +15,6 @@ let appState = {
   complexity: 3, 
   category: 'Random Case File',
   selectedModel: 'gemini-3.8-flash',
-  sealedGroundTruth: '',
   activeCaseSeed: null,
   trashedFacts: [], 
   hiddenFacts: [], 
@@ -77,6 +76,16 @@ function switchTab(tabId) {
 function navToTab(tabId) {
   switchTab(tabId);
   toggleNavDrawer();
+}
+
+function updateShelfBadge() {
+  if (typeof getShelfCases === 'function') {
+    const count = getShelfCases().length;
+    const navBadge = document.getElementById('nav-shelf-badge');
+    const drawerBadge = document.getElementById('drawer-shelf-count');
+    if (navBadge) navBadge.innerText = count;
+    if (drawerBadge) drawerBadge.innerText = count;
+  }
 }
 
 function updateActiveModelDisplay() {
@@ -174,9 +183,10 @@ function initApp() {
   const savedDraft = localStorage.getItem('terminal_draft');
   if (savedDraft) document.getElementById('court-user-input').value = savedDraft;
 
-  // Init BYOK
+  // Init BYOK & Shelf count
   customGeminiKey = localStorage.getItem('rest_your_case_custom_gemini_key') || null;
   updateKeyIndicator();
+  updateShelfBadge();
 
   // Check URL Hash for initial tab
   const hash = window.location.hash.replace('#', '');
@@ -190,17 +200,80 @@ function initApp() {
   renderAssistantFeeds();
   updateActiveModelDisplay();
 
-  // Cross-page launch triggered from index.html
-  const triggerStart = sessionStorage.getItem('trigger_intake_start');
-  if (triggerStart) {
-    sessionStorage.removeItem('trigger_intake_start');
-    try {
-      const { diff, comp, cat } = JSON.parse(triggerStart);
-      startNewProceduralTrial(diff, comp, cat);
-    } catch (e) {
-      console.error("Failed to parse trigger start", e);
+  // Check for auto-initialization handshake from startTrialWithCase()
+  const triggerHandshake = sessionStorage.getItem('trigger_engine_handshake');
+  if (triggerHandshake && appState.activeCaseSeed) {
+    sessionStorage.removeItem('trigger_engine_handshake');
+    executeEngineInitializationHandshake(appState.activeCaseSeed);
+  } else {
+    // Check for legacy intake trigger
+    const triggerStart = sessionStorage.getItem('trigger_intake_start');
+    if (triggerStart) {
+      sessionStorage.removeItem('trigger_intake_start');
+      try {
+        const { diff, comp, cat } = JSON.parse(triggerStart);
+        const legacyPrompt = `/start --mode=web --difficulty=${diff} --complexity=${comp} --category="${cat}"\n\nFAST-START MANDATE:\n1. Roll Roster (Judge, DA, Client).\n2. Generate Case Title and a 1-sentence crime summary.\n3. Mark exactly TWO starting exhibits in the docket.\n4. Output 2 lines of dialogue from the Client in holding.\n5. Enclose all state in the checkpoint block.`;
+        sendCourtAction(legacyPrompt, true);
+      } catch (e) {}
     }
   }
+}
+
+/**
+ * Builds the rich, context-packed Turn 1 initialization prompt for the Courtroom Engine.
+ * Uses the already-synthesized Scout data and sampled parameters.
+ */
+function executeEngineInitializationHandshake(caseObj) {
+  const seed = caseObj.seed;
+  const scout = caseObj.scout;
+  const diff = caseObj.difficulty || appState.difficulty || 'Normal';
+
+  // Encode the ground truth in Base64 for the sealed block
+  let base64Truth = "";
+  try {
+    base64Truth = btoa(unescape(encodeURIComponent(scout.unencryptedTruth || "No truth specified.")));
+  } catch (e) {
+    base64Truth = scout.unencryptedTruth || "No truth specified.";
+  }
+
+  const exhibitsDesc = (scout.starterExhibits || []).map(e => `[${e.id}]: ${e.name} (${e.type}) - ${e.details}`).join('\n');
+
+  const handshakePrompt = `/start --mode=web --difficulty=${diff} --complexity=${seed.meta.complexity}
+
+CASE INTAKE PARAMETERS & ESTABLISHED GROUND RECORD:
+- Case Title: ${scout.caseTitle}
+- Presiding Judge: ${seed.roster.judge.name} (${seed.roster.judge.style} | Temperament: ${seed.roster.judge.temperament})
+- Prosecutor: ${seed.roster.da.name} (${seed.roster.da.style} | Tactic: ${seed.roster.da.tactic})
+- Defendant / Client: ${seed.roster.client.name}
+- Charge: ${seed.charge.charge}
+- Statutory Definition: ${seed.charge.statutory_definition}
+- Required Mens Rea: ${seed.charge.mens_rea}
+- Crime Summary: ${scout.crimeSummary}
+- Setting / Venue: ${seed.narrative_seeds.venue.name} (${seed.narrative_seeds.venue.category})
+- Primary Evidence Anchor: ${seed.narrative_seeds.primary_evidence_anchor.item} (${seed.narrative_seeds.primary_evidence_anchor.type})
+- Hidden Constitutional Flaw: ${seed.narrative_seeds.constitutional_flaw.flaw} (Legal Basis: ${seed.narrative_seeds.constitutional_flaw.legal_basis})
+- Witness Friction: ${seed.narrative_seeds.witness_friction.friction}
+- Client Complication: ${seed.narrative_seeds.client_complication.complication}
+- Planned DA Misconduct Trap: ${seed.mechanics.da_misconduct_trap.name} (${seed.mechanics.da_misconduct_trap.legal_basis})
+- Jury Verdict Pivot: ${seed.mechanics.jury_verdict_guide.pivot} (Acquittal Standard: ${seed.mechanics.jury_verdict_guide.acquittal_test})
+
+INITIAL DISCOVERY PACKET:
+${exhibitsDesc}
+
+[ENGINE INTERNAL - SEALED RECORD TRUTH]:
+"${scout.unencryptedTruth}"
+
+MANDATORY TURN 1 INITIALIZATION DIRECTIVE:
+1. Output the Sealed Case Ground Truth block using this exact Base64 string:
+==================== SEALED CASE GROUND TRUTH ====================
+${base64Truth}
+(DO NOT DECODE UNTIL THE VERDICT HAS BEEN RENDERED)
+==================================================================
+2. Mark the 2 starter exhibits as (Marked) in the docket.
+3. Yield the floor IMMEDIATELY to **[Client ${seed.roster.client.name}]** in holding, speaking exactly two sentences of opening dialogue to Lead Defense Counsel.
+4. Output dialogue for NO OTHER NPC. Enclose the state checkpoint at the bottom.`;
+
+  sendCourtAction(handshakePrompt, true);
 }
 
 function persist() { 
@@ -211,7 +284,7 @@ function saveDraft() {
   localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);
 }
 
-// Command Autocomplete (Capped strictly at 2 AP)
+// Autocomplete logic with strictly enforced 2-AP cap
 function handleInputDraft() {
   saveDraft();
   const input = document.getElementById('court-user-input');
@@ -235,8 +308,8 @@ function handleInputDraft() {
   } else if (val.startsWith('/subpoena')) {
     const targets = [
       { name: "Cell Tower Telemetry & Pings", desc: "1 AP - Carrier timing offsets", cost: "1 AP" },
-      { name: "911 Dispatch & CAD Logs", desc: "1 AP - Call buffer & audio", cost: "1 AP" },
-      { name: "Transit Turnstile & Badge Logs", desc: "1 AP - Access scans", cost: "1 AP" },
+      { name: "911 Dispatch & CAD Run Logs", desc: "1 AP - Audio buffer", cost: "1 AP" },
+      { name: "Transit Turnstile & Badge Logs", desc: "1 AP - Access telemetry", cost: "1 AP" },
       { name: "Bank & Transaction Records", desc: "1 AP - Financial timeline", cost: "1 AP" },
       { name: "Optical Sensors / CCTV Sweep", desc: "2 AP - Field video canvass", cost: "2 AP" },
       { name: "Forensic Biological / Ballistics Audit", desc: "2 AP - Independent re-test", cost: "2 AP" }
@@ -406,12 +479,12 @@ function switchAssistantTab(tabId) {
     pBtn.className = "px-3 py-1 rounded bg-brand-surface text-brand-gold font-bold border border-brand-gold/30";
     dBtn.className = "px-3 py-1 rounded text-brand-muted hover:text-slate-200 border border-transparent";
     document.getElementById('assistant-submit-btn').innerText = "Consult Partner";
-    document.getElementById('assistant-input').placeholder = "Ask for tactical advice or rule evaluation...";
+    document.getElementById('assistant-input').placeholder = "Ask for tactical advice...";
   } else {
     dBtn.className = "px-3 py-1 rounded bg-brand-surface text-brand-gold font-bold border border-brand-gold/30";
     pBtn.className = "px-3 py-1 rounded text-brand-muted hover:text-slate-200 border border-transparent";
     document.getElementById('assistant-submit-btn').innerText = "Consult Diaz";
-    document.getElementById('assistant-input').placeholder = "Ask for records, subpoenas, or field canvass...";
+    document.getElementById('assistant-input').placeholder = "Ask for records or alibi check...";
   }
   
   const feed = document.getElementById(tabId + '-feed');
@@ -439,8 +512,7 @@ function executeWipe() {
       hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, 
       phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', 
       transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, 
-      category: 'Random Case File', selectedModel: 'gemini-3.8-flash', 
-      sealedGroundTruth: '', activeCaseSeed: null,
+      category: 'Random Case File', selectedModel: 'gemini-3.8-flash', activeCaseSeed: null,
       trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: warningState 
     };
     trialHistory = []; partnerHistory = []; diazHistory = [];
@@ -470,7 +542,7 @@ function saveNewExhibit() {
   appState.docket.push({ 
     id: document.getElementById('modal-tag').value.trim() || `Ex. ${appState.docket.length + 1}`, 
     name: document.getElementById('modal-title').value.trim() || 'Untitled', 
-    type: document.getElementById('modal-type').value || 'Documentary',
+    type: document.getElementById('modal-type') ? document.getElementById('modal-type').value : 'Documentary',
     facts: document.getElementById('modal-details').value.trim(), 
     status: 'Admitted',
     isManual: true 
@@ -519,9 +591,9 @@ function renderDocket() {
       controlsHtml = `
         <div class="flex justify-between items-center pt-2 border-t border-brand-border/50 mt-2">
           <div class="space-x-1 text-[10px]">
-            <button title="Override to Admitted" onclick="setExhibitStatus(${index}, 'Admitted')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-emerald-400">Admit</button>
-            <button title="Override to Marked" onclick="setExhibitStatus(${index}, 'Marked')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-amber-400">Mark</button>
-            <button title="Override to Suppress" onclick="setExhibitStatus(${index}, 'SUPPRESSED')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-rose-400">Suppress</button>
+            <button title="Manually override to Admitted" onclick="setExhibitStatus(${index}, 'Admitted')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-emerald-400">Admit</button>
+            <button title="Manually override to Marked" onclick="setExhibitStatus(${index}, 'Marked')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-amber-400">Mark</button>
+            <button title="Manually override to Suppress" onclick="setExhibitStatus(${index}, 'SUPPRESSED')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-rose-400">Suppress</button>
           </div><button onclick="deleteExhibit(${index})" class="text-brand-muted hover:text-rose-400 text-[10px]">Del</button>
         </div>
       `;
@@ -535,11 +607,11 @@ function renderDocket() {
             <span class="text-[9px] px-1.5 py-0.2 rounded border w-fit mt-1 ${typeBadgeColor}">${itemType}</span>
           </div>
           <div class="flex flex-col items-end gap-1">
-            <span class="text-[9px] px-2 py-0.5 rounded font-bold whitespace-nowrap ${item.status === 'Admitted' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : item.status === 'Marked' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}">${item.status || 'Marked'}</span>
+            <span class="text-[9px] px-2 py-0.5 rounded font-bold whitespace-nowrap ${item.status === 'Admitted' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : item.status === 'Marked' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}">${item.status || 'Logged'}</span>
             ${item.isApi ? '<span class="text-[8px] text-brand-muted uppercase tracking-widest" title="Generated by Court Engine">Locked</span>' : '<span class="text-[8px] text-brand-gold uppercase tracking-widest" title="Added Manually">Manual</span>'}
           </div>
         </div>
-        <p class="text-brand-muted text-[11px] font-sans flex-grow">${item.details || item.facts || 'No forensic notes.'}</p>
+        <p class="text-brand-muted text-[11px] font-sans flex-grow">${item.facts || item.details || 'No forensic notes.'}</p>
         <div class="mt-2 pt-2 border-t border-brand-border/30">
           <textarea placeholder="Defense Annotations..." data-exid="${tag}" onchange="saveExhibitNote(this.dataset.exid, this.value)" class="w-full bg-brand-dark border border-brand-border rounded p-1.5 text-slate-300 text-[10px] font-mono outline-none resize-none focus:border-brand-gold" rows="2">${notes}</textarea>
         </div>
@@ -643,11 +715,11 @@ function parseTranscriptFormat(text) {
   text = text.replace(/(?:[A-Za-z0-9+/]{4}){10,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?/g, '<span class="text-[10px] text-brand-muted italic bg-brand-dark px-2 py-0.5 rounded border border-brand-border">[SEALED TRUTH HASH HIDDEN FROM RECORD]</span>');
 
   let parsed = text.replace(/^###\s+/gm, ''); 
-  parsed = parsed.replace(/^(?:\*\*)?\[?([A-Za-z\s\-\.\']+(?:Client\vert{}Counsel\vert{}Judge\vert{}Witness\vert{}DA\vert{}Defendant\vert{}Prosecut[a-z]+\vert{}Defen[a-z]+\vert{}Diaz\vert{}Partner\vert{}Bench\vert{}Court)?)\]?(?:\*\*)?\s*:\s*/gim, (match, name) => {
+  parsed = parsed.replace(/^(?:\*\*)?\[?([A-Za-z\s\-\.\']+(?:Client\vert{}Counsel\vert{}Judge\vert{}Witness\vert{}DA\vert{}Defendant\vert{}Prosecut[a-z]+\vert{}Defen[a-z]+\vert{}Sterling\vert{}Vance\vert{}Diaz\vert{}Bench\vert{}Court)?)\]?(?:\*\*)?\s*:\s*/gim, (match, name) => {
      let color = 'text-brand-gold'; 
      let lower = name.toLowerCase();
      if (lower.includes('judge') || lower.includes('bench') || lower.includes('court')) color = 'text-slate-300';
-     else if (lower.includes('prosecut') || lower.includes('da ') || lower.includes('thorne') || lower.includes('miller') || lower.includes('rossi')) color = 'text-rose-400';
+     else if (lower.includes('prosecut') || lower.includes('da ')) color = 'text-rose-400';
      else if (lower.includes('witness') || lower.includes('diaz')) color = 'text-emerald-400';
      name = name.replace(/\*/g, '').replace(/[\[\]]/g, '').trim();
      return `<br><span class="block mt-4 mb-1 text-sm font-bold tracking-wide uppercase ${color}">${name}</span>`;
@@ -675,11 +747,11 @@ function appendErrorAlert(rawError, lastPrompt, isAssistant = false) {
   if (rawError.includes("503") || rawError.includes("high demand") || rawError.includes("UNAVAILABLE")) {
     humanError = "All Gemini endpoints are experiencing peak traffic. Please wait a few seconds and hit Retry.";
   } else if (rawError.includes("MAX_TOKENS") || rawError.includes("token limit")) {
-    humanError = "The maximum token limit per request was reached. Rephrase your inquiry or run /recap.";
+    humanError = "The maximum token limit per request was reached. Rephrase your inquiry or run /recap to condense the record context.";
   } else if (rawError.includes("429") || rawError.includes("rate limit")) {
-    humanError = "API request threshold exceeded. Plug in your own free key via Settings (⚙) to bypass rate limits.";
+    humanError = "API request threshold exceeded. Plug in your own personal Google AI Studio key via Settings (⚙) to bypass rate limits.";
   } else if (rawError.includes("timed out")) {
-    humanError = "The AI model took too long to respond. The request timed out.";
+    humanError = "The AI model is taking too long to respond. The request has been aborted to prevent freezing.";
   }
   
   const errorId = 'err-' + Date.now();
@@ -849,117 +921,6 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
   }
 }
 
-/**
- * Procedural Case Initialization: 
- * Step 1: Samples procedural seeds from data.js.
- * Step 2: Executes Fast Scout Model call to synthesize the mystery.
- * Step 3: Hydrates state and hands off to Courtroom Engine.
- */
-async function startNewProceduralTrial(diff = 'Normal', comp = 3, cat = 'Random Case File') {
-  showLoadingScreen();
-
-  const startingAP = (diff === 'Easy') ? 6 : (diff === 'Hard') ? 3 : 4;
-  const strikesMax = (diff === 'Easy') ? 4 : (diff === 'Hard') ? 2 : 3;
-
-  // 1. Procedurally sample 1 seed per category from data.js
-  const caseSeed = sampleCaseDocket(comp, cat);
-
-  appState = {
-    hasActiveCase: true,
-    profile: { 
-      title: "Synthesizing...", 
-      client: caseSeed.roster.client.name, 
-      judge: caseSeed.roster.judge.name, 
-      da: caseSeed.roster.da.name 
-    },
-    phase: "Phase 1: Intake", 
-    turn: 1, 
-    ap: startingAP, 
-    strikes: 0, 
-    maxStrikes: strikesMax, 
-    notes: '',
-    transcript: [], 
-    docket: [], 
-    facts: [], 
-    difficulty: diff, 
-    complexity: comp,
-    category: cat,
-    selectedModel: 'gemini-3.8-flash',
-    sealedGroundTruth: '',
-    activeCaseSeed: caseSeed,
-    trashedFacts: [], 
-    hiddenFacts: [], 
-    exhibitNotes: {}, 
-    hasSeenTrashWarning: appState.hasSeenTrashWarning
-  };
-
-  trialHistory = []; partnerHistory = []; diazHistory = [];
-  localStorage.removeItem('rest_your_case_history');
-  localStorage.removeItem('rest_your_case_partner_history');
-  localStorage.removeItem('rest_your_case_diaz_history');
-
-  persist();
-  renderUI();
-
-  // 2. Scout Model Pipeline Call
-  const scoutPromptText = buildScoutPrompt(caseSeed);
-  const reqHeaders = { "Content-Type": "application/json" };
-  if (customGeminiKey) reqHeaders["X-Custom-Gemini-Key"] = customGeminiKey;
-
-  try {
-    const scoutResponse = await fetchWithTimeout(WORKER_URL, {
-      method: "POST",
-      headers: reqHeaders,
-      body: JSON.stringify({
-        message: scoutPromptText,
-        history: [],
-        targetPersona: 'court'
-      })
-    }, 35000);
-
-    const scoutData = await scoutResponse.json();
-    if (!scoutResponse.ok) throw new Error(scoutData.error || "Scout synthesis failed.");
-
-    // 3. Parse Scout response & hydrate Base64 ground truth
-    const parsedBrief = parseScoutResponse(scoutData.reply);
-
-    appState.profile.title = parsedBrief.caseTitle;
-    appState.sealedGroundTruth = parsedBrief.groundTruthBase64;
-    appState.docket = (parsedBrief.starterExhibits || []).map(ex => ({ ...ex, isApi: true }));
-    appState.facts = [`Defendant is formally charged with ${caseSeed.charge.charge}.`];
-
-    // Seed Assistant Feeds
-    const partnerGreeting = `I reviewed the preliminary docket for ${parsedBrief.caseTitle}. We're in front of ${caseSeed.roster.judge.name}, and ${caseSeed.roster.da.name} has the file. Keep an eye on our AP budget and consult me anytime at 0 AP.`;
-    const diazGreeting = `Diaz here. I'm assigned to ${parsedBrief.caseTitle}. Subpoenas are 1 AP; field canvassing and forensic audits cost 2 AP. Let's dig in.`;
-    
-    appendAssistantMessage('partner', 'SENIOR PARTNER', partnerGreeting, false, true);
-    appendAssistantMessage('diaz', 'INV. DIAZ', diazGreeting, false, true);
-
-    // Render client intake dialogue to open Phase 1
-    const openingTranscript = `**[${caseSeed.roster.judge.name}]**: Preliminary arraignment docket entered for ${parsedBrief.caseTitle}. Charge: ${caseSeed.charge.charge}.\n\n` +
-      `==================== SEALED CASE GROUND TRUTH ====================\n` +
-      `${parsedBrief.groundTruthBase64}\n` +
-      `(DO NOT DECODE UNTIL THE VERDICT HAS BEEN RENDERED)\n` +
-      `==================================================================\n\n` +
-      `**[Client ${caseSeed.roster.client.name}]**: ${parsedBrief.clientDialogue}`;
-
-    trialHistory.push({ role: "model", parts: [{ text: openingTranscript }] });
-    localStorage.setItem('rest_your_case_history', JSON.stringify(trialHistory));
-    
-    processCourtResponse(openingTranscript);
-
-  } catch (err) {
-    console.error("Scout Pipeline Error, falling back to direct court start", err);
-    // Fallback: If scout fails, issue standard direct start command
-    const initPrompt = `/start --mode=web --difficulty=${diff} --complexity=${comp} --category="${cat}"`;
-    sendCourtAction(initPrompt, true);
-  } finally {
-    hideLoadingScreen();
-    persist();
-    renderUI();
-  }
-}
-
 async function sendCourtAction(userPrompt, isInit = false, isRetry = false) {
   if (engineLocked) return;
   engineLocked = true;
@@ -1016,14 +977,16 @@ async function sendCourtAction(userPrompt, isInit = false, isRetry = false) {
         }
 
         if (response.status === 429 && data?.error === "QUOTA_EXHAUSTED") {
-          if (data.activeModel) appState.selectedModel = data.activeModel;
+          if (data.activeModel) {
+            appState.selectedModel = data.activeModel;
+          }
           appendTranscriptMessage("THE BENCH / RECORD", data.reply, false);
           success = true;
           break;
         }
 
         if (!response.ok) {
-          throw new Error(`Worker HTTP ${response.status}: ${data ? JSON.stringify(data) : 'Unknown error'}`);
+          throw new Error(data?.details || data?.error?.message || `Worker HTTP ${response.status}`);
         }
 
         if (data && data.activeModel) {
@@ -1056,7 +1019,7 @@ async function sendCourtAction(userPrompt, isInit = false, isRetry = false) {
 
 function buildContextCapsule() {
   if (!appState.hasActiveCase) return "No active case.";
-  const docketStr = (appState.docket || []).map(d => `${d.id}[${d.type || 'Doc'}](${d.status})`).join(', ') || 'None';
+  const docketStr = (appState.docket || []).map(d => `${d.id}(${d.status})`).join(', ') || 'None';
   const factStr = (appState.facts || []).join('; ') || 'None established';
   return `Case: ${appState.profile.title || 'Unknown'} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}
 Marked Docket: ${docketStr}
@@ -1102,7 +1065,7 @@ async function sendAssistantAction(userPrompt, isRetry = false) {
             targetPersona: tabId,
             capsule: buildContextCapsule()
           })
-        }, 30000);
+        }, 45000); // 45s assistant budget
 
         let data;
         try {
@@ -1112,7 +1075,9 @@ async function sendAssistantAction(userPrompt, isRetry = false) {
         }
 
         if (response.status === 429 && data?.error === "QUOTA_EXHAUSTED") {
-          if (data.activeModel) appState.selectedModel = data.activeModel;
+          if (data.activeModel) {
+            appState.selectedModel = data.activeModel;
+          }
           appendAssistantMessage(tabId, senderName, data.reply, false, true);
           renderAssistantFeeds();
           success = true;
@@ -1120,7 +1085,7 @@ async function sendAssistantAction(userPrompt, isRetry = false) {
         }
 
         if (!response.ok) {
-          throw new Error(`Worker HTTP ${response.status}`);
+          throw new Error(data?.details || `Worker HTTP ${response.status}`);
         }
 
         if (data && data.activeModel) {
@@ -1171,9 +1136,7 @@ function processCourtResponse(rawText) {
         appState.docket = [...apiItems, ...manualItems];
       }
     } catch (e) { console.error("Checkpoint parse error", e); }
-  } else if (appState.hasActiveCase) { 
-    appState.turn++; 
-  }
+  } else if (appState.hasActiveCase) { appState.turn++; }
 
   const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
   appendTranscriptMessage("THE BENCH / RECORD", cleanText, false);
@@ -1196,5 +1159,5 @@ function processCourtResponse(rawText) {
   renderUI();
 }
 
-// Global initialization
+// Direct initialization after DOM tree parse
 initApp();
