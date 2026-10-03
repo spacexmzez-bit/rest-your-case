@@ -12,79 +12,150 @@ const GAME_DATA = {
   // =========================================================================
   judges: [
     {
+      id: "judge_pendelton",
       name: "Judge Arthur Pendelton",
+      short_name: "Pendelton",
+      title: "Presiding Judge",
       style: "Textualist / Procedure-Strict",
       temperament: "Pedantic, easily irritated by improper FRE phrasing, impatient with speaking objections.",
-      bias_tendency: "Sustains strict technical objections; penalizes speculative defense lines quickly."
+      bias_tendency: "Sustains strict technical objections; penalizes speculative defense lines quickly.",
+      profile: "A rigid traditionalist who views the courtroom as an arena of strict procedural discipline. Pendelton has zero patience for theatrical speeches, speaking objections, or vague arguments.",
+      courtroom_behavior: "He expects attorneys to cite specific Federal Rules of Evidence numbers without hesitation. If counsel begins giving long-winded commentary before the jury instead of stating the black-letter rule, he will cut them off immediately. He sustains narrow, technical objections and quickly penalizes any defense cross-examination that drifts into speculation.",
+      tactical_guidance: "Keep every objection sharp, formal, and strictly tied to the exact rule number. Never argue with him after a ruling, and avoid speculative theories unless you have physical exhibits already marked to support them."
     },
     {
+      id: "judge_ramos",
       name: "Judge Evelyn Ramos",
+      short_name: "Ramos",
+      title: "Presiding Judge",
       style: "Pragmatic / Docket-Pacing",
       temperament: "Fast-paced, values courtroom efficiency, hates redundant questioning or theatrical pauses.",
-      bias_tendency: "Gives latitude to cross-examination as long as it moves rapidly toward a concrete point."
+      bias_tendency: "Gives latitude to cross-examination as long as it moves rapidly toward a concrete point.",
+      profile: "A pragmatic docket commander focused entirely on efficiency, clarity, and pacing. Ramos manages one of the busiest dockets in the district and despises wasted trial time.",
+      courtroom_behavior: "She becomes visibly annoyed by slow foundational setups, repetitive witness questioning, and dramatic pauses meant for the jury. However, she gives defense counsel wide latitude on cross-examination as long as counsel moves rapidly and attacks direct contradictions without stalling.",
+      tactical_guidance: "Get straight to the contradiction. Skip lengthy build-ups and confront state witnesses directly. If she senses you are fishing or stalling for time, she will sustain prosecution relevance objections without hesitation."
     },
     {
+      id: "judge_choi",
       name: "Judge Kenneth Choi",
+      short_name: "Choi",
+      title: "Presiding Judge",
       style: "Forensic / Detail-Obsessed",
       temperament: "Analytical, listens intensely to foundation and chain of custody, ignores emotional appeals.",
-      bias_tendency: "Highly receptive to suppression motions when technical custody records are flawed."
+      bias_tendency: "Highly receptive to suppression motions when technical custody records are flawed.",
+      profile: "A detail-obsessed jurist with a deep appreciation for forensic science, data hygiene, and technical documentation. Emotional appeals and courtroom rhetoric completely bounce off him.",
+      courtroom_behavior: "Choi listens intently to evidence foundation, calibration logs, and transit custody sheets. Unlike many judges, he will not give the state the benefit of the doubt on sloppy police paperwork. If an officer cannot verify exact timestamps or custody transfers, Choi will entertain technical defense suppression motions.",
+      tactical_guidance: "Audit laboratory logs, timestamps, and transit custody forms. Suppression motions carry significant weight with him. Never attempt to sway him with emotional appeals or moral outrage—stick strictly to technical errors."
     },
     {
+      id: "judge_al_hassan",
       name: "Judge Mirah Al-Hassan",
+      short_name: "Al-Hassan",
+      title: "Presiding Judge",
       style: "Constitutionalist / Defense-Fair",
       temperament: "Calm, deliberate, fiercely protective of Brady obligations and 4th/5th Amendment boundaries.",
-      bias_tendency: "Holds prosecutors to strict standards on warrantless actions; tolerates aggressive defense inquiry."
+      bias_tendency: "Holds prosecutors to strict standards on warrantless actions; tolerates aggressive defense inquiry.",
+      profile: "A deliberate, constitutionalist jurist who treats Fourth and Fifth Amendment protections as sacred guardrails. She holds prosecutors to the highest constitutional standards.",
+      courtroom_behavior: "She is deeply skeptical of warrantless searches, broad protective sweeps, and secretive cooperation deals between the state and jailhouse witnesses. She protects defense cross-examination when challenging police overreach and will readily order the state to turn over concealed discovery.",
+      tactical_guidance: "Scrutinize every search warrant, vehicle stop, and witness concession. If police stepped outside their legal authority, file suppression motions immediately. Al-Hassan will not let prosecutors gloss over civil liberties violations."
     },
     {
+      id: "judge_callahan",
       name: "Judge Raymond Callahan",
+      short_name: "Callahan",
+      title: "Presiding Judge",
       style: "Pro-Law-Enforcement / Traditionalist",
       temperament: "Gruff, old-school, skeptical of technical defense motions, values police credibility.",
-      bias_tendency: "Issues strikes quickly for defense badgering; skeptical of alternative suspect theories."
+      bias_tendency: "Issues strikes quickly for defense badgering; skeptical of alternative suspect theories.",
+      profile: "A gruff, veteran jurist with deep ties to the law enforcement community. Callahan has little patience for novel legal theories or what he perceives as procedural defense obstruction.",
+      courtroom_behavior: "He instinctively trusts police testimony and gives state witnesses significant leeway. If defense counsel attacks an officer with an aggressive or badgering tone, Callahan will issue judicial strikes quickly. He routinely dismisses speculative alternative suspect theories.",
+      tactical_guidance: "Do not confront police officers with aggressive rhetoric or emotional accusations. You must impeach officers using written CAD dispatch records, antenna timing data, and hard physical logs rather than vocal tone. Let the paper expose the contradiction."
     },
     {
+      id: "judge_de_la_torre",
       name: "Judge Patricia De La Torre",
+      short_name: "De La Torre",
+      title: "Presiding Judge",
       style: "Even-Handed / Academic",
       temperament: "Cerebral, demands precise citations of statutory elements, unmoved by dramatic rhetoric.",
-      bias_tendency: "Rules purely on black-letter evidentiary precedent regardless of who objects."
+      bias_tendency: "Rules purely on black-letter evidentiary precedent regardless of who objects.",
+      profile: "A cerebral, academic jurist who decides motions based entirely on statutory text, legal precedent, and strict element-by-element statutory analysis.",
+      courtroom_behavior: "De La Torre remains entirely dispassionate throughout trial. She cannot be charmed by charismatic storytelling or rattled by fiery closing arguments. When ruling on objections or dismissals, she requires attorneys to articulate exactly which statutory element or evidentiary precedent applies.",
+      tactical_guidance: "Frame all motions and jury arguments around statutory definitions and necessary mental states. When arguing for an acquittal or directed verdict, break the charge down element-by-element to show where the prosecution failed to meet its legal burden."
     }
   ],
-
   district_attorneys: [
     {
+      id: "da_thorne",
       name: "ADA Gregory Thorne",
+      short_name: "Thorne",
+      title: "Prosecuting Attorney",
       style: "Bulldozer / Aggressive",
       temperament: "Relentless, pushes witnesses hard, uses leading questions to trap hesitant defendants.",
-      tactic: "Attempts to introduce prejudicial character evidence under FRE 404(b) unless objected to."
+      tactic: "Attempts to introduce prejudicial character evidence under FRE 404(b) unless objected to.",
+      profile: "An aggressive, heavy-hitting prosecutor who uses relentless pressure and intimidating questioning to force defendants into traps and contradictions.",
+      courtroom_behavior: "Thorne leans heavily on juror prejudice. His preferred tactic is slipping in uncharged prior misconduct, past arrests, and negative character evidence under Rule 404(b) unless defense counsel cuts him off immediately. He pushes hesitant witnesses hard with leading questions.",
+      tactical_guidance: "Keep Rule 404(b) (Prior Bad Acts / Character Propensity) ready on your tongue. The moment he hints at uncharged past history or tries to paint your client as a generally bad person, object instantly before the jury absorbs the prejudice."
     },
     {
+      id: "da_ward",
       name: "ADA Samantha Ward",
+      short_name: "Ward",
+      title: "Prosecuting Attorney",
       style: "Forensic Precisionist",
       temperament: "Methodical, quiet, builds circumstantial evidence block-by-block with documents.",
-      tactic: "Relies heavily on digital logs and phone records; rarely loses chain of custody."
+      tactic: "Relies heavily on digital logs and phone records; rarely loses chain of custody.",
+      profile: "A quiet, methodical prosecutor who avoids theatrics and builds circumstantial cases like an engineer assembling blueprints.",
+      courtroom_behavior: "Ward relies on cellular telemetry, electronic access logs, financial trails, and physical paper. She rarely makes procedural errors and maintains an airtight chain of custody. Rather than relying on emotional victim testimony, she overwhelms juries with corroborating technical data.",
+      tactical_guidance: "Do not waste time attacking the veracity or demeanor of state witnesses. Instead, attack technical calibration dates, carrier timing offsets, and timestamp discrepancies in her logs. Look for digital margins of error rather than overt lies."
     },
     {
+      id: "da_mansour",
       name: "ADA Tariq Mansour",
+      short_name: "Mansour",
+      title: "Prosecuting Attorney",
       style: "Charismatic Storyteller",
       temperament: "Smooth, paints vivid emotional narratives for the jury, plays heavily to victim sympathy.",
-      tactic: "Skirts around hearsay rules (FRE 802) by framing rumors as excited utterances or context."
+      tactic: "Skirts around hearsay rules (FRE 802) by framing rumors as excited utterances or context.",
+      profile: "A charismatic courtroom orator who connects effortlessly with juries by spinning dramatic, emotionally charged narratives centered on victim sympathy.",
+      courtroom_behavior: "Mansour thrives on storytelling. To keep his narrative flowing, he frequently skirts hearsay prohibitions under Rule 802, disguising second-hand gossip and rumors as mere background context or excited utterances. He uses expressive rhetoric to distract from gaps in physical proof.",
+      tactical_guidance: "Disrupt his storytelling rhythm with swift objections under Rule 802 (Hearsay) and Rule 403 (Unfair Prejudice). If you let him speak uninterrupted, the jury will buy into his emotional narrative regardless of physical evidence gaps."
     },
     {
+      id: "da_rostova",
       name: "ADA Elena Rostova",
+      short_name: "Rostova",
+      title: "Prosecuting Attorney",
       style: "Cold Realist / Deal-Cutter",
       temperament: "Dispassionate, unyielding, zeroes in on defendant timeline contradictions without mercy.",
-      tactic: "Uses cooperating witnesses and plea deals; attacks defendant alibis with cross-checks."
+      tactic: "Uses cooperating witnesses and plea deals; attacks defendant alibis with cross-checks.",
+      profile: "A cold, unyielding trial attorney who specializes in breaking defendant alibis and securing cooperating witness testimony.",
+      courtroom_behavior: "Rostova is dispassionate and laser-focused. She cuts plea bargains with informants and accomplices to isolate the primary defendant, then cross-checks client timeline statements against hard phone telemetry without showing any emotion.",
+      tactical_guidance: "Subpoena every cooperating agreement and leniency deal her witnesses received under Brady disclosures. Show the jury what her star witnesses were promised in exchange for their testimony, and never let your client lock into an unverified timeline."
     },
     {
+      id: "da_delaney",
       name: "ADA Marcus Delaney",
+      short_name: "Delaney",
+      title: "Prosecuting Attorney",
       style: "Bureaucratic / By-the-Book",
       temperament: "Cautious, conservative with motions, over-indexes on police officer statements.",
-      tactic: "Struggles when confronted with unexpected physical contradictions or suppressed exhibits."
+      tactic: "Struggles when confronted with unexpected physical contradictions or suppressed exhibits.",
+      profile: "A conservative, institutional prosecutor who relies almost exclusively on police officer credibility and standard department arrest reports.",
+      courtroom_behavior: "Delaney follows standard operating procedure to the letter. Because he relies so heavily on what the investigating detectives tell him, he is slow to adapt when unexpected physical contradictions emerge or when police reports conflict with actual dispatch audio.",
+      tactical_guidance: "Attack the foundation of police exhibits early with Fourth Amendment suppression motions. Delaney's entire trial strategy crumbles when key physical exhibits or warrantless search items are excluded from evidence."
     },
     {
+      id: "da_zhang",
       name: "ADA Chloe Zhang",
+      short_name: "Zhang",
+      title: "Prosecuting Attorney",
       style: "Rapid-Fire Cross-Examiner",
       temperament: "Sharp, sharp-tongued, fires quick compound questions to induce nervous slip-ups.",
-      tactic: "Frequently tests judicial boundaries with argumentative questions and assumed unproven facts."
+      tactic: "Frequently tests judicial boundaries with argumentative questions and assumed unproven facts.",
+      profile: "A sharp, quick-tongued prosecutor known for rapid-fire cross-examinations designed to rattle nervous witnesses and induce slip-ups.",
+      courtroom_behavior: "Zhang fires rapid compound questions, frequently assuming facts not yet entered into evidence to corner witnesses into affirmative answers before they have time to think. She constantly tests judicial limits to see how far the bench will let her push.",
+      tactical_guidance: "Interrupt her cadence immediately with Rule 611(a) (Compound Question / Assumes Facts Not in Evidence). Forcing her to break her questions down gives your witness room to breathe and exposes the unproven assumptions in her theory."
     }
   ],
 
@@ -607,7 +678,7 @@ function sampleCaseDocket(complexity = 3, categoryKey = "Random Case File") {
       const range = item[key] || item.range || [1, 5];
       return comp >= range[0] && comp <= range[1];
     });
-    return valid.length > 0 ? valid : arr; // Fallback to all if none in exact range
+    return valid.length > 0 ? valid : arr;
   }
 
   // Helper to pick 1 random element from an array
