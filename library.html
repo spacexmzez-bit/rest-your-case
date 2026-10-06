@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rest Your Case | Legal Library</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -38,8 +38,77 @@
       }
     }
   </script>
+
+  <style>
+    /* Library design tokens: shared starting point for RUC's later visual update. */
+    #library-main { --library-paper: #15191e; --library-ink: #e2e8f0; --library-accent: #c5a880; --library-line: #303843; --library-muted: #acb7c5; max-width: 1240px; width: 100%; margin: 0 auto; padding: 2rem 1.25rem 4rem; color: var(--library-ink); }
+    #library-main * { box-sizing: border-box; }
+    #library-main [hidden] { display: none !important; }
+    #library-main h1, #library-main h2, #library-main h3 { font-family: Georgia, serif; color: #fff; }
+    #library-main h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.15; margin: .5rem 0 1rem; }
+    #library-main p { line-height: 1.7; }
+    #library-main .library-kicker { color: var(--library-accent); text-transform: uppercase; letter-spacing: .16em; font-size: .75rem; }
+    #library-main .library-intro { max-width: 760px; color: var(--library-muted); font-size: 1rem; }
+    #library-main .library-toolbar { border-block: 1px solid var(--library-line); margin: 1.75rem 0 .7rem; padding: 1.25rem 0; display: flex; flex-wrap: wrap; align-items: end; gap: .8rem; }
+    #library-main label { display: block; font-size: .8rem; color: var(--library-muted); margin-bottom: .4rem; }
+    #library-main .search-field { flex: 1 1 280px; }
+    #library-main input, #library-main select, #library-main button { font: inherit; border: 1px solid var(--library-line); border-radius: 6px; background: var(--library-paper); color: var(--library-ink); padding: .7rem .85rem; min-height: 44px; }
+    #library-main input, #library-main select { width: 100%; }
+    #library-main .topic-field { flex: 0 1 240px; }
+    #library-main button { cursor: pointer; }
+    #library-main button[aria-pressed="true"] { background: var(--library-accent); color: #0b0d10; border-color: var(--library-accent); }
+    #library-main a { color: var(--library-accent); text-underline-offset: .2em; }
+    #library-main :focus-visible { outline: 2px solid var(--library-accent); outline-offset: 4px; }
+    #library-main .library-results { color: var(--library-muted); font-size: .85rem; min-height: 1.5rem; }
+    #library-main .library-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 2rem; margin-top: 1.75rem; }
+    #library-main .library-index { align-self: start; position: sticky; top: 90px; padding: 1rem; border: 1px solid var(--library-line); border-radius: 8px; background: var(--library-paper); }
+    #library-main .library-index h2 { font-size: 1.1rem; margin-bottom: .85rem; }
+    #library-main .library-index ol { list-style: none; padding: 0; margin: 0; display: grid; gap: .65rem; }
+    #library-main .library-index a { display: block; font-size: .85rem; line-height: 1.5; text-decoration: none; }
+    #library-main .library-index a:hover { text-decoration: underline; }
+    #library-main .library-section { margin-bottom: 3rem; scroll-margin-top: 100px; }
+    #library-main .library-section-header { border-bottom: 1px solid var(--library-line); margin-bottom: 1rem; padding-bottom: 1rem; }
+    #library-main .library-section h2 { font-size: 1.65rem; line-height: 1.25; margin-bottom: .5rem; }
+    #library-main .library-section-header p { color: var(--library-muted); font-size: .9rem; }
+    #library-main .library-entry { padding: 1.4rem; border: 1px solid var(--library-line); border-radius: 8px; background: var(--library-paper); margin-bottom: 1rem; scroll-margin-top: 100px; overflow-wrap: anywhere; }
+    #library-main .library-entry h3 { font-size: 1.25rem; line-height: 1.4; margin: .35rem 0 .8rem; }
+    #library-main .library-entry p, #library-main .library-entry li { font-size: .95rem; line-height: 1.75; }
+    #library-main .library-reference { color: var(--library-accent); font-size: .75rem !important; letter-spacing: .03em; }
+    #library-main .library-application { margin-top: .9rem; }
+    #library-main .library-application strong, #library-main .library-proof-label { display: block; color: #fff; font-size: .8rem; margin-bottom: .3rem; }
+    #library-main .library-points { padding-left: 1.2rem; margin: .6rem 0 .8rem; list-style: disc; }
+    #library-main .library-example { border-top: 1px solid var(--library-line); margin-top: 1rem; padding-top: 1rem; }
+    #library-main .library-example h4 { color: var(--library-accent); font-size: .8rem; font-weight: bold; margin-bottom: .3rem; }
+    #library-main .library-empty { padding: 2rem; border: 1px dashed var(--library-line); border-radius: 8px; }
+    #library-main .library-sources { border-top: 1px solid var(--library-line); padding-top: 1.5rem; }
+    #library-main .library-sources h2 { font-size: 1.2rem; margin-bottom: .75rem; }
+    #library-main .library-sources p, #library-main .library-sources li { font-size: .85rem; color: var(--library-muted); line-height: 1.7; }
+    #library-main .library-sources ul { list-style: disc; padding-left: 1.2rem; margin-top: .7rem; }
+    .library-skip { position: absolute; left: 1rem; top: -100px; z-index: 100; padding: .8rem; background: #c5a880; color: #0b0d10; }
+    .library-skip:focus { top: 1rem; }
+    @media (max-width: 760px) {
+      #library-main { padding-inline: 1rem; }
+      #library-main .library-layout { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+      #library-main .library-index { position: static; }
+      #library-main .library-index ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #library-main .library-entry { padding: 1.1rem; }
+      #library-main .topic-field { flex: 1 1 200px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .animate-scrollMarquee { animation: none !important; } }
+    @media print {
+      body { background: white !important; color: black !important; }
+      body > header, body > div, body > aside, body > footer, .library-skip, #library-main .library-toolbar, #library-main .library-index, #library-main .library-results { display: none !important; }
+      #library-main { padding: 0; --library-ink: #111; --library-muted: #333; --library-accent: #584329; --library-line: #ccc; --library-paper: #fff; }
+      #library-main .library-layout { display: block; }
+      #library-main h1, #library-main h2, #library-main h3, #library-main .library-application strong, #library-main .library-proof-label { color: #111; }
+      #library-main .library-entry { break-inside: avoid; }
+    }
+  </style>
+
 </head>
 <body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
+
+  <a class="library-skip" href="#library-main">Skip to library</a>
 
   <!-- ================= TOP HUD NAV ================= -->
   <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
@@ -75,116 +144,516 @@
   </div>
 
   <!-- ================= TAB 5: LEGAL LIBRARY CONTENT ================= -->
-  <main class="max-w-5xl mx-auto px-4 py-8 space-y-10 flex-grow w-full">
-    <div class="border-b border-brand-border pb-4">
-      <h1 class="text-3xl font-serif text-white font-semibold">Legal Library</h1>
-      <p class="text-brand-muted text-sm mt-2">Compendium of Criminal Defense tactics and Federal Rules of Evidence.</p>
+  <main id="library-main" tabindex="-1">
+    <header>
+      <p class="library-kicker">The defense reference collection</p>
+      <h1>Legal Library</h1>
+      <p class="library-intro">Understand the rule. Know what to look for. Build your defense. Browse plain-English guides to the charges, evidence, and courtroom decisions you will encounter in Rest Your Case.</p>
+    </header>
+    <div class="library-toolbar" role="search" aria-label="Search the legal library" hidden>
+      <div class="search-field"><label for="library-search">Search the collection</label><input id="library-search" type="search" placeholder="Try hearsay, self-defense, DNA, or wire fraud" autocomplete="off" /></div>
+      <div class="topic-field"><label for="library-topic">Browse by topic</label><select id="library-topic"><option value="all">All topics</option>
+<option value="essentials">Start here</option>
+<option value="objections">Courtroom objections</option>
+<option value="charges">Charges &amp; what must be proved</option>
+<option value="rights">Police actions &amp; evidence challenges</option>
+<option value="witnesses">Witness credibility</option>
+<option value="traps">Prosecution tactics to recognize</option>
+<option value="investigation">Investigation &amp; action points</option>
+<option value="evidence">Reading exhibits critically</option>
+<option value="verdicts">Building a closing argument</option>
+<option value="courtroom">Courtroom field guide</option>
+</select></div>
+      <button id="library-examples" type="button" aria-pressed="false" aria-controls="library-collection">Show examples</button>
+      <button id="library-reset" type="button">Clear filters</button>
     </div>
-
-    <section class="space-y-4">
-      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">1. Criminal Defense Standards</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
-          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Burden of Proof</h3>
-          <p class="text-xs text-slate-300 font-sans">The defense does not have to prove innocence. The State must prove guilt <em class="text-white">beyond a reasonable doubt</em>. Poke holes in their narrative rather than inventing your own.</p>
-        </div>
-        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
-          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Exclusionary Rule</h3>
-          <p class="text-xs text-slate-300 font-sans">Evidence obtained through a violation of the 4th Amendment (warrantless/illegal searches) is tainted. File a motion to suppress to exclude "fruits of the poisonous tree."</p>
-        </div>
-        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
-          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Brady Material</h3>
-          <p class="text-xs text-slate-300 font-sans">The prosecution is constitutionally required to turn over any exculpatory evidence (evidence favorable to the defendant). If they hide it, demand a mistrial.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="space-y-4">
-      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">2. Complete Objection Matrix</h2>
-      <p class="text-xs text-brand-muted font-mono mb-4">Use the `!` button in the Terminal to rapidly deploy these during cross-examination.</p>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
-          <div class="flex justify-between items-start">
-            <h3 class="text-white font-bold font-mono text-sm">FRE 802: Hearsay</h3>
-          </div>
-          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> A witness testifies about what someone else said out of court to prove it was true.</p>
-          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Exceptions: Present Sense Impression, Excited Utterance, Admissions.</p>
-        </div>
-
-        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
-          <div class="flex justify-between items-start">
-            <h3 class="text-white font-bold font-mono text-sm">FRE 611(c): Leading (Direct)</h3>
-          </div>
-          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The prosecutor feeds the answer to their own friendly witness in the question.</p>
-          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Force the DA to ask open "Who, what, where" questions.</p>
-        </div>
-
-        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
-          <div class="flex justify-between items-start">
-            <h3 class="text-white font-bold font-mono text-sm">FRE 602: Speculation / Foundation</h3>
-          </div>
-          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The witness guesses about something they didn't personally perceive, or guesses someone else's state of mind.</p>
-          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Tactics: Demand the DA lay a foundation showing personal knowledge.</p>
-        </div>
-
-        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
-          <div class="flex justify-between items-start">
-            <h3 class="text-white font-bold font-mono text-sm">FRE 404(b): Improper Character</h3>
-          </div>
-          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The State mentions prior bad acts or past crimes to prove the defendant acted in accordance with that trait.</p>
-          <p class="text-[10px] text-brand-gold font-mono mt-2 pt-2 border-t border-brand-border">Defense: Past crimes do not prove current guilt.</p>
-        </div>
-
-        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
-          <div class="flex justify-between items-start">
-            <h3 class="text-white font-bold font-mono text-sm">FRE 403: Unfair Prejudice</h3>
-          </div>
-          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The evidence's probative value is substantially outweighed by a danger of inflaming the jury's emotions.</p>
-        </div>
-
-        <div class="bg-brand-dark border-l-2 border-brand-gold p-4 space-y-2 shadow-md">
-          <div class="flex justify-between items-start">
-            <h3 class="text-white font-bold font-mono text-sm">Assumes Facts Not in Evidence</h3>
-          </div>
-          <p class="text-xs text-slate-300 font-sans"><strong class="text-brand-muted">Trigger:</strong> The question embeds an unproven allegation as an accepted premise to trap the witness.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Statutory Criminal Offenses -->
-    <section class="space-y-4 pt-4 border-t border-brand-border">
-      <h2 class="text-xl font-serif text-white uppercase tracking-wider border-b border-brand-border pb-2">3. Statutory Criminal Offenses</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-sans">
-        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
-          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Murder (1st & 2nd Degree)</h3>
-          <p class="text-slate-300"><strong class="text-white">1st Degree:</strong> Premeditated and intentional. <strong class="text-white">2nd Degree:</strong> Intentional but not premeditated (heat of the moment or extreme reckless disregard).</p>
-          <p class="text-xs text-brand-muted">Defense: Self-defense, lack of intent (mens rea), or mistaken identity.</p>
-        </div>
-        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
-          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Manslaughter</h3>
-          <p class="text-slate-300"><strong class="text-white">Voluntary:</strong> Intentional killing committed under adequate provocation ("heat of passion"). <strong class="text-white">Involuntary:</strong> Unintentional killing caused by recklessness or criminal negligence.</p>
-        </div>
-        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
-          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Wire & Financial Fraud</h3>
-          <p class="text-slate-300">Intentionally devising a scheme to defraud another of money/property using electronic communications.</p>
-          <p class="text-xs text-brand-muted">Defense: Good faith belief in the truth of the statements (lack of fraudulent intent).</p>
-        </div>
-        <div class="bg-brand-surface border border-brand-border p-4 rounded space-y-2">
-          <h3 class="text-brand-gold font-mono text-xs font-bold uppercase">Espionage / Cyber Intrusion</h3>
-          <p class="text-slate-300">Unauthorized access to classified/protected systems with intent to harm the nation or benefit a foreign entity.</p>
-          <p class="text-xs text-brand-muted">Defense: Lack of intent, authorized access, or mishandling vs. intentional espionage.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Cross-Examination Tactics -->
-    <section class="bg-brand-surface border border-emerald-900/50 rounded p-6 space-y-3">
-      <h2 class="text-emerald-400 font-mono text-sm uppercase tracking-wider border-b border-emerald-900/50 pb-2">4. Cross-Examination Tactics</h2>
-      <ul class="text-sm text-slate-300 space-y-3 font-sans list-disc pl-5">
-        <li><strong class="text-white">Impeachment by Prior Statement:</strong> If a witness changes their story on the stand, confront them with their original police statement (found in your Phase 2 discovery). <em>"Isn't it true you told Detective Vance..."</em></li>
-        <li><strong class="text-white">Financial Bias:</strong> Always ask cooperating witnesses or "experts" if they are being paid by the State for their testimony, or if they were offered a plea deal in exchange for testifying against your client.</li>
-        <li><strong class="text-white">Sensory Limitations:</strong> Attack the conditions of perception. <em>"It was midnight, raining, and you were 100 feet away without your glasses, correct?"</em></li>
+    <p id="library-results" class="library-results" role="status" aria-live="polite"></p>
+    <noscript><p class="library-intro">All explanations and examples are available below. Enable JavaScript to search, filter, and toggle examples.</p></noscript>
+    <div class="library-layout">
+      <aside class="library-index"><nav aria-label="Library contents"><h2>Contents</h2><ol>
+<li><a href="#topic-essentials">01. Start here</a></li>
+<li><a href="#topic-objections">02. Courtroom objections</a></li>
+<li><a href="#topic-charges">03. Charges &amp; what must be proved</a></li>
+<li><a href="#topic-rights">04. Police actions &amp; evidence challenges</a></li>
+<li><a href="#topic-witnesses">05. Witness credibility</a></li>
+<li><a href="#topic-traps">06. Prosecution tactics to recognize</a></li>
+<li><a href="#topic-investigation">07. Investigation &amp; action points</a></li>
+<li><a href="#topic-evidence">08. Reading exhibits critically</a></li>
+<li><a href="#topic-verdicts">09. Building a closing argument</a></li>
+<li><a href="#topic-courtroom">10. Courtroom field guide</a></li>
+</ol></nav></aside><div id="library-collection">
+<section class="library-section" id="topic-essentials" data-topic="essentials" aria-labelledby="heading-essentials"><header class="library-section-header"><h2 id="heading-essentials">Start here</h2><p>The basic ideas behind every defense, explained without legal training.</p></header>
+<article class="library-entry" id="entry-proof" data-source="" aria-labelledby="title-proof">
+<h3 id="title-proof">Burden of proof &amp; reasonable doubt</h3><p>The prosecution must prove every required part of the charge beyond a reasonable doubt. The defense does not have to prove innocence. A reasonable doubt comes from a real weakness in the evidence, rather than an imaginary possibility.</p>
+<p class="library-application"><strong>How to use it</strong>Identify the exact part of the charge the evidence fails to prove. Connect your argument to testimony or records.</p><div class="library-example"><h4>Example in practice</h4><p>A blurry video shows someone in a common jacket. Explain why it does not reliably identify your client.</p></div></article>
+<article class="library-entry" id="entry-elements" data-source="" aria-labelledby="title-elements">
+<h3 id="title-elements">Elements &amp; mental state (mens rea)</h3><p>Elements are the separate facts needed to prove a crime. Mental state means what the person intended, knew, or consciously risked. Causing harm alone may not prove the charged mental state.</p>
+<p class="library-application"><strong>How to use it</strong>Make a checklist of the required conduct, mental state, and result. Test each against the evidence.</p><div class="library-example"><h4>Example in practice</h4><p>An incorrect invoice may be a mistake. Ask what proves it was a deliberate attempt to cheat someone.</p></div></article>
+<article class="library-entry" id="entry-self-defense" data-source="" aria-labelledby="title-self-defense">
+<h3 id="title-self-defense">Self-defense &amp; who attacked first</h3><p>A person may be legally justified in using force against an imminent unlawful threat. Necessity, proportionality, and rules about retreat matter. Deadly force has stricter limits. The case&#x27;s law controls.</p>
+<p class="library-application"><strong>How to use it</strong>Reconstruct who threatened whom, what danger existed, and whether the response was necessary.</p><div class="library-example"><h4>Example in practice</h4><p>Video shows an attacker raising a knife before your client reacts. Use that sequence to support a defensive response.</p></div></article>
+<article class="library-entry" id="entry-suppression" data-source="" aria-labelledby="title-suppression">
+<h3 id="title-suppression">Excluding illegally obtained evidence</h3><p>A motion to suppress asks the judge to keep evidence out because it was obtained unlawfully. Related evidence may also be affected. Exceptions can apply, so an unlawful search does not automatically erase the entire case.</p>
+<p class="library-application"><strong>How to use it</strong>Identify your client&#x27;s protected interest, the police action, and the evidence connected to it.</p><div class="library-example"><h4>Example in practice</h4><p>An officer searches a private bag without consent or another lawful basis. Ask to suppress what that search uncovered.</p></div></article>
+<article class="library-entry" id="entry-discovery" data-source="" aria-labelledby="title-discovery">
+<h3 id="title-discovery">Discovery, Brady &amp; Giglio disclosure</h3><p>Discovery is the exchange of case information. Brady concerns material evidence favorable to the defense; Giglio includes information that undermines a prosecution witness, such as promised benefits. A remedy depends on timing and harm.</p>
+<p class="library-application"><strong>How to use it</strong>Request the missing material, explain how it affects the defense, and seek an appropriate remedy such as more preparation time. A mistrial is not automatic.</p><div class="library-example"><h4>Example in practice</h4><p>An informant was promised a reduced sentence. Request the deal and use it to question the informant&#x27;s motive.</p></div></article>
+<article class="library-entry" id="entry-foundation" data-source="" aria-labelledby="title-foundation">
+<h3 id="title-foundation">Foundation, authentication &amp; admission</h3><p>Foundation explains why evidence may be used. Authentication shows that an item is what its presenter claims. Admission is the judge&#x27;s decision to allow it into evidence; marking an exhibit only labels it.</p>
+<p class="library-application"><strong>How to use it</strong>In RUC, mark the item, establish its origin and reliability through a witness or records, then ask the judge to admit it.</p><div class="library-example"><h4>Example in practice</h4><p>Have the camera owner identify the recording and explain how it was saved before asking to admit the video.</p></div></article>
+<article class="library-entry" id="entry-impeachment" data-source="" aria-labelledby="title-impeachment">
+<h3 id="title-impeachment">Impeachment: testing credibility</h3><p>Impeachment means showing a reason to doubt a witness. It can involve a changed story, a motive to lie, or poor observation. Discrediting one witness does not automatically disprove every fact.</p>
+<p class="library-application"><strong>How to use it</strong>Use a specific statement or record and let the witness respond. Separate what they observed from what they inferred.</p><div class="library-example"><h4>Example in practice</h4><p>The witness now says the car was red; their earlier statement says they could not see its color. Put the two accounts side by side.</p></div></article>
+<article class="library-entry" id="entry-motions" data-source="" aria-labelledby="title-motions">
+<h3 id="title-motions">Objections, motions &amp; rulings</h3><p>An objection challenges a question or evidence when it is offered. A motion asks the judge for a decision, such as excluding evidence. Sustained means the judge agrees with an objection; overruled means the judge rejects it.</p>
+<p class="library-application"><strong>How to use it</strong>State the legal ground briefly. If an improper answer is already given, ask to strike it and request an instruction when useful.</p><div class="library-example"><h4>Example in practice</h4><p>Say: “Objection, hearsay.” If the witness has already repeated the rumor, ask the judge to strike that answer.</p></div></article>
+</section>
+<section class="library-section" id="topic-objections" data-topic="objections" aria-labelledby="heading-objections"><header class="library-section-header"><h2 id="heading-objections">Courtroom objections</h2><p>Recognize the problem, state the ground, and ask for a focused ruling.</p></header>
+<article class="library-entry" id="entry-hearsay" data-source="" aria-labelledby="title-hearsay">
+<p class="library-reference">FRE 801–802</p>
+<h3 id="title-hearsay">Hearsay</h3><p>Hearsay is an out-of-court statement offered to prove what it says is true. It can be spoken or written. Some statements are excluded from this definition, and others qualify for exceptions.</p>
+<p class="library-application"><strong>How to use it</strong>Ask what the statement is being used to prove and whether an exclusion or exception applies.</p><div class="library-example"><h4>Example in practice</h4><p>A witness says, “My neighbor told me Alex stole the car.” If offered to prove Alex stole it, object to hearsay.</p></div></article>
+<article class="library-entry" id="entry-hearsay-exceptions" data-source="" aria-labelledby="title-hearsay-exceptions">
+<p class="library-reference">FRE 803(1)–(2); 801(d)(2)</p>
+<h3 id="title-hearsay-exceptions">Common hearsay exceptions &amp; opposing-party statements</h3><p>A description made while observing an event or immediately after it may be a present sense impression. A statement made under the stress of a startling event may be an excited utterance. An opposing party&#x27;s own statement offered against them is treated as non-hearsay, not an exception.</p>
+<p class="library-application"><strong>How to use it</strong>Check timing, personal observation, continuing stress, and who is offering whose statement. A label alone is not enough.</p><div class="library-example"><h4>Example in practice</h4><p>A calm retelling the next day is not automatically an excited utterance. Ask when it was said and whether the speaker was still under the event&#x27;s stress.</p></div></article>
+<article class="library-entry" id="entry-leading" data-source="" aria-labelledby="title-leading">
+<p class="library-reference">FRE 611(c)</p>
+<h3 id="title-leading">Leading questions on direct examination</h3><p>A leading question suggests its own answer. They are ordinarily restricted when a lawyer questions their own friendly witness, but are ordinarily allowed on cross-examination and in some other circumstances.</p>
+<p class="library-application"><strong>How to use it</strong>Object to an improper suggested answer on direct. Avoid treating all leading questions as misconduct.</p><div class="library-example"><h4>Example in practice</h4><p>The prosecutor asks their friendly witness, “You saw Alex holding the knife, correct?” Ask for an open question such as “What did you see?”</p></div></article>
+<article class="library-entry" id="entry-knowledge" data-source="" aria-labelledby="title-knowledge">
+<p class="library-reference">FRE 602</p>
+<h3 id="title-knowledge">Personal knowledge &amp; speculation</h3><p>A fact witness generally must have personally perceived what they describe. Guessing another person&#x27;s thoughts or filling gaps with assumptions is not the same as observing facts.</p>
+<p class="library-application"><strong>How to use it</strong>Ask how the witness knows. Object when there is no basis in their own perception.</p><div class="library-example"><h4>Example in practice</h4><p>A neighbor claims Alex intended to kill, but only saw Alex walk past. Ask what they actually saw or heard.</p></div></article>
+<article class="library-entry" id="entry-character" data-source="" aria-labelledby="title-character">
+<p class="library-reference">FRE 404(b); 403</p>
+<h3 id="title-character">Prior bad acts &amp; improper character evidence</h3><p>A past bad act generally cannot be used simply to say the defendant is a bad person who probably did this too. Other uses, such as motive, identity, or intent, may be allowed when their requirements are met.</p>
+<p class="library-application"><strong>How to use it</strong>Challenge the actual purpose, relevance, notice where required, and unfair prejudice. Do not claim all prior-act evidence is forbidden.</p><div class="library-example"><h4>Example in practice</h4><p>The prosecutor says an old unrelated arrest proves your client is a thief. Object to using past conduct to prove present guilt.</p></div></article>
+<article class="library-entry" id="entry-prejudice" data-source="" aria-labelledby="title-prejudice">
+<p class="library-reference">FRE 403</p>
+<h3 id="title-prejudice">Unfair prejudice</h3><p>Useful evidence is often damaging. Unfair prejudice means a risk of an improper emotional or other unfair decision. Exclusion may be warranted when that risk substantially outweighs the evidence&#x27;s usefulness.</p>
+<p class="library-application"><strong>How to use it</strong>Explain the unfair risk and why a less inflammatory version would prove the same point.</p><div class="library-example"><h4>Example in practice</h4><p>Several graphic photographs add little beyond one clear image. Ask the judge to limit needless repetition.</p></div></article>
+<article class="library-entry" id="entry-assumptions" data-source="" aria-labelledby="title-assumptions">
+<p class="library-reference">FRE 611(a)</p>
+<h3 id="title-assumptions">Assumes facts not in evidence</h3><p>A loaded question treats a disputed fact as already established. The judge controls questioning so a witness is not forced to accept an unsupported premise.</p>
+<p class="library-application"><strong>How to use it</strong>Name the assumption and request a question without it.</p><div class="library-example"><h4>Example in practice</h4><p>“Where did you hide the stolen money?” assumes the witness stole money. Ask the prosecutor to establish that premise first.</p></div></article>
+<article class="library-entry" id="entry-compound" data-source="" aria-labelledby="title-compound">
+<p class="library-reference">FRE 611(a)</p>
+<h3 id="title-compound">Compound questions</h3><p>One question asks several things at once. A yes or no answer may be unclear because the witness agrees with one part but disputes another.</p>
+<p class="library-application"><strong>How to use it</strong>Ask for one question at a time.</p><div class="library-example"><h4>Example in practice</h4><p>“Did you take the bag and erase the camera recording?” combines two disputed acts. Ask that they be separated.</p></div></article>
+<article class="library-entry" id="entry-argumentative" data-source="" aria-labelledby="title-argumentative">
+<p class="library-reference">FRE 611(a)</p>
+<h3 id="title-argumentative">Argumentative or repetitive questioning</h3><p>Questions should obtain useful testimony. Arguing with a witness, harassing them, or repeating a fully answered question may call for the judge to control the examination.</p>
+<p class="library-application"><strong>How to use it</strong>Identify the argument or repetition and ask the judge to require a factual question.</p><div class="library-example"><h4>Example in practice</h4><p>After an answer, the lawyer says, “So you expect this jury to believe that ridiculous story?” Object to argumentative questioning.</p></div></article>
+<article class="library-entry" id="entry-lay-opinion" data-source="" aria-labelledby="title-lay-opinion">
+<p class="library-reference">FRE 701–702</p>
+<h3 id="title-lay-opinion">Ordinary witnesses giving expert conclusions</h3><p>An ordinary witness can give some opinions based on their own perceptions, such as apparent speed. Specialized scientific conclusions need a proper expert basis; a job title alone does not supply it.</p>
+<p class="library-application"><strong>How to use it</strong>Separate observations from conclusions. Ask about qualifications and the method used.</p><div class="library-example"><h4>Example in practice</h4><p>A neighbor calls a wound “proof of deliberate execution.” Ask for the observed facts and object to unsupported medical conclusions.</p></div></article>
+<article class="library-entry" id="entry-experts" data-source="" aria-labelledby="title-experts">
+<p class="library-reference">FRE 702</p>
+<h3 id="title-experts">Expert reliability &amp; a Daubert challenge</h3><p>Expert opinions need useful specialized knowledge, sufficient information, and reliably applied methods. A Daubert challenge asks the judge to examine that reliability. Disagreement with a result alone does not prove unreliability.</p>
+<p class="library-application"><strong>How to use it</strong>Examine qualifications, validation, error rates, controls, calibration, and application to this case.</p><div class="library-example"><h4>Example in practice</h4><p>The analyst used an unvalidated method without a control sample. Request a reliability hearing before the opinion reaches the jury.</p></div></article>
+<article class="library-entry" id="entry-confrontation" data-source="" aria-labelledby="title-confrontation">
+<p class="library-reference">Sixth Amendment; Crawford</p>
+<h3 id="title-confrontation">Confronting an absent accuser</h3><p>In criminal cases, testimonial statements offered for their truth usually cannot replace a witness whom the defense has no opportunity to question. Generally, an unavailable witness also requires a prior opportunity for cross-examination; exceptions exist.</p>
+<p class="library-application"><strong>How to use it</strong>Distinguish a hearsay objection from the constitutional right to question an accuser.</p><div class="library-example"><h4>Example in practice</h4><p>A detective repeats an absent informant&#x27;s formal accusation to establish guilt. Raise hearsay and the lack of an opportunity to question the informant.</p></div></article>
+<article class="library-entry" id="entry-relevance" data-source="" aria-labelledby="title-relevance">
+<p class="library-reference">FRE 401–402</p>
+<h3 id="title-relevance">Relevance</h3><p>Evidence is relevant if it makes a fact that matters in the case more or less likely. Interesting details that do not help decide a disputed issue can distract the jury.</p>
+<p class="library-application"><strong>How to use it</strong>Explain the connection between the evidence and a required element or credibility issue.</p><div class="library-example"><h4>Example in practice</h4><p>A witness is asked about an unrelated hobby. Ask how that helps establish any fact in dispute.</p></div></article>
+</section>
+<section class="library-section" id="topic-charges" data-topic="charges" aria-labelledby="heading-charges"><header class="library-section-header"><h2 id="heading-charges">Charges &amp; what must be proved</h2><p>Every charge in the case data, grouped by case type. These are RUC summaries; exact legal elements depend on the governing law.</p></header>
+<article class="library-entry" id="entry-charge-violent_crimes-1" data-source="crime_genres.violent_crimes.charges.0" aria-labelledby="title-charge-violent_crimes-1">
+<p class="library-reference">Violent Crimes</p>
+<h3 id="title-charge-violent_crimes-1">First-Degree Murder</h3><p>An unlawful intentional killing carried out with advance reflection or planning.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Intent to kill</li><li>Advance reflection or planning</li><li>A killing without lawful justification</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Test the timeline for actual planning and investigate identity and self-defense.</p><div class="library-example"><h4>Example in practice</h4><p>Messages show a meeting was arranged, but no plan to kill. Explain why arranging the meeting alone does not prove premeditation.</p></div></article>
+<article class="library-entry" id="entry-charge-violent_crimes-2" data-source="crime_genres.violent_crimes.charges.1" aria-labelledby="title-charge-violent_crimes-2">
+<p class="library-reference">Violent Crimes</p>
+<h3 id="title-charge-violent_crimes-2">Second-Degree Murder</h3><p>An unlawful killing with the required malice but without first-degree premeditation. RUC includes intentional killings and extreme disregard for life.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A killing linked to the defendant</li><li>Intentional lethal harm or extreme disregard for life</li><li>No lawful justification</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Distinguish deliberate harm from accident, legally sufficient mitigation, or justified force.</p><div class="library-example"><h4>Example in practice</h4><p>The prosecution alleges a planned killing but has no planning evidence. Examine whether the remaining evidence proves the mental state for any lesser charge.</p></div></article>
+<article class="library-entry" id="entry-charge-violent_crimes-3" data-source="crime_genres.violent_crimes.charges.2" aria-labelledby="title-charge-violent_crimes-3">
+<p class="library-reference">Violent Crimes</p>
+<h3 id="title-charge-violent_crimes-3">Aggravated Assault with a Deadly Weapon</h3><p>In RUC&#x27;s version, using a dangerous weapon to make someone reasonably fear immediate serious injury.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>An act causing reasonable fear of immediate serious injury</li><li>Use or display of a dangerous weapon</li><li>The required intent</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Check the threat, distance, ability to act, and any justification.</p><div class="library-example"><h4>Example in practice</h4><p>A witness saw a tool in your client&#x27;s hand but heard no threat. Ask what created a reasonable fear of immediate injury.</p></div></article>
+<article class="library-entry" id="entry-charge-violent_crimes-4" data-source="crime_genres.violent_crimes.charges.3" aria-labelledby="title-charge-violent_crimes-4">
+<p class="library-reference">Violent Crimes</p>
+<h3 id="title-charge-violent_crimes-4">Armed Robbery</h3><p>Taking property from someone or their immediate presence through force or threats while armed.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Taking someone else&#x27;s property</li><li>Force or intimidation</li><li>A dangerous weapon</li><li>Intent to permanently deprive the owner</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Test identity, whether a taking occurred, and whether force accompanied it.</p><div class="library-example"><h4>Example in practice</h4><p>A disputed debt does not automatically justify taking a wallet. Focus on evidence of ownership, intent, and the alleged threat.</p></div></article>
+<article class="library-entry" id="entry-charge-violent_crimes-5" data-source="crime_genres.violent_crimes.charges.4" aria-labelledby="title-charge-violent_crimes-5">
+<p class="library-reference">Violent Crimes</p>
+<h3 id="title-charge-violent_crimes-5">Kidnapping / False Imprisonment</h3><p>Unlawfully moving or confining someone against their will. Movement and confinement requirements differ between offenses and jurisdictions.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Restraint or qualifying movement</li><li>Lack of consent</li><li>Force, fear, or deception</li><li>Knowing restraint</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Examine exits, duration, threats, and the person&#x27;s ability to leave.</p><div class="library-example"><h4>Example in practice</h4><p>The door was open and the person freely left. Use that evidence to test whether they were actually confined.</p></div></article>
+<article class="library-entry" id="entry-charge-violent_crimes-6" data-source="crime_genres.violent_crimes.charges.5" aria-labelledby="title-charge-violent_crimes-6">
+<p class="library-reference">Violent Crimes</p>
+<h3 id="title-charge-violent_crimes-6">Aggravated Battery Causing Great Bodily Harm</h3><p>Unlawful physical contact causing serious injury. RUC focuses on intentional severe harm.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Unlawful physical contact</li><li>Serious or lasting injury</li><li>The required intent and a link to that injury</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Compare medical records with the alleged mechanism of injury and examine justified force.</p><div class="library-example"><h4>Example in practice</h4><p>Hospital notes describe a minor bruise. Ask what evidence supports the allegation of severe injury.</p></div></article>
+<article class="library-entry" id="entry-charge-violent_crimes-7" data-source="crime_genres.violent_crimes.charges.6" aria-labelledby="title-charge-violent_crimes-7">
+<p class="library-reference">Violent Crimes</p>
+<h3 id="title-charge-violent_crimes-7">Attempted Murder</h3><p>Acting with an intent to kill and taking a substantial or direct step beyond preparation toward that killing.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Specific intent to kill</li><li>An act beyond mere preparation</li><li>An attempted unlawful killing</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Separate an intent to scare or injure from an intent to kill.</p><div class="library-example"><h4>Example in practice</h4><p>A threat is disturbing, but the prosecution must also identify the required act toward carrying out a killing.</p></div></article>
+<article class="library-entry" id="entry-charge-financial_fraud-1" data-source="crime_genres.financial_fraud.charges.0" aria-labelledby="title-charge-financial_fraud-1">
+<p class="library-reference">Financial Fraud &amp; White-Collar Crimes</p>
+<h3 id="title-charge-financial_fraud-1">Wire Fraud (18 U.S.C. § 1343)</h3><p>Deliberately using an interstate electronic communication to help a scheme to obtain money or property through significant deception.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A fraudulent scheme for money or property</li><li>Intent to defraud</li><li>A meaningful deception</li><li>An interstate wire communication advancing the scheme</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Look for evidence of deliberate deception, rather than assuming a failed business or accounting error proves fraud.</p><div class="library-example"><h4>Example in practice</h4><p>Emails show the seller corrected a mistaken invoice before payment. Use them to test the claimed dishonest intent.</p></div></article>
+<article class="library-entry" id="entry-charge-financial_fraud-2" data-source="crime_genres.financial_fraud.charges.1" aria-labelledby="title-charge-financial_fraud-2">
+<p class="library-reference">Financial Fraud &amp; White-Collar Crimes</p>
+<h3 id="title-charge-financial_fraud-2">Securities Fraud / Insider Trading</h3><p>Deception connected to securities, or trading on important secret information in breach of a relevant duty. RUC combines several legal theories.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Important deception or nonpublic information</li><li>The required dishonest mental state</li><li>A securities transaction connection</li><li>A relevant duty for the insider-trading theory</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Identify the specific theory and whether the information was important, nonpublic, and used in breach of a duty.</p><div class="library-example"><h4>Example in practice</h4><p>The supposedly secret earnings figure was published before the trade. Compare publication and trading times.</p></div></article>
+<article class="library-entry" id="entry-charge-financial_fraud-3" data-source="crime_genres.financial_fraud.charges.2" aria-labelledby="title-charge-financial_fraud-3">
+<p class="library-reference">Financial Fraud &amp; White-Collar Crimes</p>
+<h3 id="title-charge-financial_fraud-3">Embezzlement &amp; Corporate Misappropriation</h3><p>Dishonestly using property for an unauthorized purpose after being trusted with it.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Property entrusted to the defendant</li><li>Unauthorized dishonest conversion or transfer</li><li>Required intent</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Trace authorization, account access, and the final destination of the funds.</p><div class="library-example"><h4>Example in practice</h4><p>The transfer went to an approved supplier account. Request the approval record before assuming personal misuse.</p></div></article>
+<article class="library-entry" id="entry-charge-cyber_crime-1" data-source="crime_genres.cyber_crime.charges.0" aria-labelledby="title-charge-cyber_crime-1">
+<p class="library-reference">Cybercrime &amp; Digital Intrusion</p>
+<h3 id="title-charge-cyber_crime-1">Unauthorized Computer Access (CFAA - 18 U.S.C. § 1030)</h3><p>Intentionally entering a protected computer or accessing information beyond permitted access under the relevant CFAA provision. Misusing information one may access is not automatically the same as unauthorized access.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A protected computer</li><li>The required unauthorized access</li><li>Required knowledge or intent</li><li>The information or other result required by the charged provision</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Identify the exact access boundary and link the activity to a person. Shared credentials or an IP address alone may be inconclusive.</p><div class="library-example"><h4>Example in practice</h4><p>Logs show a shared administrator account. Ask who could use it and what independently ties this session to your client.</p></div></article>
+<article class="library-entry" id="entry-charge-cyber_crime-2" data-source="crime_genres.cyber_crime.charges.1" aria-labelledby="title-charge-cyber_crime-2">
+<p class="library-reference">Cybercrime &amp; Digital Intrusion</p>
+<h3 id="title-charge-cyber_crime-2">Digital Extortion &amp; Ransomware Deployment</h3><p>Using threats to lock, damage, or expose data to obtain money or another thing of value.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A relevant threat or malicious locking activity</li><li>A demand for value</li><li>Intent to extort</li><li>A reliable connection to the defendant</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Separate the attacker, the affected account, and the person receiving payment.</p><div class="library-example"><h4>Example in practice</h4><p>A ransom note bears your client&#x27;s username. Investigate whether that account was compromised before treating the label as attribution.</p></div></article>
+<article class="library-entry" id="entry-charge-cyber_crime-3" data-source="crime_genres.cyber_crime.charges.2" aria-labelledby="title-charge-cyber_crime-3">
+<p class="library-reference">Cybercrime &amp; Digital Intrusion</p>
+<h3 id="title-charge-cyber_crime-3">Aggravated Identity Theft (18 U.S.C. § 1028A)</h3><p>Knowingly using, possessing, or transferring another real person&#x27;s identifying information without lawful authority during and in relation to a qualifying listed felony.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Another actual person&#x27;s identifying information</li><li>Knowledge it belongs to another person</li><li>Lack of lawful authority</li><li>A qualifying underlying felony and the required connection</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Check whose identity was used, what the defendant knew, and whether the identity use meets the charged felony connection.</p><div class="library-example"><h4>Example in practice</h4><p>A synthetic test identity is alleged to be a real person&#x27;s identity. Request evidence identifying that person and showing the defendant knew.</p></div></article>
+<article class="library-entry" id="entry-charge-cyber_crime-4" data-source="crime_genres.cyber_crime.charges.3" aria-labelledby="title-charge-cyber_crime-4">
+<p class="library-reference">Cybercrime &amp; Digital Intrusion</p>
+<h3 id="title-charge-cyber_crime-4">Trade Secret Theft &amp; Corporate Espionage</h3><p>Knowingly taking or copying a protected business secret without permission, with the economic intent and other requirements of the charged offense.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Information that qualifies as a trade secret</li><li>Unauthorized taking or copying</li><li>Required economic purpose and knowledge</li><li>A connection to the accused</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Check secrecy measures, public availability, permission, and the purpose of any copying.</p><div class="library-example"><h4>Example in practice</h4><p>The copied document was already on the company&#x27;s public website. Ask what protected secret was actually taken.</p></div></article>
+<article class="library-entry" id="entry-charge-substance_use_and_distribution-1" data-source="crime_genres.substance_use_and_distribution.charges.0" aria-labelledby="title-charge-substance_use_and_distribution-1">
+<p class="library-reference">Substance Use, Trafficking &amp; Controlled Substances</p>
+<h3 id="title-charge-substance_use_and_distribution-1">Possession with Intent to Distribute (PWID)</h3><p>Knowingly possessing a controlled drug with the purpose of distributing it. Possession and intent to distribute are separate issues.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A controlled substance</li><li>Knowing possession or control</li><li>Intent to distribute</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Test control of the drugs and the evidence of distribution. Quantity and packaging are clues, rather than automatic answers.</p><div class="library-example"><h4>Example in practice</h4><p>Drugs were in a shared car with no sales messages. Ask what proves your client&#x27;s knowledge, control, and distribution intent.</p></div></article>
+<article class="library-entry" id="entry-charge-substance_use_and_distribution-2" data-source="crime_genres.substance_use_and_distribution.charges.1" aria-labelledby="title-charge-substance_use_and_distribution-2">
+<p class="library-reference">Substance Use, Trafficking &amp; Controlled Substances</p>
+<h3 id="title-charge-substance_use_and_distribution-2">Conspiracy to Traffic Narcotics (21 U.S.C. § 846)</h3><p>Knowingly joining an agreement to commit a federal drug offense. Mere association is insufficient. Section 846 does not require proof of a separate overt act.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>An agreement to commit the relevant drug offense</li><li>Knowledge of the unlawful objective</li><li>Voluntary participation</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Distinguish knowing membership from friendship, presence, or an innocent delivery. Interstate movement is not a universal requirement.</p><div class="library-example"><h4>Example in practice</h4><p>Your client drove a friend without knowing the sealed parcel&#x27;s contents. Ask what proves they knowingly joined the drug agreement.</p></div></article>
+<article class="library-entry" id="entry-charge-substance_use_and_distribution-3" data-source="crime_genres.substance_use_and_distribution.charges.2" aria-labelledby="title-charge-substance_use_and_distribution-3">
+<p class="library-reference">Substance Use, Trafficking &amp; Controlled Substances</p>
+<h3 id="title-charge-substance_use_and_distribution-3">Operating a Drug-Involved Premises</h3><p>Knowingly maintaining or making a place available for prohibited drug activities under the charged provision.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>The relevant management, maintenance, or control of a place</li><li>Required knowledge</li><li>The prohibited drug purpose or use</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Look at knowledge, actual authority, and the use of the property; ownership alone does not answer every question.</p><div class="library-example"><h4>Example in practice</h4><p>The landlord learned of the activity only after police arrived. Examine notices and messages for prior knowledge.</p></div></article>
+<article class="library-entry" id="entry-charge-substance_use_and_distribution-4" data-source="crime_genres.substance_use_and_distribution.charges.3" aria-labelledby="title-charge-substance_use_and_distribution-4">
+<p class="library-reference">Substance Use, Trafficking &amp; Controlled Substances</p>
+<h3 id="title-charge-substance_use_and_distribution-4">Illicit Pharmaceutical &amp; Precursor Diversion</h3><p>Knowingly diverting controlled medicines or regulated production chemicals from lawful channels into unlawful use or supply.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Regulated substances</li><li>An unlawful obtaining, diversion, or distribution</li><li>Required knowledge or fraud</li><li>A link to the defendant</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Audit prescriptions, authorization, stock records, and who could alter the inventory.</p><div class="library-example"><h4>Example in practice</h4><p>Missing stock is attributed to a pharmacist, but several people share the login. Compare access logs and physical handling records.</p></div></article>
+<article class="library-entry" id="entry-charge-substance_use_and_distribution-5" data-source="crime_genres.substance_use_and_distribution.charges.4" aria-labelledby="title-charge-substance_use_and_distribution-5">
+<p class="library-reference">Substance Use, Trafficking &amp; Controlled Substances</p>
+<h3 id="title-charge-substance_use_and_distribution-5">Simple Felony Possession</h3><p>Knowing possession of a controlled drug without lawful authorization, charged as a felony where the applicable law supports it. Classification does not always depend only on weight.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A controlled substance</li><li>Knowing physical possession or control</li><li>No lawful authorization</li><li>The facts required for the charged felony classification</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Check laboratory identification, knowledge, control, lawful prescriptions, and the actual classification rule.</p><div class="library-example"><h4>Example in practice</h4><p>A bag was under another passenger&#x27;s seat. Ask what proves your client&#x27;s knowledge and ability to control it.</p></div></article>
+<article class="library-entry" id="entry-charge-overcharge_and_manslaughter-1" data-source="crime_genres.overcharge_and_manslaughter.charges.0" aria-labelledby="title-charge-overcharge_and_manslaughter-1">
+<p class="library-reference">Overcharge Scenarios &amp; Manslaughter</p>
+<h3 id="title-charge-overcharge_and_manslaughter-1">Voluntary Manslaughter (Heat of Passion / Imperfect Self-Defense)</h3><p>An intentional unlawful killing that may receive a lesser classification because of legally adequate sudden provocation or a recognized imperfect self-defense doctrine.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>An intentional killing</li><li>Qualifying provocation without sufficient cooling time or recognized imperfect self-defense</li><li>A causal connection between the mitigating circumstances and the killing</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Investigate the immediate sequence and governing law. Anger or an unreasonable fear does not automatically qualify.</p><div class="library-example"><h4>Example in practice</h4><p>Video shows an immediate response to a serious confrontation. Use the timing to investigate whether legally sufficient mitigation applies.</p></div></article>
+<article class="library-entry" id="entry-charge-overcharge_and_manslaughter-2" data-source="crime_genres.overcharge_and_manslaughter.charges.1" aria-labelledby="title-charge-overcharge_and_manslaughter-2">
+<p class="library-reference">Overcharge Scenarios &amp; Manslaughter</p>
+<h3 id="title-charge-overcharge_and_manslaughter-2">Involuntary Manslaughter / Gross Criminal Negligence</h3><p>An unintended death caused by the level of recklessness or serious negligence required by the applicable law.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A death caused by the defendant&#x27;s conduct or legally required omission</li><li>Required recklessness or gross negligence</li><li>No intent to kill for this theory</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Separate a tragic accident from a grossly dangerous departure from reasonable care.</p><div class="library-example"><h4>Example in practice</h4><p>A machine failed despite documented maintenance. Examine whether the defendant ignored a known serious danger.</p></div></article>
+<article class="library-entry" id="entry-charge-overcharge_and_manslaughter-3" data-source="crime_genres.overcharge_and_manslaughter.charges.2" aria-labelledby="title-charge-overcharge_and_manslaughter-3">
+<p class="library-reference">Overcharge Scenarios &amp; Manslaughter</p>
+<h3 id="title-charge-overcharge_and_manslaughter-3">Vehicular Manslaughter with Gross Negligence</h3><p>Causing death through driving that meets the required serious negligence, recklessness, or impairment standard.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>Operation of a vehicle</li><li>The charged dangerous or impaired conduct</li><li>A causal link to the death</li><li>Required mental state</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Use collision reconstruction, mechanical records, and toxicology to test both fault and causation.</p><div class="library-example"><h4>Example in practice</h4><p>A documented brake defect may explain the collision. Compare it with the allegation that reckless driving caused the death.</p></div></article>
+<article class="library-entry" id="entry-charge-overcharge_and_manslaughter-4" data-source="crime_genres.overcharge_and_manslaughter.charges.3" aria-labelledby="title-charge-overcharge_and_manslaughter-4">
+<p class="library-reference">Overcharge Scenarios &amp; Manslaughter</p>
+<h3 id="title-charge-overcharge_and_manslaughter-4">Prosecutorial Overcharge: Felony Murder Elevation</h3><p>Some laws allow a murder charge for a death connected to a qualifying felony, even without a separate intent to kill. Liability limits for accomplices vary. Overcharge describes a disputed charging theory, rather than a separate crime.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A qualifying underlying felony</li><li>A death with the required connection to it</li><li>The defendant&#x27;s legally sufficient participation</li><li>Any additional limits imposed by the applicable law</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Test the qualifying felony, connection to the death, and rules for this defendant&#x27;s role. Lack of an intent to kill alone may not defeat felony murder.</p><div class="library-example"><h4>Example in practice</h4><p>A getaway driver had no knowledge of lethal conduct. Examine whether the governing law requires additional participation or mental-state proof.</p></div></article>
+<article class="library-entry" id="entry-charge-overcharge_and_manslaughter-5" data-source="crime_genres.overcharge_and_manslaughter.charges.4" aria-labelledby="title-charge-overcharge_and_manslaughter-5">
+<p class="library-reference">Overcharge Scenarios &amp; Manslaughter</p>
+<h3 id="title-charge-overcharge_and_manslaughter-5">Reckless Endangerment Resulting in Death</h3><p>Consciously disregarding a substantial unjustified danger that leads to death, under the offense used in the case.</p>
+<div class="library-application"><p class="library-proof-label">What the charge requires in RUC</p><ul class="library-points"><li>A substantial unjustified risk</li><li>Required awareness and disregard of that risk</li><li>A death caused by the conduct</li></ul></div>
+<p class="library-application"><strong>How to use it</strong>Show what danger was known, what precautions were taken, and what actually caused the death.</p><div class="library-example"><h4>Example in practice</h4><p>A supervisor received no warning of a hidden structural fault. Test the allegation that they consciously ignored a known danger.</p></div></article>
+</section>
+<section class="library-section" id="topic-rights" data-topic="rights" aria-labelledby="heading-rights"><header class="library-section-header"><h2 id="heading-rights">Police actions &amp; evidence challenges</h2><p>All eight legal flaws in the case data, translated into practical defense questions.</p></header>
+<article class="library-entry" id="entry-LF01" data-source="legal_flaws.LF01" aria-labelledby="title-LF01">
+<p class="library-reference">4th Amendment / Reasonable Suspicion</p>
+<h3 id="title-LF01">Anonymous tips &amp; the basis for a stop</h3><p>An anonymous accusation needs enough reliability and supporting detail to justify the police action taken. A stop and a search have different legal requirements.</p>
+<p class="library-application"><strong>How to use it</strong>Ask what police verified before acting, and whether it showed suspected wrongdoing rather than just a person&#x27;s appearance.</p><div class="library-example"><h4>Example in practice</h4><p>A caller names a jacket color but gives no reliable account of a crime. Compare the tip with what officers actually observed.</p></div></article>
+<article class="library-entry" id="entry-LF02" data-source="legal_flaws.LF02" aria-labelledby="title-LF02">
+<p class="library-reference">Due Process / Lineup Bias</p>
+<h3 id="title-LF02">Suggestive identification</h3><p>Police identification procedures can steer a witness toward a suspect. Constitutional exclusion depends on the procedure and reliability; an imperfect identification is not automatically excluded.</p>
+<p class="library-application"><strong>How to use it</strong>Examine instructions, alternatives, lighting, original descriptions, and police influence.</p><div class="library-example"><h4>Example in practice</h4><p>Police present your client alone and say, “We caught the robber.” Ask how that suggestion affected the identification.</p></div></article>
+<article class="library-entry" id="entry-LF03" data-source="legal_flaws.LF03" aria-labelledby="title-LF03">
+<p class="library-reference">4th Amendment / Voluntariness</p>
+<h3 id="title-LF03">Disputed consent to search</h3><p>Consent must be voluntary, come from someone with appropriate authority, and stay within its permitted scope. Pressure or a limited permission may matter.</p>
+<p class="library-application"><strong>How to use it</strong>Check recordings for the exact words, circumstances, authority, and any withdrawal of consent.</p><div class="library-example"><h4>Example in practice</h4><p>Your client allowed an officer to look in the trunk, but refused a search of a locked case. Compare the search with that limit.</p></div></article>
+<article class="library-entry" id="entry-LF04" data-source="legal_flaws.LF04" aria-labelledby="title-LF04">
+<p class="library-reference">4th Amendment / Particularity Clause</p>
+<h3 id="title-LF04">Search beyond a warrant</h3><p>A warrant limits the place to search and items to seek. The size of the item sought can limit which containers may be searched. Exceptions may permit some other actions.</p>
+<p class="library-application"><strong>How to use it</strong>Read the warrant and compare each search step with its scope and any claimed exception.</p><div class="library-example"><h4>Example in practice</h4><p>A warrant for a stolen television is used to open a tiny pill bottle. Ask how the listed object could fit inside.</p></div></article>
+<article class="library-entry" id="entry-LF05" data-source="legal_flaws.LF05" aria-labelledby="title-LF05">
+<p class="library-reference">FRE 901 / Evidence Integrity</p>
+<h3 id="title-LF05">Chain of custody &amp; authenticity</h3><p>Custody records track an item&#x27;s handling. A gap may raise doubts about identity, alteration, or contamination. Not every gap prevents admission; some affect how much the jury should trust the item.</p>
+<p class="library-application"><strong>How to use it</strong>Find the missing transfer and explain a concrete risk. Distinguish authenticity from constitutional suppression.</p><div class="library-example"><h4>Example in practice</h4><p>A sample changes labels between collection and testing. Ask who relabeled it and how the lab knows it tested the original sample.</p></div></article>
+<article class="library-entry" id="entry-LF06" data-source="legal_flaws.LF06" aria-labelledby="title-LF06">
+<p class="library-reference">5th Amendment / Miranda Violation</p>
+<h3 id="title-LF06">Questioning after rights are invoked</h3><p>Miranda applies to custodial interrogation. An unambiguous request for counsel generally requires questioning to stop under the applicable rules. Invoking silence has related but distinct rules; admissibility and exceptions need analysis.</p>
+<p class="library-application"><strong>How to use it</strong>Reconstruct custody, warnings, the exact invocation, and who restarted the conversation.</p><div class="library-example"><h4>Example in practice</h4><p>A recording captures “I want a lawyer,” followed by continued interrogation. Seek to exclude the resulting statement on the appropriate ground.</p></div></article>
+<article class="library-entry" id="entry-LF07" data-source="legal_flaws.LF07" aria-labelledby="title-LF07">
+<p class="library-reference">Due Process / Brady Violation</p>
+<h3 id="title-LF07">Hidden witness agreements</h3><p>Promises of leniency or other benefits can help the defense test a witness&#x27;s credibility. Material favorable information cannot be concealed simply because it is embarrassing to the prosecution.</p>
+<p class="library-application"><strong>How to use it</strong>Request the agreement and related promises, then identify how they affect the witness&#x27;s motive and your preparation.</p><div class="library-example"><h4>Example in practice</h4><p>A witness denies receiving anything, but a letter promises a reduced charge. Ask for disclosure and confront the contradiction.</p></div></article>
+<article class="library-entry" id="entry-LF08" data-source="legal_flaws.LF08" aria-labelledby="title-LF08">
+<p class="library-reference">FRE 702 / Daubert Challenge</p>
+<h3 id="title-LF08">Unreliable scientific methods</h3><p>A scientific-sounding result still needs a reliable method applied correctly to sufficient information.</p>
+<p class="library-application"><strong>How to use it</strong>Request validation studies, raw results, controls, and calibration records. Ask for a Rule 702 reliability ruling when supported.</p><div class="library-example"><h4>Example in practice</h4><p>A lab reports a match using a method it never validated. Ask the judge to assess whether that opinion has a reliable basis.</p></div></article>
+</section>
+<section class="library-section" id="topic-witnesses" data-topic="witnesses" aria-labelledby="heading-witnesses"><header class="library-section-header"><h2 id="heading-witnesses">Witness credibility</h2><p>All witness frictions and client complications: evaluate facts without turning suspicion into proof.</p></header>
+<article class="library-entry" id="entry-WF01" data-source="witness_frictions.WF01" aria-labelledby="title-WF01">
+<h3 id="title-WF01">Poor observation conditions</h3><p>Distance, darkness, noise, intoxication, stress, or impaired senses can limit what a witness accurately perceived.</p>
+<p class="library-application"><strong>How to use it</strong>Ask about specific conditions and compare them with the confidence of the identification.</p><div class="library-example"><h4>Example in practice</h4><p>A witness watched from across a dark road without glasses. Establish distance and lighting before challenging certainty.</p></div></article>
+<article class="library-entry" id="entry-WF02" data-source="witness_frictions.WF02" aria-labelledby="title-WF02">
+<h3 id="title-WF02">Grudges &amp; prior disputes</h3><p>A personal feud may give a witness a reason to exaggerate or blame someone. Bias does not itself prove the witness is lying.</p>
+<p class="library-application"><strong>How to use it</strong>Establish the relationship using specific events or records, then compare the account with independent evidence.</p><div class="library-example"><h4>Example in practice</h4><p>Messages show a recent threat to “get even.” Ask about the dispute and check whether other evidence supports the accusation.</p></div></article>
+<article class="library-entry" id="entry-WF03" data-source="witness_frictions.WF03" aria-labelledby="title-WF03">
+<h3 id="title-WF03">Financial self-interest</h3><p>A witness may protect income, avoid repayment, or shift financial responsibility by blaming the accused.</p>
+<p class="library-application"><strong>How to use it</strong>Find the benefit or loss at stake and connect it to the testimony.</p><div class="library-example"><h4>Example in practice</h4><p>A manager could owe repayment if their own error caused the loss. Examine whether blaming your client avoids that responsibility.</p></div></article>
+<article class="library-entry" id="entry-WF04" data-source="witness_frictions.WF04" aria-labelledby="title-WF04">
+<h3 id="title-WF04">Changed stories</h3><p>A prior inconsistent statement may weaken reliability. Differences may also have innocent explanations.</p>
+<p class="library-application"><strong>How to use it</strong>Identify the exact earlier statement, circumstances, and contradiction; give the witness a chance to explain.</p><div class="library-example"><h4>Example in practice</h4><p>The first interview says “I heard a bang”; trial testimony says “I saw the shot.” Ask what explains the added observation.</p></div></article>
+<article class="library-entry" id="entry-WF05" data-source="witness_frictions.WF05" aria-labelledby="title-WF05">
+<h3 id="title-WF05">Cooperating co-defendants &amp; plea deals</h3><p>A co-defendant may gain a lighter sentence or other benefit by helping prosecutors. The deal is relevant to credibility, not automatic proof of fabrication.</p>
+<p class="library-application"><strong>How to use it</strong>Ask what was promised, what remains at risk, and whether independent evidence supports the account.</p><div class="library-example"><h4>Example in practice</h4><p>A witness hopes testimony will reduce a ten-year sentence. Establish that incentive before discussing their accusation.</p></div></article>
+<article class="library-entry" id="entry-WF06" data-source="witness_frictions.WF06" aria-labelledby="title-WF06">
+<h3 id="title-WF06">Career or professional pressure</h3><p>A person facing discipline, licensing trouble, or blame at work may have a reason to protect their reputation.</p>
+<p class="library-application"><strong>How to use it</strong>Look for documented pressure and compare the testimony with contemporaneous records.</p><div class="library-example"><h4>Example in practice</h4><p>An analyst could be disciplined for mishandling a sample. Use the handling log to test their denial of an error.</p></div></article>
+<article class="library-entry" id="entry-CC01" data-source="client_complications.CC01" aria-labelledby="title-CC01">
+<h3 id="title-CC01">Flight for an unrelated warrant</h3><p>Running may reflect fear of an unrelated arrest rather than guilt of the charged crime. Flight is a fact to interpret in context.</p>
+<p class="library-application"><strong>How to use it</strong>Investigate the alternative reason with records, while checking what your client knew at the time.</p><div class="library-example"><h4>Example in practice</h4><p>A pre-existing warrant explains why your client fled when police arrived. Use its date to test the prosecution&#x27;s inference.</p></div></article>
+<article class="library-entry" id="entry-CC02" data-source="client_complications.CC02" aria-labelledby="title-CC02">
+<h3 id="title-CC02">Protecting another person</h3><p>A client may hide information to protect someone else. That can make an account incomplete without proving the charged offense.</p>
+<p class="library-application"><strong>How to use it</strong>Ask privately for the missing facts and verify them independently. Avoid building an alibi on an untested story.</p><div class="library-example"><h4>Example in practice</h4><p>Your client concealed a friend&#x27;s presence. Camera footage confirms the friend was there; revise the timeline around verified facts.</p></div></article>
+<article class="library-entry" id="entry-CC03" data-source="client_complications.CC03" aria-labelledby="title-CC03">
+<h3 id="title-CC03">A different uncharged act</h3><p>A client may have done something unlawful without committing the particular crime on trial. Different acts need different proof.</p>
+<p class="library-application"><strong>How to use it</strong>Separate evidence of the charged elements from unrelated misconduct and challenge improper character use.</p><div class="library-example"><h4>Example in practice</h4><p>Your client admits trespassing, but that does not by itself establish who stole the equipment.</p></div></article>
+<article class="library-entry" id="entry-CC04" data-source="client_complications.CC04" aria-labelledby="title-CC04">
+<h3 id="title-CC04">Evidence destroyed for another reason</h3><p>Deleting or discarding material may suggest concealment, but its meaning depends on what was removed, when, and why.</p>
+<p class="library-application"><strong>How to use it</strong>Seek backups and establish the timing. Do not assume the client&#x27;s explanation is true without checking.</p><div class="library-example"><h4>Example in practice</h4><p>Messages were deleted before the charged event. Use backup timestamps to test whether deletion could have hidden that event.</p></div></article>
+<article class="library-entry" id="entry-CC05" data-source="client_complications.CC05" aria-labelledby="title-CC05">
+<h3 id="title-CC05">Prior felony history &amp; fear of authorities</h3><p>A prior conviction or fear of police can affect behavior without proving a new offense. Prior convictions may have limited permitted uses under the applicable rules.</p>
+<p class="library-application"><strong>How to use it</strong>Explain relevant behavior with evidence and challenge attempts to turn history into a general guilt inference.</p><div class="library-example"><h4>Example in practice</h4><p>Your client avoided police after a prior conviction. Distinguish that fear from evidence tying them to the present offense.</p></div></article>
+</section>
+<section class="library-section" id="topic-traps" data-topic="traps" aria-labelledby="heading-traps"><header class="library-section-header"><h2 id="heading-traps">Prosecution tactics to recognize</h2><p>All five courtroom traps in the case data, with a clear response.</p></header>
+<article class="library-entry" id="entry-MC01" data-source="da_misconduct.MC01" aria-labelledby="title-MC01">
+<p class="library-reference">FRE 404(b) / Impermissible Character &amp; Prior Bad Acts</p>
+<h3 id="title-MC01">Past-bad-act ambush</h3><p>The prosecutor introduces unrelated misconduct to encourage the jury to infer guilt from character. A proper non-character use needs a separate analysis.</p>
+<p class="library-application"><strong>How to use it</strong>Object to the improper purpose under Rule 404(b), address Rule 403 if applicable, and request a ruling before more detail reaches the jury.</p><div class="library-example"><h4>Example in practice</h4><p>The prosecutor mentions an old unrelated arrest to portray your client as dishonest. Ask what permitted issue it proves.</p></div></article>
+<article class="library-entry" id="entry-MC02" data-source="da_misconduct.MC02" aria-labelledby="title-MC02">
+<p class="library-reference">FRE 611(a) / Argumentative &amp; Assuming Facts Not in Evidence</p>
+<h3 id="title-MC02">Loaded, compound questions</h3><p>Rapid questions can bundle disputed assumptions with several requested answers.</p>
+<p class="library-application"><strong>How to use it</strong>Object under the judge&#x27;s control of questioning and request one clear question without an unproved premise.</p><div class="library-example"><h4>Example in practice</h4><p>“When you hid the weapon and wiped it clean, who helped?” assumes multiple disputed events. Ask the lawyer to establish those facts separately.</p></div></article>
+<article class="library-entry" id="entry-MC03" data-source="da_misconduct.MC03" aria-labelledby="title-MC03">
+<p class="library-reference">FRE 701 &amp; FRE 702 / Speculative Lay Opinion on Guilt/State of Mind</p>
+<h3 id="title-MC03">Ordinary witness giving technical conclusions</h3><p>A non-expert is pushed to supply scientific findings or an unsupported conclusion about intent.</p>
+<p class="library-application"><strong>How to use it</strong>Object to speculation or improper lay opinion. Ask what was personally observed and what requires qualified expert analysis.</p><div class="library-example"><h4>Example in practice</h4><p>A patrol officer calls a wound pattern proof of premeditation without medical expertise. Separate the observation from the conclusion.</p></div></article>
+<article class="library-entry" id="entry-MC04" data-source="da_misconduct.MC04" aria-labelledby="title-MC04">
+<p class="library-reference">Due Process / Giglio v. United States / Concealed Witness Inducement</p>
+<h3 id="title-MC04">Concealed benefits for a witness</h3><p>A witness is presented as disinterested while promised money, immunity, or a reduced sentence is hidden.</p>
+<p class="library-application"><strong>How to use it</strong>Seek disclosure of the promises and use them to test credibility. Explain any resulting preparation problem to the judge.</p><div class="library-example"><h4>Example in practice</h4><p>The informant says they helped out of civic duty, but payment records show a reward. Ask about the payment and its conditions.</p></div></article>
+<article class="library-entry" id="entry-MC05" data-source="da_misconduct.MC05" aria-labelledby="title-MC05">
+<p class="library-reference">FRE 802 / Crawford v. Washington / Sixth Amendment Confrontation</p>
+<h3 id="title-MC05">Hearsay disguised as investigation background</h3><p>A detective repeats an absent person&#x27;s accusation and calls it an explanation of the investigation. Some genuine background uses are permissible, but the label does not authorize proving guilt through an absent accuser.</p>
+<p class="library-application"><strong>How to use it</strong>Ask why the statement is needed, object to hearsay when offered for its truth, and raise confrontation when testimonial accusations are involved.</p><div class="library-example"><h4>Example in practice</h4><p>“We arrested Alex because an informant said Alex planned the robbery.” Challenge the accusation instead of accepting the “background” label.</p></div></article>
+</section>
+<section class="library-section" id="topic-investigation" data-topic="investigation" aria-labelledby="heading-investigation"><header class="library-section-header"><h2 id="heading-investigation">Investigation &amp; action points</h2><p>All eight investigation types. The AP figures come from the RUC data; findings still need context and a proper foundation.</p></header>
+<article class="library-entry" id="entry-IA01" data-source="investigative_archetypes.IA01" aria-labelledby="title-IA01">
+<p class="library-reference">RUC investigation · 1 AP</p>
+<h3 id="title-IA01">Phone location &amp; timing records</h3><p>Cell connections and device clocks can help test a timeline, but location estimates and timestamps have limits.</p>
+<p class="library-application"><strong>How to use it</strong>Request carrier records, coverage information, and clock offsets; compare independent sources.</p><div class="library-example"><h4>Example in practice</h4><p>A tower record places the phone in a broad area, not at a particular door. Use the uncertainty when testing an asserted exact location.</p></div></article>
+<article class="library-entry" id="entry-IA02" data-source="investigative_archetypes.IA02" aria-labelledby="title-IA02">
+<p class="library-reference">RUC investigation · 1 AP</p>
+<h3 id="title-IA02">Dispatch logs &amp; emergency audio</h3><p>Emergency calls, computer-aided dispatch (CAD) logs, and radio traffic preserve what was reported and when officers acted.</p>
+<p class="library-application"><strong>How to use it</strong>Compare the original audio with later reports and check whether clocks align.</p><div class="library-example"><h4>Example in practice</h4><p>The report says police saw a weapon before stopping the car; dispatch audio suggests the description came afterward.</p></div></article>
+<article class="library-entry" id="entry-IA03" data-source="investigative_archetypes.IA03" aria-labelledby="title-IA03">
+<p class="library-reference">RUC investigation · 1 AP</p>
+<h3 id="title-IA03">Travel &amp; access records</h3><p>Transit taps, toll readers, and badge logs can support or contradict travel claims. They identify a card or vehicle more directly than its user.</p>
+<p class="library-application"><strong>How to use it</strong>Verify time settings and who could use the card or vehicle. Cross-check with cameras.</p><div class="library-example"><h4>Example in practice</h4><p>A badge logged entry at 9:10, but another person had borrowed it. Request video before assuming who entered.</p></div></article>
+<article class="library-entry" id="entry-IA04" data-source="investigative_archetypes.IA04" aria-labelledby="title-IA04">
+<p class="library-reference">RUC investigation · 1 AP</p>
+<h3 id="title-IA04">Medical, intake &amp; shift records</h3><p>Ambulance observations, hospital arrival notes, and sign-in records can provide independent anchors for injury and movement timelines.</p>
+<p class="library-application"><strong>How to use it</strong>Check authorship, time settings, identity, and whether the entry reflects an observation or later recollection.</p><div class="library-example"><h4>Example in practice</h4><p>A hospital intake record places your client away from the scene. Confirm the actual arrival time and identity recorded.</p></div></article>
+<article class="library-entry" id="entry-IA05" data-source="investigative_archetypes.IA05" aria-labelledby="title-IA05">
+<p class="library-reference">RUC investigation · 2 AP</p>
+<h3 id="title-IA05">Find route &amp; shift witnesses</h3><p>Canvassing means contacting people who may have directly observed a useful part of the event.</p>
+<p class="library-application"><strong>How to use it</strong>Ask open questions, preserve their original words, and verify what they could see or hear.</p><div class="library-example"><h4>Example in practice</h4><p>A night clerk remembers the delivery van leaving before the alleged crime. Compare that account with a dated receipt.</p></div></article>
+<article class="library-entry" id="entry-IA06" data-source="investigative_archetypes.IA06" aria-labelledby="title-IA06">
+<p class="library-reference">RUC investigation · 2 AP</p>
+<h3 id="title-IA06">Locate independent video</h3><p>Doorbells, shop cameras, vehicle cameras, and network video recorders (NVRs) may capture missing parts of the sequence.</p>
+<p class="library-application"><strong>How to use it</strong>Preserve original files, check clock accuracy, and record where the footage came from.</p><div class="library-example"><h4>Example in practice</h4><p>A nearby shop camera shows the first aggressor. Obtain the original recording and identify its owner for authentication.</p></div></article>
+<article class="library-entry" id="entry-IA07" data-source="investigative_archetypes.IA07" aria-labelledby="title-IA07">
+<p class="library-reference">RUC investigation · 2 AP</p>
+<h3 id="title-IA07">Biological &amp; ballistics review</h3><p>Review of DNA mixtures, injury patterns, and firearm marks can test a claimed forensic link. A match claim needs explanation of limits and possible error.</p>
+<p class="library-application"><strong>How to use it</strong>Ask for raw records, controls, custody history, and qualified review. DNA presence alone does not establish when or how it arrived.</p><div class="library-example"><h4>Example in practice</h4><p>A mixed DNA sample includes several people. Ask whether the result truly singles out your client and how strong the association is.</p></div></article>
+<article class="library-entry" id="entry-IA08" data-source="investigative_archetypes.IA08" aria-labelledby="title-IA08">
+<p class="library-reference">RUC investigation · 2 AP</p>
+<h3 id="title-IA08">Digital &amp; instrument review</h3><p>File hashes, access records, and instrument calibration help test data integrity and measurements. A hash is a file fingerprint; a matching hash does not prove its author or truth.</p>
+<p class="library-application"><strong>How to use it</strong>Compare original and analyzed files, account access, time settings, and machine calibration. GC-MS is a laboratory method for separating and identifying chemicals.</p><div class="library-example"><h4>Example in practice</h4><p>The analyzed drive image has a different hash from the collected image. Investigate the change before relying on extracted messages.</p></div></article>
+</section>
+<section class="library-section" id="topic-evidence" data-topic="evidence" aria-labelledby="heading-evidence"><header class="library-section-header"><h2 id="heading-evidence">Reading exhibits critically</h2><p>Every evidence anchor in the case data: what it may help prove and what to check.</p></header>
+<article class="library-entry" id="entry-EA01" data-source="evidence_anchors.EA01" aria-labelledby="title-EA01">
+<p class="library-reference">Physical evidence</p>
+<h3 id="title-EA01">Discarded Heavy Work Glove</h3><p>A glove may connect a person to an item or location, but ownership, transfer, and timing remain separate questions.</p>
+<p class="library-application"><strong>How to use it</strong>Check recovery location, custody, DNA interpretation, and innocent handling.</p><div class="library-example"><h4>Example in practice</h4><p>Your client once used the shared glove. Ask what ties its presence to the crime rather than earlier work.</p></div></article>
+<article class="library-entry" id="entry-EA02" data-source="evidence_anchors.EA02" aria-labelledby="title-EA02">
+<p class="library-reference">Documentary evidence</p>
+<h3 id="title-EA02">Point-of-Sale Register Receipt</h3><p>A register receipt may help establish a transaction or timeline, rather than reliably identify everyone present.</p>
+<p class="library-application"><strong>How to use it</strong>Verify the transaction, register clock, payment method, and who obtained it.</p><div class="library-example"><h4>Example in practice</h4><p>A 9:15 receipt supports a purchase time only after the register clock is checked.</p></div></article>
+<article class="library-entry" id="entry-EA03" data-source="evidence_anchors.EA03" aria-labelledby="title-EA03">
+<p class="library-reference">Digital evidence</p>
+<h3 id="title-EA03">Low-Resolution Forecourt CCTV Snippet</h3><p>A low-resolution camera clip may show movement while leaving identity uncertain.</p>
+<p class="library-application"><strong>How to use it</strong>Obtain the full original recording, check timestamps, and avoid conclusions beyond the image detail.</p><div class="library-example"><h4>Example in practice</h4><p>The clip shows a dark coat but no face. Explain why many people fit that description.</p></div></article>
+<article class="library-entry" id="entry-EA04" data-source="evidence_anchors.EA04" aria-labelledby="title-EA04">
+<p class="library-reference">Physical evidence</p>
+<h3 id="title-EA04">Serrated Utility Box Cutter</h3><p>A cutting tool may be capable of causing an injury without being the tool actually used.</p>
+<p class="library-application"><strong>How to use it</strong>Check injury compatibility, traces, handling, and the recovery context.</p><div class="library-example"><h4>Example in practice</h4><p>A box cutter was common workplace equipment. Ask what specifically connects this one to the wound.</p></div></article>
+<article class="library-entry" id="entry-EA05" data-source="evidence_anchors.EA05" aria-labelledby="title-EA05">
+<p class="library-reference">Documentary evidence</p>
+<h3 id="title-EA05">Handwritten Shift Manifest &amp; Notes</h3><p>Shift notes may establish duties or observations, but handwritten information needs an author and context.</p>
+<p class="library-application"><strong>How to use it</strong>Identify the writer, when notes were made, and whether they record firsthand facts.</p><div class="library-example"><h4>Example in practice</h4><p>A note was added after the incident. Ask whether it reflects a memory rather than a contemporaneous entry.</p></div></article>
+<article class="library-entry" id="entry-EA06" data-source="evidence_anchors.EA06" aria-labelledby="title-EA06">
+<p class="library-reference">Documentary evidence</p>
+<h3 id="title-EA06">Equipment Maintenance Sign-Off Card</h3><p>A maintenance card records inspections or repairs, but a signature is not conclusive proof every check occurred.</p>
+<p class="library-application"><strong>How to use it</strong>Verify the signer, procedure, underlying work, and equipment identity.</p><div class="library-example"><h4>Example in practice</h4><p>A card lists a successful check, while repair logs document a recurring fault. Compare both records.</p></div></article>
+<article class="library-entry" id="entry-EA07" data-source="evidence_anchors.EA07" aria-labelledby="title-EA07">
+<p class="library-reference">Digital evidence</p>
+<h3 id="title-EA07">Transit Badge Keycard Scan Log</h3><p>A keycard scan logs use of a credential, not necessarily the identity of its holder.</p>
+<p class="library-application"><strong>How to use it</strong>Check sharing, duplicate cards, clock accuracy, and matching video.</p><div class="library-example"><h4>Example in practice</h4><p>Another worker borrowed the badge. Ask for an independent identification of the entrant.</p></div></article>
+<article class="library-entry" id="entry-EA08" data-source="evidence_anchors.EA08" aria-labelledby="title-EA08">
+<p class="library-reference">Digital evidence</p>
+<h3 id="title-EA08">Patrol Dashcam Pre-Event Buffer Clip</h3><p>A dashcam pre-event buffer may preserve events before manual recording starts, sometimes with limited audio.</p>
+<p class="library-application"><strong>How to use it</strong>Inspect the original clip, buffer coverage, missing audio, and device timing.</p><div class="library-example"><h4>Example in practice</h4><p>The officer describes a spoken threat, but the buffer has no audio. Do not treat silence in that clip as proof no words were spoken.</p></div></article>
+<article class="library-entry" id="entry-EA09" data-source="evidence_anchors.EA09" aria-labelledby="title-EA09">
+<p class="library-reference">Forensic evidence</p>
+<h3 id="title-EA09">Field Presumptive Chemical Test Vial</h3><p>A field chemical test is a preliminary screen that may have false positives.</p>
+<p class="library-application"><strong>How to use it</strong>Request confirmatory testing and inspect storage, contamination, and test instructions.</p><div class="library-example"><h4>Example in practice</h4><p>A field kit reacts positively but the lab identifies a lawful material. Use the confirmatory result to challenge the initial inference.</p></div></article>
+<article class="library-entry" id="entry-EA10" data-source="evidence_anchors.EA10" aria-labelledby="title-EA10">
+<p class="library-reference">Documentary evidence</p>
+<h3 id="title-EA10">Intermodal Bolt Seal Manifest</h3><p>A container seal manifest tracks seals, cargo, and handling rather than proving a particular person&#x27;s knowledge.</p>
+<p class="library-application"><strong>How to use it</strong>Compare seal numbers, transfer signatures, opening records, and cargo access.</p><div class="library-example"><h4>Example in practice</h4><p>A seal number changes in transit. Ask who opened or resealed the container.</p></div></article>
+<article class="library-entry" id="entry-EA11" data-source="evidence_anchors.EA11" aria-labelledby="title-EA11">
+<p class="library-reference">Forensic evidence</p>
+<h3 id="title-EA11">Hospital Emergency Toxicology Panel</h3><p>A toxicology panel can identify tested substances, but timing, concentration, and clinical context affect interpretation.</p>
+<p class="library-application"><strong>How to use it</strong>Check sample time, test scope, medication history, and expert limits.</p><div class="library-example"><h4>Example in practice</h4><p>Medication given in the emergency department may explain a result. Compare administration and collection times.</p></div></article>
+<article class="library-entry" id="entry-EA12" data-source="evidence_anchors.EA12" aria-labelledby="title-EA12">
+<p class="library-reference">Forensic evidence</p>
+<h3 id="title-EA12">Autopsy Anatomical Wound Schematic</h3><p>An autopsy diagram records injury locations; interpretation of mechanism, sequence, and intent requires an adequate expert basis.</p>
+<p class="library-application"><strong>How to use it</strong>Compare the diagram with the report, photographs, and the examiner&#x27;s limits.</p><div class="library-example"><h4>Example in practice</h4><p>The diagram shows one entry wound but does not establish who fired. Separate medical findings from identity.</p></div></article>
+<article class="library-entry" id="entry-EA13" data-source="evidence_anchors.EA13" aria-labelledby="title-EA13">
+<p class="library-reference">Digital evidence</p>
+<h3 id="title-EA13">Extracted Encrypted Messaging Log</h3><p>A messaging extraction may show communications, but account identity, missing context, and file integrity matter.</p>
+<p class="library-application"><strong>How to use it</strong>Verify the original source, participants, full thread, timestamps, and extraction method.</p><div class="library-example"><h4>Example in practice</h4><p>A threatening line is followed by a clear discussion of a video game. Read the complete thread before inferring a real threat.</p></div></article>
+<article class="library-entry" id="entry-EA14" data-source="evidence_anchors.EA14" aria-labelledby="title-EA14">
+<p class="library-reference">Digital evidence</p>
+<h3 id="title-EA14">Remote Server Bastion Auth Log</h3><p>A bastion server access log records connections through a controlled gateway. Credentials and network addresses are clues to attribution.</p>
+<p class="library-application"><strong>How to use it</strong>Check shared accounts, compromised access, time settings, and independent device evidence.</p><div class="library-example"><h4>Example in practice</h4><p>A login used your client&#x27;s account from an unfamiliar device. Investigate compromise before assigning authorship.</p></div></article>
+<article class="library-entry" id="entry-EA15" data-source="evidence_anchors.EA15" aria-labelledby="title-EA15">
+<p class="library-reference">Forensic evidence</p>
+<h3 id="title-EA15">Laboratory Gas Chromatograph Calibration Readout</h3><p>A gas chromatograph calibration record helps show whether an instrument measured reliably at the relevant time.</p>
+<p class="library-application"><strong>How to use it</strong>Compare calibration dates, standards, drift, maintenance, and the specific sample run.</p><div class="library-example"><h4>Example in practice</h4><p>The instrument drifted outside its accepted range before testing. Ask whether that affected the reported result.</p></div></article>
+<article class="library-entry" id="entry-EA16" data-source="evidence_anchors.EA16" aria-labelledby="title-EA16">
+<p class="library-reference">Documentary evidence</p>
+<h3 id="title-EA16">Automated Clearinghouse Wire Trace</h3><p>An automated clearinghouse (ACH) or wire trace shows a payment path, but not automatically who authorized it or why.</p>
+<p class="library-application"><strong>How to use it</strong>Trace origin, approval, beneficiary ownership, access, and any reversal.</p><div class="library-example"><h4>Example in practice</h4><p>Money reached a supplier account. Check the contract and approval chain before describing it as a personal payoff.</p></div></article>
+</section>
+<section class="library-section" id="topic-verdicts" data-topic="verdicts" aria-labelledby="heading-verdicts"><header class="library-section-header"><h2 id="heading-verdicts">Building a closing argument</h2><p>All five verdict guides. A weakness may defeat a greater charge while leaving a lesser offense for consideration.</p></header>
+<article class="library-entry" id="entry-verdict-violent_crimes" data-source="jury_verdict_guides.violent_crimes" aria-labelledby="title-verdict-violent_crimes">
+<h3 id="title-verdict-violent_crimes">Violent crimes: identity &amp; the first aggressor</h3><p>Focus on whether the accused was reliably identified and whether the force was unlawful rather than justified.</p>
+<p class="library-application"><strong>How to use it</strong>Connect visibility, timing, physical presence, and the threat sequence to the charged elements.</p><div class="library-example"><h4>Example in practice</h4><p>Combine poor identification conditions with video showing the other person&#x27;s initial attack. Explain how each affects a required finding.</p></div></article>
+<article class="library-entry" id="entry-verdict-financial_fraud" data-source="jury_verdict_guides.financial_fraud" aria-labelledby="title-verdict-financial_fraud">
+<h3 id="title-verdict-financial_fraud">Financial cases: dishonest intent</h3><p>A financial loss alone does not prove deliberate fraud. Good faith and genuinely innocent mistakes can undermine intent; following a boss&#x27;s orders is not a blanket defense.</p>
+<p class="library-application"><strong>How to use it</strong>Use contemporaneous instructions, approvals, and disclosures to test the claimed intent.</p><div class="library-example"><h4>Example in practice</h4><p>An email openly flags a bookkeeping mistake before money changes hands. Explain why that weakens an inference of deliberate deception.</p></div></article>
+<article class="library-entry" id="entry-verdict-cyber_crime" data-source="jury_verdict_guides.cyber_crime" aria-labelledby="title-verdict-cyber_crime">
+<h3 id="title-verdict-cyber_crime">Cyber cases: attribution &amp; data integrity</h3><p>A technical trace must be linked to the defendant and interpreted reliably. A shared network or account can create uncertainty, but does not automatically defeat attribution.</p>
+<p class="library-application"><strong>How to use it</strong>Bring together account access, device evidence, timing, integrity checks, and alternative access supported by facts.</p><div class="library-example"><h4>Example in practice</h4><p>The login came through a shared account, and device evidence points elsewhere. Explain the gap between account activity and personal responsibility.</p></div></article>
+<article class="library-entry" id="entry-verdict-substance_use_and_distribution" data-source="jury_verdict_guides.substance_use_and_distribution" aria-labelledby="title-verdict-substance_use_and_distribution">
+<h3 id="title-verdict-substance_use_and_distribution">Drug cases: knowledge, control &amp; distribution purpose</h3><p>Shared premises can weaken an inference of knowing control. Personal-use evidence may challenge distribution intent while leaving possession at issue.</p>
+<p class="library-application"><strong>How to use it</strong>Address possession and distribution separately. Joint possession is possible, so shared access is a fact to evaluate rather than an automatic defense.</p><div class="library-example"><h4>Example in practice</h4><p>Evidence suggests personal use but not sales. Argue the distribution element separately from whether possession was proved.</p></div></article>
+<article class="library-entry" id="entry-verdict-overcharge_and_manslaughter" data-source="jury_verdict_guides.overcharge_and_manslaughter" aria-labelledby="title-verdict-overcharge_and_manslaughter">
+<h3 id="title-verdict-overcharge_and_manslaughter">Overcharging &amp; manslaughter: the proper mental state</h3><p>Lack of planning or legally recognized mitigation may defeat a greater homicide charge without proving innocence of all homicide offenses. Felony-murder theories require separate analysis.</p>
+<p class="library-application"><strong>How to use it</strong>Match your argument to the actual charge and any lesser-offense instructions. Identify exactly what is missing or mitigated.</p><div class="library-example"><h4>Example in practice</h4><p>Evidence supports a sudden confrontation but no planning. Explain why that matters for first-degree murder and assess any lesser charge independently.</p></div></article>
+</section>
+<section class="library-section" id="topic-courtroom" data-topic="courtroom" aria-labelledby="heading-courtroom"><header class="library-section-header"><h2 id="heading-courtroom">Courtroom field guide</h2><p>The fictional judges and prosecutors in RUC. These profiles guide gameplay; they do not change the legal rules.</p></header>
+<article class="library-entry" id="entry-judge_pendelton" data-source="judges.judge_pendelton" aria-labelledby="title-judge_pendelton">
+<p class="library-reference">RUC judge profile</p>
+<h3 id="title-judge_pendelton">Judge Arthur Pendelton</h3><p>A strict procedural judge who expects precise legal grounds and dislikes speculative arguments.</p>
+<p class="library-application"><strong>How to use it</strong>Use short, precise objections and identify the rule and disputed evidence. Avoid speeches or unsupported theories.</p><div class="library-example"><h4>Example in practice</h4><p>A witness repeats a rumor. State “Objection, hearsay, Rule 802,” then explain the purpose only if asked.</p></div></article>
+<article class="library-entry" id="entry-judge_ramos" data-source="judges.judge_ramos" aria-labelledby="title-judge_ramos">
+<p class="library-reference">RUC judge profile</p>
+<h3 id="title-judge_ramos">Judge Evelyn Ramos</h3><p>A fast-paced judge who values efficient, concrete questioning.</p>
+<p class="library-application"><strong>How to use it</strong>Keep questions focused and move toward a useful contradiction without needless repetition.</p><div class="library-example"><h4>Example in practice</h4><p>Use the dispatch time and the officer&#x27;s claimed arrival time in two clear questions instead of a long introduction.</p></div></article>
+<article class="library-entry" id="entry-judge_choi" data-source="judges.judge_choi" aria-labelledby="title-judge_choi">
+<p class="library-reference">RUC judge profile</p>
+<h3 id="title-judge_choi">Judge Kenneth Choi</h3><p>A detail-focused judge who pays close attention to scientific records and evidence handling.</p>
+<p class="library-application"><strong>How to use it</strong>Build arguments around handling records, laboratory reliability, timestamps, and specific technical defects.</p><div class="library-example"><h4>Example in practice</h4><p>A missing sample transfer matters most when you show how it creates a risk of misidentification or contamination.</p></div></article>
+<article class="library-entry" id="entry-judge_al_hassan" data-source="judges.judge_al_hassan" aria-labelledby="title-judge_al_hassan">
+<p class="library-reference">RUC judge profile</p>
+<h3 id="title-judge_al_hassan">Judge Mirah Al-Hassan</h3><p>A deliberate judge who closely examines constitutional protections and disclosure duties.</p>
+<p class="library-application"><strong>How to use it</strong>Examine search authority, custodial questioning, and undisclosed witness benefits carefully.</p><div class="library-example"><h4>Example in practice</h4><p>Show the exact limit of the recorded consent and compare it with the actual search.</p></div></article>
+<article class="library-entry" id="entry-judge_callahan" data-source="judges.judge_callahan" aria-labelledby="title-judge_callahan">
+<p class="library-reference">RUC judge profile</p>
+<h3 id="title-judge_callahan">Judge Raymond Callahan</h3><p>A traditional judge inclined to trust police testimony and skeptical of unsupported alternative theories.</p>
+<p class="library-application"><strong>How to use it</strong>Use a calm tone and records rather than accusations when challenging officers.</p><div class="library-example"><h4>Example in practice</h4><p>Read the recorded dispatch entry and ask the officer to explain its conflict with their report.</p></div></article>
+<article class="library-entry" id="entry-judge_de_la_torre" data-source="judges.judge_de_la_torre" aria-labelledby="title-judge_de_la_torre">
+<p class="library-reference">RUC judge profile</p>
+<h3 id="title-judge_de_la_torre">Judge Patricia De La Torre</h3><p>An analytical judge who focuses on statutory elements and evidentiary rules.</p>
+<p class="library-application"><strong>How to use it</strong>Break the charge into required elements and tie every motion to the missing proof.</p><div class="library-example"><h4>Example in practice</h4><p>For attempted murder, distinguish evidence of an intent to frighten from evidence of an intent to kill.</p></div></article>
+<article class="library-entry" id="entry-da_thorne" data-source="district_attorneys.da_thorne" aria-labelledby="title-da_thorne">
+<p class="library-reference">RUC prosecutor profile</p>
+<h3 id="title-da_thorne">ADA Gregory Thorne</h3><p>An aggressive prosecutor who uses pressure and prior-act insinuations.</p>
+<p class="library-application"><strong>How to use it</strong>Watch for improper character use and object before more prejudicial detail is introduced.</p><div class="library-example"><h4>Example in practice</h4><p>An unrelated arrest is mentioned to suggest guilt. Challenge the purpose under Rule 404(b).</p></div></article>
+<article class="library-entry" id="entry-da_ward" data-source="district_attorneys.da_ward" aria-labelledby="title-da_ward">
+<p class="library-reference">RUC prosecutor profile</p>
+<h3 id="title-da_ward">ADA Samantha Ward</h3><p>A methodical prosecutor who builds cases from records and technical links.</p>
+<p class="library-application"><strong>How to use it</strong>Inspect calibration, timing, account access, and the limits of each record rather than relying on a broad accusation of dishonesty.</p><div class="library-example"><h4>Example in practice</h4><p>Two log systems differ by three minutes. Check their clock offsets before accepting the reconstructed sequence.</p></div></article>
+<article class="library-entry" id="entry-da_mansour" data-source="district_attorneys.da_mansour" aria-labelledby="title-da_mansour">
+<p class="library-reference">RUC prosecutor profile</p>
+<h3 id="title-da_mansour">ADA Tariq Mansour</h3><p>A storyteller who relies on emotional narratives and secondhand accounts.</p>
+<p class="library-application"><strong>How to use it</strong>Check hearsay claims and distinguish useful evidence from unfair emotional appeals.</p><div class="library-example"><h4>Example in practice</h4><p>A witness repeats a rumor labeled an excited utterance. Ask when it was made and under what stress.</p></div></article>
+<article class="library-entry" id="entry-da_rostova" data-source="district_attorneys.da_rostova" aria-labelledby="title-da_rostova">
+<p class="library-reference">RUC prosecutor profile</p>
+<h3 id="title-da_rostova">ADA Elena Rostova</h3><p>A prosecutor who tests alibis with records and uses cooperating witnesses.</p>
+<p class="library-application"><strong>How to use it</strong>Verify the client&#x27;s timeline and obtain witness agreements and promises.</p><div class="library-example"><h4>Example in practice</h4><p>An informant&#x27;s deal rewards cooperation. Ask about the benefit and compare the account with independent records.</p></div></article>
+<article class="library-entry" id="entry-da_delaney" data-source="district_attorneys.da_delaney" aria-labelledby="title-da_delaney">
+<p class="library-reference">RUC prosecutor profile</p>
+<h3 id="title-da_delaney">ADA Marcus Delaney</h3><p>A cautious prosecutor who relies on police reports and standard procedures.</p>
+<p class="library-application"><strong>How to use it</strong>Compare reports with original audio and physical evidence; challenge unlawful collection with a focused motion.</p><div class="library-example"><h4>Example in practice</h4><p>Dispatch audio contradicts a report&#x27;s timing. Use the actual recording to question the account.</p></div></article>
+<article class="library-entry" id="entry-da_zhang" data-source="district_attorneys.da_zhang" aria-labelledby="title-da_zhang">
+<p class="library-reference">RUC prosecutor profile</p>
+<h3 id="title-da_zhang">ADA Chloe Zhang</h3><p>A rapid questioner who uses compound questions and disputed assumptions.</p>
+<p class="library-application"><strong>How to use it</strong>Ask for one factual question at a time under Rule 611(a).</p><div class="library-example"><h4>Example in practice</h4><p>A question assumes your client erased a file while asking why. Challenge the unsupported premise first.</p></div></article>
+</section>
+<div id="library-empty" class="library-empty" hidden><h2>No matching entries</h2><p>Try a broader phrase or clear the filters to browse the full collection.</p></div>
+    </div></div>
+    <section class="library-sources" aria-labelledby="library-sources-heading">
+      <h2 id="library-sources-heading">About this collection</h2>
+      <p>This collection explains the legal concepts used in RUC's fictional U.S. courtroom. Charge summaries and character profiles reflect the game. Real statutes, evidence rules, and defenses vary by jurisdiction. Case names below refer to court decisions; FRE means Federal Rules of Evidence.</p>
+      <p>Reference reading for the evidence and disclosure explanations:</p>
+      <ul>
+        <li><a href="https://www.uscourts.gov/forms-rules/current-rules-practice-procedure/federal-rules-evidence">Federal Rules of Evidence — U.S. Courts</a></li>
+        <li><a href="https://www.law.cornell.edu/rules/fre/rule_702">Rule 702: expert testimony</a> and <a href="https://www.law.cornell.edu/rules/fre/rule_901">Rule 901: authentication</a></li>
+        <li><a href="https://www.law.cornell.edu/supremecourt/text/373/83">Brady: favorable evidence</a> and <a href="https://www.law.cornell.edu/supremecourt/text/405/150">Giglio: witness benefits</a></li>
+        <li><a href="https://www.law.cornell.edu/supremecourt/text/541/36">Crawford: confronting testimonial accusations</a></li>
+        <li><a href="https://www.law.cornell.edu/supremecourt/text/513/10">Shabani: no separate overt-act requirement under § 846</a></li>
       </ul>
     </section>
   </main>
@@ -319,5 +788,69 @@
       }
     })();
   </script>
+
+  <script>
+    // Stable article IDs and scoped CSS keep content independent of the site-wide visual theme.
+    (() => {
+      const root = document.getElementById('library-main');
+      const search = document.getElementById('library-search');
+      const topic = document.getElementById('library-topic');
+      const toggle = document.getElementById('library-examples');
+      const results = document.getElementById('library-results');
+      const sections = [...root.querySelectorAll('.library-section')];
+      const entries = [...root.querySelectorAll('.library-entry')];
+      const examples = [...root.querySelectorAll('.library-example')];
+      const preferenceKey = 'ruc_library_show_examples';
+      const normalize = value => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const searchable = new Map(entries.map(entry => [entry, normalize(entry.textContent)]));
+      let showExamples = false;
+      try { showExamples = localStorage.getItem(preferenceKey) === 'true'; } catch (_) {}
+
+      function applyExamples() {
+        examples.forEach(example => { example.hidden = !showExamples; });
+        toggle.setAttribute('aria-pressed', String(showExamples));
+        toggle.textContent = showExamples ? 'Hide examples' : 'Show examples';
+      }
+      function applyFilters() {
+        const terms = normalize(search.value).split(' ').filter(Boolean);
+        let count = 0;
+        sections.forEach(section => {
+          let sectionCount = 0;
+          section.querySelectorAll('.library-entry').forEach(entry => {
+            const visible = (topic.value === 'all' || section.dataset.topic === topic.value) && terms.every(term => searchable.get(entry).includes(term));
+            entry.hidden = !visible;
+            if (visible) sectionCount++;
+          });
+          section.hidden = sectionCount === 0;
+          count += sectionCount;
+        });
+        document.getElementById('library-empty').hidden = count !== 0;
+        results.textContent = count === entries.length ? `${count} entries across ${sections.length} topics` : `${count} of ${entries.length} entries shown`;
+      }
+      function clearFilters() { search.value = ''; topic.value = 'all'; applyFilters(); }
+      function revealHash() {
+        const target = document.getElementById(location.hash.slice(1));
+        if (!target || !target.closest('#library-collection')) return;
+        clearFilters();
+        requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
+      }
+      search.addEventListener('input', applyFilters);
+      topic.addEventListener('change', applyFilters);
+      toggle.addEventListener('click', () => {
+        showExamples = !showExamples;
+        applyExamples();
+        try { localStorage.setItem(preferenceKey, String(showExamples)); } catch (_) {}
+      });
+      document.getElementById('library-reset').addEventListener('click', () => { clearFilters(); search.focus(); });
+      // Clicking the current contents link should also reveal it after filtering.
+      root.querySelectorAll('.library-index a').forEach(link => link.addEventListener('click', clearFilters));
+      window.addEventListener('hashchange', revealHash);
+      applyExamples();
+      applyFilters();
+      root.querySelector('.library-toolbar').hidden = false;
+      revealHash();
+    })();
+  </script>
+
 </body>
 </html>
