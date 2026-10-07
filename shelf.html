@@ -1,406 +1,452 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Rest Your Case | Case Files Shelf</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              gold: '#C5A880',
-              crimson: '#8B263E',
-              dark: '#0B0D10',
-              surface: '#15191E',
-              border: '#232932',
-              muted: '#7E8B9B'
-            }
-          },
-          fontFamily: {
-            serif: ['Georgia', 'serif'],
-            mono: ['Courier New', 'monospace']
-          },
-          keyframes: {
-            scrollMarquee: {
-              '0%': { transform: 'translateX(100vw)' },
-              '100%': { transform: 'translateX(-100%)' }
-            }
-          },
-          animation: {
-            scrollMarquee: 'scrollMarquee 25s linear infinite'
-          }
-        }
-      }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#493325">
+  <title>Case Archive | Rest Your Case</title>
+  <style>
+    :root { color-scheme: light; --ink: #30241d; --muted: #6c5745; --cream: #faf2de; --burgundy: #682f3d; --gold: #c6a970; --wood: #493325; --line: #bd9c71; --shadow: 0 14px 28px #21170d40; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; color: var(--ink); background: #77553a; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
+    button, input, select { font: inherit; color: inherit; }
+    button, a, input, select { -webkit-tap-highlight-color: transparent; }
+    button, select { cursor: pointer; }
+    a { color: inherit; text-underline-offset: .2em; }
+    button { border: 0; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid #773248; outline-offset: 4px; }
+    button, a { touch-action: manipulation; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; }
+    .scene { position: fixed; inset: 0; background: #d4be9b url('bg_props/archive_room/bg/Archive_LS.jpg') center -130px / cover no-repeat; z-index: -2; }
+    .scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(#fff1d422, transparent 45%, #28190d45); }
+    .skip-link { position: fixed; top: -100px; left: 16px; z-index: 20; background: var(--cream); padding: 12px; }
+    .skip-link:focus { top: 12px; }
+    .topbar { min-height: 62px; padding: 10px clamp(16px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 14px; background: #382a20e8; color: #fff3dd; border-bottom: 1px solid #cdb18465; backdrop-filter: blur(8px); }
+    .brand { font: 600 16px Georgia, serif; letter-spacing: .04em; text-decoration: none; }
+    .brand span { color: #d8bc83; padding-right: 8px; }
+    .top-links { display: flex; align-items: center; gap: 18px; font-size: 13px; }
+    .top-links > a { text-decoration: none; }
+    .top-links > a:hover { text-decoration: underline; }
+    .site-menu { position: relative; }
+    .site-menu summary { list-style: none; cursor: pointer; padding: 9px 13px; border: 1px solid #cfb38565; border-radius: 5px; min-height: 44px; }
+    .site-menu summary::-webkit-details-marker { display: none; }
+    .site-menu nav { position: absolute; top: calc(100% + 10px); right: 0; z-index: 8; min-width: 200px; padding: 7px; background: #f8edd5; border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); color: var(--ink); }
+    .site-menu nav a { display: block; padding: 12px; text-decoration: none; border-radius: 3px; }
+    .site-menu nav a:hover { background: #e3ceb0; }
+    .room-title { display: grid; justify-items: center; align-content: start; min-height: clamp(245px, 34vh, 330px); padding: 28px 20px; text-align: center; }
+    .room-title .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .24em; color: #392c20; padding: 5px 10px; background: #f6ebd5d9; border-radius: 3px; }
+    .title-plaque { width: min(520px, 95vw); min-height: 95px; margin-top: 10px; display: grid; place-content: center; background: url('bg_props/archive_room/props/plaque.png') center / 100% 100% no-repeat; padding: 20px 40px; filter: drop-shadow(0 4px 5px #22170e35); }
+    h1 { font-size: clamp(30px, 5vw, 42px); line-height: 1.2; font-weight: 500; }
+    .room-caption { max-width: 540px; margin-top: 12px; padding: 7px 16px; background: #f7eddae8; border-radius: 3px; font-size: 13px; }
+    .workbench { width: min(1160px, calc(100% - 48px)); margin: 0 auto 40px; padding: clamp(16px, 3vw, 30px); border: 1px solid #483221; border-top: 6px solid #533726; border-radius: 10px 10px 6px 6px; background: #99724c url('bg_props/archive_room/bg/Desk_LS.jpg') center / cover; box-shadow: 0 16px 50px #24170e65, inset 0 1px #dcbf86; }
+    .active-slip { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 22px; margin-bottom: 22px; background: #faf0dce8; border-left: 4px solid var(--burgundy); border-radius: 3px; }
+    .active-slip strong { display: block; font: 600 17px Georgia, serif; overflow-wrap: anywhere; }
+    .active-slip p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .text-link { font-size: 13px; white-space: nowrap; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
+    .collection-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .collection-tab { min-height: 48px; padding: 13px 23px; background: url('bg_props/archive_room/props/tab.png') center / 100% 100% no-repeat; font-size: 13px; font-weight: 600; filter: drop-shadow(0 2px 2px #281a1433); }
+    .collection-tab[aria-pressed="true"] { color: var(--burgundy); text-decoration: underline; text-underline-offset: 5px; }
+    .catalog { display: grid; grid-template-columns: minmax(180px, 1.5fr) minmax(140px, 1fr) minmax(125px, .8fr) minmax(125px, .8fr); gap: 12px; padding: 20px; background: #f6ebd7; border: 1px solid #b49a73; border-radius: 0 5px 5px 5px; box-shadow: 0 3px 7px #251a1222; }
+    .catalog label { display: block; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .catalog input, .catalog select { min-height: 44px; width: 100%; border: 1px solid #bfa77e; background: #fffbf0; border-radius: 3px; padding: 9px 10px; font-size: 14px; }
+    .catalog input::placeholder { color: #806e5a; }
+    .catalog input { min-width: 0; }
+    .results-bar { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 3px; color: #fff7e5; text-shadow: 0 1px 2px #24170e; font-size: 12px; }
+    .results-bar p { background: #f5ecd5; border: 1px solid transparent; border-image: url('bg_props/archive_room/props/label.png') 38 100 38 100 fill / 8px 25px 8px 25px / 0 stretch; padding: 10px 28px; color: var(--ink); text-shadow: none; border-radius: 3px; }
+    .clear-filters { padding: 8px 10px; min-height: 44px; background: #f7eedc; color: var(--ink); border-radius: 3px; font-size: 12px; text-shadow: none; }
+    .case-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+    .case-folder { display: flex; flex-direction: column; align-items: stretch; position: relative; width: 100%; aspect-ratio: 982 / 769; min-height: 270px; padding: 15% 10% 10%; text-align: left; background: transparent; filter: drop-shadow(0 9px 8px #21170d45); transition: transform .16s ease, filter .16s ease; }
+    .case-folder::before { content: ''; position: absolute; inset: 0; background: #eddbb8; border-radius: 10px; z-index: -2; }
+    .case-folder .folder-art { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+    .case-folder:hover { transform: translateY(-4px); filter: drop-shadow(0 14px 9px #21170d55); }
+    .case-folder .file-label { position: absolute; right: 8%; top: 3.4%; width: 23%; text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; overflow: hidden; white-space: nowrap; }
+    .case-folder .clip-art { position: absolute; width: 15px; height: 53px; object-fit: contain; top: 1%; left: 5%; pointer-events: none; }
+    .folder-genre { font-size: 9px; line-height: 1.3; color: var(--burgundy); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .folder-title { font-family: Georgia, serif; font-size: clamp(18px, 2vw, 22px); font-weight: 600; line-height: 1.25; margin: 8px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+    .folder-client { font-size: 12px; margin-bottom: 7px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .folder-charge { font-size: 12px; line-height: 1.45; color: #5c4736; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .folder-meta { display: flex; justify-content: space-between; gap: 5px; margin-top: auto; padding-top: 10px; border-top: 1px solid #b3976a88; font-size: 10px; color: #5c4736; }
+    .empty-card { max-width: 520px; min-height: 270px; margin: 14px auto; padding: 42px 48px; text-align: center; background: #f5ecd7 url('bg_props/archive_room/props/card.png') center / 100% 100% no-repeat; border-radius: 14px; box-shadow: var(--shadow); display: grid; align-content: center; gap: 14px; }
+    .empty-card h2 { font-size: 26px; font-weight: 500; }
+    .empty-card p { color: var(--muted); font-size: 14px; }
+    .primary, .secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 11px 18px; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 600; }
+    .primary { color: #fff7e7; background: var(--burgundy); border: 1px solid #4b202e; box-shadow: 0 2px 3px #22170f33; }
+    .primary:hover { background: #512432; }
+    .secondary { background: #f6ebd3; border: 1px solid #a88c65; }
+    .secondary:hover { background: #ecdab9; }
+    .storage-warning { background: #fff4de; border: 1px solid #8c5439; padding: 16px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; }
+    .storage-warning strong { display: block; margin-bottom: 5px; }
+    footer { padding: 10px 20px 28px; text-align: center; font-size: 11px; color: #fff1d7; text-shadow: 0 1px 2px #251b15; }
+    dialog { padding: 0; color: var(--ink); border: 0; max-width: none; }
+    dialog::backdrop { background: #21170eb8; backdrop-filter: blur(5px); }
+    .dossier-dialog { width: 100%; height: 100dvh; max-height: none; margin: 0; background: #856344 url('bg_props/archive_room/bg/Desk_LS.jpg') center / cover; }
+    .dossier-dialog[open] { display: flex; flex-direction: column; animation: room-in .22s ease; }
+    .dossier-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 24px; background: #382a20e8; color: #fff0d8; min-height: 76px; }
+    .dossier-toolbar .secondary { color: var(--ink); }
+    .dossier-toolbar .primary { background: #75384b; }
+    .dossier-counter { font-size: 12px; }
+    .dossier-tools { display: flex; align-items: center; gap: 10px; }
+    .dossier-tabs { display: none; justify-content: center; gap: 8px; padding: 10px; }
+    .dossier-stage { display: grid; place-items: center; min-height: 0; flex: 1; padding: 16px; }
+    .dossier-art { position: relative; width: min(1100px, calc((100dvh - 135px) * 1.63), 100%); aspect-ratio: 1151 / 706; background: url('bg_props/archive_room/props/spread.png') center / 100% 100% no-repeat; filter: drop-shadow(0 14px 15px #281a1460); }
+    .dossier-page { position: absolute; top: 10%; bottom: 10%; width: 36.5%; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #a68b60 transparent; padding-right: 8px; overflow-wrap: anywhere; }
+    .page-brief { left: 8%; }
+    .page-evidence { right: 8%; }
+    .page-kicker { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--burgundy); font-weight: 700; }
+    .dossier-page h2 { font-size: clamp(23px, 2.5vw, 30px); line-height: 1.2; font-weight: 500; margin: 10px 0 18px; }
+    .dossier-page h3 { font-size: 19px; margin: 22px 0 9px; font-weight: 600; }
+    .dossier-page p, .dossier-page li { font-size: 14px; line-height: 1.7; white-space: pre-line; }
+    .case-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; margin: 0 0 20px; }
+    .case-facts dt { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+    .case-facts dd { margin: 4px 0 0; font-size: 13px; line-height: 1.5; }
+    .case-facts .wide { grid-column: 1 / -1; }
+    .exhibit { margin: 14px 0; padding: 12px 0; border-top: 1px solid #b99e7355; }
+    .exhibit h3 { margin: 4px 0 8px; font-size: 17px; }
+    .exhibit-tag { font-size: 10px; color: var(--burgundy); font-weight: 700; letter-spacing: .05em; }
+    .dossier-tip { padding: 8px 20px 14px; text-align: center; color: #fff0d8; font-size: 11px; }
+    .confirm-dialog { width: min(420px, calc(100vw - 30px)); max-height: calc(100dvh - 32px); padding: 45px 36px 35px; border-radius: 5px; background: #f5eed9; border-image: url('bg_props/archive_room/props/conf.png') 60 40 40 40 fill / 28px 20px 20px 20px / 0 stretch; box-shadow: var(--shadow); overflow: auto; }
+    .confirm-dialog h2 { font-size: 26px; font-weight: 500; margin-bottom: 14px; }
+    .confirm-dialog p { font-size: 14px; margin-bottom: 12px; overflow-wrap: anywhere; }
+    .confirm-dialog .confirmation-title { font-family: Georgia, serif; font-size: 19px; }
+    .confirm-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .error-message { color: #8a263c; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @keyframes room-in { from { opacity: 0; } to { opacity: 1; } }
+    @media (max-width: 1050px) { .case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .catalog { grid-template-columns: 1.5fr 1fr; } }
+    @media (max-width: 900px), (max-height: 540px) {
+      .dossier-toolbar { padding: 10px 14px; min-height: 66px; }
+      .dossier-counter { display: none; }
+      .dossier-tabs { display: flex; }
+      .dossier-stage { padding: 2px 12px 8px; }
+      .dossier-art { width: min(550px, 100%); height: 100%; min-height: 140px; aspect-ratio: auto; background: #f8efda; border-image: url('bg_props/archive_room/props/page.png') 80 50 50 50 fill / 42px 24px 24px 24px / 0 stretch; }
+      .dossier-page { left: 9%; right: 9%; top: 9%; bottom: 7%; width: auto; padding-right: 5px; }
+      .dossier-page:not(.is-current) { display: none; }
+      .dossier-tip { padding-bottom: 9px; }
     }
-  </script>
+    @media (max-width: 620px) {
+      .topbar { padding: 8px 14px; }
+      .top-links > a { display: none; }
+      .brand { font-size: 15px; }
+      .scene { background-image: url('bg_props/archive_room/bg/Archive_PT.jpg'); background-size: auto 680px; background-position: center -110px; }
+      .room-title { min-height: 265px; padding: 24px 16px; }
+      .title-plaque { min-height: 77px; padding: 17px 28px; }
+      .room-caption { font-size: 12px; max-width: 340px; }
+      .workbench { width: calc(100% - 18px); padding: 14px 12px; margin-bottom: 20px; }
+      .collection-tab { font-size: 12px; padding-inline: 16px; }
+      .catalog { padding: 14px; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .search-field { grid-column: 1 / -1; }
+      .genre-field { grid-column: 1 / -1; }
+      .case-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .case-folder { width: min(400px, 100%); justify-self: center; min-height: 265px; }
+      .folder-title { font-size: 23px; }
+      .folder-charge, .folder-client { font-size: 13px; }
+      .folder-meta { font-size: 11px; }
+      .folder-genre { font-size: 10px; }
+      .case-folder .file-label { font-size: 10px; }
+      .empty-card { padding: 35px 28px; }
+      .active-slip { padding: 12px 14px; gap: 12px; }
+      .active-slip strong { font-size: 15px; }
+      .active-slip .text-link { white-space: normal; min-width: 66px; }
+      .dossier-toolbar .primary, .dossier-toolbar .secondary { font-size: 12px; padding: 9px 12px; }
+      .dossier-page h2 { font-size: 25px; }
+      .case-facts { gap: 10px; }
+    }
+    @media (orientation: portrait) { .scene { background-image: url('bg_props/archive_room/bg/Archive_PT.jpg'); } }
+    @media (orientation: landscape) { .scene { background-image: url('bg_props/archive_room/bg/Archive_LS.jpg'); background-size: cover; background-position: center -130px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .case-folder:hover { transform: none; } }
+  </style>
 </head>
-<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
-
-  <!-- ================= TOP HUD NAV ================= -->
-  <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
-    <div class="max-w-7xl mx-auto px-4 min-h-14 py-2 flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center space-x-2">
-        <span class="text-brand-gold text-lg">⚖</span>
-        <span class="font-serif tracking-wide text-white uppercase text-sm font-bold">Rest Your Case</span>
-      </div>
-      
-      <nav class="flex items-center gap-2">
-        <!-- Shelf indicator pill -->
-        <a href="shelf.html" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-brand-surface border border-brand-gold/60 text-brand-gold text-xs font-mono shadow-sm">
-          <span>🗄️</span>
-          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Shelf</span>
-          <span id="nav-shelf-badge" class="px-1.5 py-0.2 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold">0</span>
-        </a>
-
-        <!-- BYOK Indicator & Settings Button -->
-        <button onclick="openKeyModal()" class="flex items-center gap-1.5 px-2 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold transition shadow-sm" title="API Key Settings">
-          <span id="nav-key-indicator" class="w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300"></span>
-          <span class="text-[11px] font-mono text-brand-muted uppercase hidden sm:inline tracking-widest">Key</span>
-          <span class="text-brand-gold text-xs">⚙</span>
-        </button>
-
-        <button onclick="toggleNavDrawer()" class="px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border text-brand-gold hover:text-white transition flex items-center gap-2 font-mono text-xs shadow-sm hover:border-brand-gold/50">
-          <span class="text-base leading-none">☰</span>
-          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Menu</span>
-        </button>
-      </nav>
+<body>
+  <a class="skip-link" href="#catalog">Skip to case files</a>
+  <div class="scene" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span aria-hidden="true">⚖</span> Rest Your Case</a>
+    <div class="top-links">
+      <a href="index.html">Overview</a><a href="library.html">Legal Library</a>
+      <details class="site-menu" id="site-menu">
+        <summary aria-label="Site navigation">•••</summary>
+        <nav aria-label="Site navigation">
+          <a href="index.html">Overview</a>
+          <a href="game.html#terminal" id="menu-resume" hidden>Resume trial</a>
+          <a href="game.html#notebook">Notebook</a>
+          <a href="shelf.html" aria-current="page">Case Archive</a>
+          <a href="library.html">Legal Library</a>
+          <a href="info.html#howtoplay">How to Play</a>
+          <a href="info.html#setup">Setup &amp; API Key</a>
+        </nav>
+      </details>
     </div>
   </header>
-
-  <!-- Marquee Tips Bar -->
-  <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
-    <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
-      🗄️ ARCHIVE: Case files discovered during intake are preserved on your Shelf for later trial. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: Accepting a case from the Shelf will ask for confirmation if an active trial is underway. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      🗄️️ STORAGE: Shelf holds up to 30 cases locally on this device.
+  <main>
+    <div class="room-title">
+      <p class="eyebrow">The records room</p>
+      <div class="title-plaque"><h1>Case Archive</h1></div>
+      <p class="room-caption">A case begins with a closer look. Open a folder, review the brief, then decide which case to take.</p>
     </div>
-  </div>
-
-  <!-- ================= SHELF WORKSPACE ================= -->
-  <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full space-y-6">
-    
-    <!-- Header & Difficulty Calibration -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-brand-border pb-4">
-      <div class="space-y-1">
-        <div class="text-brand-gold font-mono text-xs uppercase tracking-widest flex items-center gap-2">
-          <span>Firm Archives</span>
-          <span class="text-brand-muted">/</span>
-          <span id="shelf-count-text">0 Case Files Stored</span>
-        </div>
-        <h1 class="text-2xl md:text-3xl font-serif text-white font-semibold">Case Files Shelf</h1>
-        <p class="text-brand-muted text-xs md:text-sm max-w-xl">
-          Pending intake files and archived dossiers discovered by Diaz. Select an archived case below to review preliminary discovery and commence trial proceedings.
-        </p>
+    <section class="workbench" aria-label="Case collection">
+      <div id="storage-warning" class="storage-warning" role="alert" hidden></div>
+      <aside id="active-slip" class="active-slip" aria-label="Current trial" hidden>
+        <div><strong id="active-title"></strong><p id="active-phase"></p></div>
+        <a class="text-link" href="game.html#terminal">Resume trial →</a>
+      </aside>
+      <div class="collection-tabs" role="group" aria-label="File collection">
+        <button class="collection-tab" type="button" data-collection="all" aria-pressed="true">All files</button>
+        <button class="collection-tab" type="button" data-collection="shelf" aria-pressed="false">Filed</button>
+        <button class="collection-tab" type="button" data-collection="pending" aria-pressed="false">Pending intake</button>
       </div>
-
-      <!-- Difficulty Selector -->
-      <div class="bg-brand-surface border border-brand-border rounded p-2.5 flex items-center gap-3 shrink-0">
-        <label for="shelf-diff" class="text-brand-gold font-mono text-xs uppercase tracking-wider">Trial Rules:</label>
-        <select id="shelf-diff" onchange="handleDifficultyChange(this.value)" class="bg-brand-dark border border-brand-border text-white text-xs font-mono rounded px-2.5 py-1.5 outline-none focus:border-brand-gold cursor-pointer">
-          <option value="Easy">Easy (6 AP, 4 Strikes)</option>
-          <option value="Normal" selected>Normal (4 AP, 3 Strikes)</option>
-          <option value="Hard">Hard (3 AP, 2 Strikes)</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Active Grid of Cases -->
-    <div id="shelf-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Injected via renderShelf() -->
-    </div>
-
-    <!-- Empty State -->
-    <div id="shelf-empty" class="hidden flex-col items-center justify-center py-20 text-center space-y-4 border border-dashed border-brand-border rounded bg-brand-surface/30">
-      <div class="text-5xl">🗄️</div>
-      <h3 class="text-lg font-serif text-white">The Shelf is Empty</h3>
-      <p class="text-brand-muted text-xs max-w-md font-sans leading-relaxed">
-        You have no archived case files saved. Head to the Overview intake room to have Investigator Diaz generate and scout new case dossiers.
-      </p>
-      <a href="index.html" class="px-5 py-2.5 bg-brand-gold text-brand-dark font-mono font-bold text-xs rounded uppercase tracking-wider hover:bg-white transition shadow mt-2">
-        Open Intake Room
-      </a>
-    </div>
+      <form class="catalog" id="catalog" role="search" aria-label="Find a case">
+        <div class="search-field"><label for="search">Search the files</label><input id="search" type="search" placeholder="Case title, client, or charge" autocomplete="off"></div>
+        <div class="genre-field"><label for="genre">Case type</label><select id="genre"><option value="all">All case types</option></select></div>
+        <div><label for="difficulty">Difficulty</label><select id="difficulty"><option value="all">All difficulties</option><option>Easy</option><option>Normal</option><option>Hard</option></select></div>
+        <div><label for="sort">File order</label><select id="sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></div>
+      </form>
+      <div class="results-bar"><p id="results-count" role="status" aria-live="polite">Opening the archive…</p><button class="clear-filters" id="clear-filters" type="button" hidden>Clear filters</button></div>
+      <div class="case-grid" id="case-grid" aria-label="Saved case folders"></div>
+      <div class="empty-card" id="empty-card" hidden><h2 id="empty-title"></h2><p id="empty-description"></p><a class="primary" id="find-case" href="index.html">Find a case</a><button class="secondary" id="empty-clear" type="button" hidden>Clear filters</button></div>
+      <noscript><div class="empty-card"><h2>Open the archive</h2><p>Enable JavaScript to read the saved case files in this browser.</p><a class="primary" href="index.html">Return to overview</a></div></noscript>
+    </section>
   </main>
-
-  <!-- ================= NAVIGATION SIDEBAR DRAWER ================= -->
-  <div id="nav-drawer-backdrop" onclick="toggleNavDrawer()" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"></div>
-  
-  <aside id="nav-drawer" class="fixed left-0 top-0 h-full w-72 sm:w-80 bg-brand-dark border-r border-brand-border z-50 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
-    <div class="px-4 py-3 bg-brand-surface border-b border-brand-border flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <span class="text-brand-gold text-base">⚖</span>
-        <span class="font-serif text-white uppercase text-xs font-bold tracking-wider">Rest Your Case</span>
-      </div>
-      <button onclick="toggleNavDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
+  <footer>Rest Your Case · Files saved in this browser</footer>
+  <dialog class="dossier-dialog" id="dossier" aria-labelledby="case-title">
+    <div class="dossier-toolbar">
+      <button class="secondary" id="close-dossier" type="button" autofocus>← Archive</button>
+      <p class="dossier-counter" id="dossier-counter"></p>
+      <div class="dossier-tools"><button class="primary" id="accept-case" type="button">Accept case →</button></div>
     </div>
-  
-    <nav class="p-4 flex flex-col space-y-2 font-mono text-xs overflow-y-auto flex-grow">
-      <a href="index.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Overview</a>
-      <a id="drawer-terminal-link" href="game.html#terminal" class="hidden w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Live Terminal</a>
-      <a href="game.html#notebook" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Notebook</a>
-      <a href="shelf.html" class="w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition flex items-center justify-between">
-        <span>Case Shelf</span>
-        <span id="drawer-shelf-count" class="px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold text-[10px] font-bold">0</span>
-      </a>
-      <a href="info.html#howtoplay-section" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">How to Play</a>
-      <a href="library.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Legal Library</a>
-      <a href="info.html#setup-section" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Setup Guide</a>
-    </nav>
-  
-    <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
-      Procedural Engine &copy; 2026
-    </div>
-  </aside>
-
-  <!-- ================= BYOK CONFIGURATION MODAL ================= -->
-  <div id="key-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-6 space-y-5 shadow-2xl relative">
-      <div class="border-b border-brand-border pb-2">
-        <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide">API Configuration</h3>
-        <p class="text-brand-muted text-[11px] font-mono">Run the engine on your own Gemini credentials.</p>
-      </div>
-      
-      <div class="space-y-3">
-        <div class="flex justify-between items-end">
-          <label class="text-brand-gold text-[10px] font-mono uppercase tracking-wider block">Google AI Studio Key</label>
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-brand-muted hover:text-white underline font-mono">Get a Free Key ↗</a>
-        </div>
-        <div class="relative">
-          <input id="key-input" type="password" placeholder="AIza..." class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold font-mono text-xs pr-10" autocomplete="off" />
-          <button type="button" onclick="toggleKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted hover:text-white text-xs">👁</button>
-        </div>
-        <p class="text-[9px] font-mono text-emerald-500/70 leading-relaxed border-l-2 border-emerald-900 pl-2">
-          🔒 Your key is stored strictly in your browser's local storage. It is never saved to an external database.
-        </p>
-      </div>
-      
-      <div class="flex justify-between items-center pt-3 border-t border-brand-border">
-        <button onclick="clearCustomKey()" class="text-[10px] font-mono text-brand-muted hover:text-rose-400 transition">Use System Default</button>
-        <div class="flex gap-2">
-          <button onclick="closeKeyModal()" class="px-3 py-1.5 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
-          <button onclick="saveCustomKey()" class="px-3 py-1.5 bg-brand-gold text-brand-dark font-bold font-mono text-xs rounded hover:bg-white transition shadow">Save Key</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="border-t border-brand-border py-2 px-4 text-[10px] font-mono text-brand-muted max-w-7xl mx-auto w-full shrink-0">
-    Rest Your Case &copy; 2026. Local-First Client Storage.
-  </footer>
-
-  <!-- Scripts -->
-  <script src="data.js?v=1"></script>
-  <script src="scout_prompt.js?v=1"></script>
-  <script src="cases.js?v=1"></script>
+    <div class="dossier-tabs" role="group" aria-label="Dossier pages"><button class="collection-tab" id="brief-tab" type="button" aria-pressed="true" aria-controls="page-brief">Case brief</button><button class="collection-tab" id="evidence-tab" type="button" aria-pressed="false" aria-controls="page-evidence">Evidence</button></div>
+    <div class="dossier-stage"><div class="dossier-art">
+      <section class="dossier-page page-brief is-current" id="page-brief" aria-label="Case brief" tabindex="0">
+        <p class="page-kicker" id="case-genre"></p><h2 id="case-title"></h2>
+        <dl class="case-facts" id="case-facts"></dl>
+        <h3>The allegation</h3><p id="case-summary"></p>
+        <p class="error-message" id="case-unavailable" hidden></p>
+      </section>
+      <section class="dossier-page page-evidence" id="page-evidence" aria-label="Initial evidence" tabindex="0">
+        <p class="page-kicker">Discovery preview</p><h2>Initial exhibits</h2>
+        <p>Review what is in the file. Listing an exhibit here does not make it admitted evidence.</p>
+        <div id="exhibit-list"></div>
+      </section>
+    </div></div>
+    <p class="dossier-tip">Reviewing a file uses no action points. Accepting it starts a new trial.</p>
+  </dialog>
+  <dialog class="confirm-dialog" id="accept-confirmation" aria-labelledby="confirm-heading">
+    <h2 id="confirm-heading">Take this case?</h2><p class="confirmation-title" id="confirm-title"></p><p>You will begin with client intake. The case will move from this collection into your current trial.</p>
+    <p id="confirm-error" class="error-message" role="alert" hidden></p>
+    <div class="confirm-actions"><button class="secondary" id="cancel-accept" type="button" autofocus>Keep reviewing</button><button class="primary" id="confirm-accept" type="button">Begin trial →</button></div>
+  </dialog>
+  <!-- Use the existing case broker; archive browsing makes no AI requests. -->
+  <script src="cases.js"></script>
   <script>
-    let customGeminiKey = localStorage.getItem('rest_your_case_custom_gemini_key') || null;
-    let selectedDifficulty = 'Normal';
-    let pendingDeletionId = null;
-
-    function toggleNavDrawer() {
-      document.getElementById('nav-drawer').classList.toggle('-translate-x-full');
-      document.getElementById('nav-drawer-backdrop').classList.toggle('hidden');
+  (() => {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const keys = { shelf: 'ryc_shelf_cases', pending: 'ryc_pending_cases', active: 'rest_your_case_state' };
+    const state = { records: [], visible: [], selected: null, collection: 'all', problems: [], active: null, opener: null, starting: false };
+    const normalize = value => String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const text = (value, fallback = 'Not provided') => typeof value === 'string' && value.trim() ? value.trim() : fallback;
+    const formatDate = value => {
+      const number = typeof value === 'number' ? value : Number(value);
+      if (!Number.isFinite(number) || number <= 0) return 'Date unavailable';
+      try { return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(number)); } catch (_) { return 'Date unavailable'; }
+    };
+    function readArray(key) {
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) throw new Error('The saved collection has an unexpected format.');
+      return parsed;
     }
-
-    function updateKeyIndicator() {
-      const indicator = document.getElementById('nav-key-indicator');
-      if (indicator) {
-        indicator.className = customGeminiKey 
-          ? 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)] transition-colors duration-300' 
-          : 'w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300';
+    function readActive() {
+      const raw = localStorage.getItem(keys.active);
+      if (!raw) return null;
+      const active = JSON.parse(raw);
+      if (!active || typeof active !== 'object' || Array.isArray(active)) throw new Error('The current trial has an unexpected format.');
+      return active;
+    }
+    function canStart(c) {
+      return !!(c && typeof c.id === 'string' && c.id && c.scout && typeof c.scout.caseTitle === 'string' && c.seed?.roster?.client?.name && c.seed?.roster?.judge?.name && c.seed?.roster?.da?.name && c.seed?.charge?.charge && c.seed?.meta && (!c.scout.starterExhibits || Array.isArray(c.scout.starterExhibits)));
+    }
+    function recordView(c, source, index) {
+      return { raw: c, source, key: `${source}:${index}`, title: text(c.scout?.caseTitle, 'Untitled case'), client: text(c.seed?.roster?.client?.name), charge: text(c.seed?.charge?.charge), genre: text(c.seed?.meta?.genre_name, 'Unclassified'), difficulty: text(c.difficulty, 'Normal'), date: formatDate(c.timestamp), timestamp: Number(c.timestamp) || 0, complexity: c.seed?.meta?.complexity };
+    }
+    function showProblems() {
+      const warning = $('storage-warning');
+      warning.replaceChildren();
+      warning.hidden = state.problems.length === 0;
+      if (!warning.hidden) {
+        const title = document.createElement('strong'); title.textContent = 'Some saved information could not be opened';
+        const explanation = document.createElement('p'); explanation.textContent = state.problems.join(' ') + ' Your saved data has not been changed. Case acceptance is unavailable until the files can be read.';
+        warning.append(title, explanation);
       }
     }
-
-    function openKeyModal() {
-      document.getElementById('key-input').value = customGeminiKey || '';
-      document.getElementById('key-input').type = 'password';
-      document.getElementById('key-modal').classList.remove('hidden');
-    }
-
-    function closeKeyModal() {
-      document.getElementById('key-modal').classList.add('hidden');
-    }
-
-    function toggleKeyVisibility() {
-      const input = document.getElementById('key-input');
-      input.type = input.type === 'password' ? 'text' : 'password';
-    }
-
-    function saveCustomKey() {
-      const val = document.getElementById('key-input').value.trim();
-      if (val) {
-        localStorage.setItem('rest_your_case_custom_gemini_key', val);
-        customGeminiKey = val;
-      } else {
-        localStorage.removeItem('rest_your_case_custom_gemini_key');
-        customGeminiKey = null;
-      }
-      updateKeyIndicator();
-      closeKeyModal();
-    }
-
-    function clearCustomKey() {
-      localStorage.removeItem('rest_your_case_custom_gemini_key');
-      customGeminiKey = null;
-      document.getElementById('key-input').value = '';
-      updateKeyIndicator();
-      closeKeyModal();
-    }
-
-    function handleDifficultyChange(diff) {
-      selectedDifficulty = diff;
-    }
-
-    function formatTimeAgo(timestamp) {
-      if (!timestamp) return 'Just now';
-      const diffSec = Math.floor((Date.now() - timestamp) / 1000);
-      if (diffSec < 60) return 'Just now';
-      const diffMin = Math.floor(diffSec / 60);
-      if (diffMin < 60) return `${diffMin}m ago`;
-      const diffHr = Math.floor(diffMin / 60);
-      if (diffHr < 24) return `${diffHr}h ago`;
-      const diffDay = Math.floor(diffHr / 24);
-      return `${diffDay}d ago`;
-    }
-
-    function renderShelf() {
-      // Archive any leftover pending cases so nothing is lost
-      archivePending();
-
-      const shelf = getShelfCases();
-      const count = shelf.length;
-
-      // Update HUD count labels
-      document.getElementById('nav-shelf-badge').innerText = count;
-      document.getElementById('drawer-shelf-count').innerText = count;
-      document.getElementById('shelf-count-text').innerText = `${count} / 30 Case Files Stored`;
-
-      const grid = document.getElementById('shelf-grid');
-      const emptyState = document.getElementById('shelf-empty');
-
-      if (count === 0) {
-        grid.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        emptyState.classList.add('flex');
-        return;
-      }
-
-      emptyState.classList.add('hidden');
-      emptyState.classList.remove('flex');
-
-      grid.innerHTML = shelf.map(caseObj => {
-        const seed = caseObj.seed;
-        const scout = caseObj.scout;
-        const exhibits = (scout.starterExhibits || []).map(e => e.name || e.id).join(', ');
-        const isConfirmingDelete = pendingDeletionId === caseObj.id;
-
-        return `
-          <div class="bg-brand-surface border border-brand-border rounded p-4 flex flex-col justify-between space-y-4 hover:border-brand-gold/40 transition shadow-lg">
-            <div class="space-y-3">
-              <div class="flex items-start justify-between gap-2 border-b border-brand-border/60 pb-2">
-                <div class="space-y-0.5">
-                  <span class="text-[10px] font-mono text-brand-gold uppercase tracking-wider block">${seed.meta.genre_name}</span>
-                  <h3 class="text-base font-serif text-white font-bold">${scout.caseTitle}</h3>
-                </div>
-                <span class="text-[10px] font-mono text-brand-muted bg-brand-dark px-2 py-0.5 rounded border border-brand-border shrink-0">
-                  ${formatTimeAgo(caseObj.timestamp)}
-                </span>
-              </div>
-
-              <div class="text-xs space-y-1 font-mono">
-                <div><span class="text-brand-muted">Charge: </span><span class="text-rose-300 font-bold">${seed.charge.charge}</span></div>
-                <div><span class="text-brand-muted">Client: </span><span class="text-slate-200">${seed.roster.client.name}</span></div>
-                <div><span class="text-brand-muted">Judge: </span><span class="text-slate-200">${seed.roster.judge.name}</span></div>
-                <div><span class="text-brand-muted">DA: </span><span class="text-rose-300">${seed.roster.da.name}</span></div>
-              </div>
-
-              <p class="text-slate-300 text-xs font-sans leading-relaxed line-clamp-3 bg-brand-dark/50 p-2.5 rounded border border-brand-border/40">
-                "${scout.crimeSummary}"
-              </p>
-
-              <div class="text-[11px] font-mono text-brand-muted truncate">
-                <span class="text-brand-gold">Discovery: </span>${exhibits || '2 Initial Exhibits'}
-              </div>
-            </div>
-
-            <div class="pt-3 border-t border-brand-border/60 flex items-center justify-between gap-2">
-              <span class="text-[10px] font-mono bg-brand-dark px-2 py-1 rounded border border-brand-border text-slate-300">
-                Complexity: <strong class="text-brand-gold">${seed.meta.complexity}/5</strong>
-              </span>
-
-              <div class="flex items-center gap-2">
-                ${isConfirmingDelete ? `
-                  <button onclick="confirmDelete('${caseObj.id}')" class="px-2.5 py-1.5 bg-rose-950 hover:bg-rose-900 border border-rose-800 text-rose-300 text-[10px] font-mono font-bold rounded transition">
-                    Confirm?
-                  </button>
-                  <button onclick="cancelDelete()" class="px-2 py-1.5 text-brand-muted hover:text-white text-[10px] font-mono">
-                    Cancel
-                  </button>
-                ` : `
-                  <button onclick="requestDelete('${caseObj.id}')" class="px-2.5 py-1.5 bg-brand-dark hover:bg-rose-950/40 border border-brand-border hover:border-rose-900/60 text-brand-muted hover:text-rose-300 text-[10px] font-mono rounded transition" title="Expunge case from shelf">
-                    Expunge
-                  </button>
-                  <button onclick="acceptShelfCase('${caseObj.id}')" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-mono font-bold text-xs rounded transition uppercase tracking-wider shadow">
-                    Start Trial
-                  </button>
-                `}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function requestDelete(caseId) {
-      pendingDeletionId = caseId;
-      renderShelf();
-    }
-
-    function cancelDelete() {
-      pendingDeletionId = null;
-      renderShelf();
-    }
-
-    function confirmDelete(caseId) {
-      const shelf = getShelfCases().filter(c => c.id !== caseId);
-      saveShelfCases(shelf);
-      pendingDeletionId = null;
-      renderShelf();
-    }
-
-    function acceptShelfCase(caseId) {
-      const shelf = getShelfCases();
-      const targetCase = shelf.find(c => c.id === caseId);
-      if (!targetCase) return;
-
-      // Assign the currently selected difficulty
-      targetCase.difficulty = selectedDifficulty;
-
-      startTrialWithCase(targetCase);
-    }
-
-    // Initialize Page
-    (function initShelfPage() {
-      updateKeyIndicator();
-      
-      // Check for active trial link in drawer
-      const saved = localStorage.getItem('rest_your_case_state');
-      if (saved) {
+    function loadRecords() {
+      state.records = []; state.problems = []; state.active = null;
+      const seen = new Set();
+      for (const source of ['shelf', 'pending']) {
         try {
-          const parsed = JSON.parse(saved);
-          if (parsed.hasActiveCase) {
-            const link = document.getElementById('drawer-terminal-link');
-            if (link) link.classList.remove('hidden');
-          }
-        } catch (e) {}
+          const records = readArray(keys[source]);
+          records.forEach((c, index) => {
+            if (!c || typeof c !== 'object' || Array.isArray(c)) { state.problems.push('A saved case entry is not readable.'); return; }
+            if (typeof c.id === 'string' && c.id) { if (seen.has(c.id)) return; seen.add(c.id); }
+            state.records.push(recordView(c, source, index));
+          });
+        } catch (_) { state.problems.push(`${source === 'shelf' ? 'Filed cases' : 'Pending intake'} could not be read from this browser.`); }
       }
-
-      renderShelf();
-    })();
+      try { state.active = readActive(); } catch (_) { state.problems.push('The current trial could not be read.'); }
+      const active = state.active?.hasActiveCase;
+      $('active-slip').hidden = !active;
+      $('menu-resume').hidden = !active;
+      if (active) { $('active-title').textContent = text(state.active.profile?.title, 'Current trial'); $('active-phase').textContent = text(state.active.phase, 'In progress'); }
+      const previousGenre = $('genre').value;
+      $('genre').replaceChildren(new Option('All case types', 'all'));
+      [...new Set(state.records.map(r => r.genre))].sort((a,b) => a.localeCompare(b)).forEach(genre => $('genre').add(new Option(genre, genre)));
+      if ([...$('genre').options].some(o => o.value === previousGenre)) $('genre').value = previousGenre;
+      showProblems(); render();
+      if ($('dossier').open && state.selected) {
+        const matching = state.records.find(r => r.raw.id && r.raw.id === state.selected.raw.id);
+        if (matching) { state.selected = matching; fillDossier(); }
+        else { $('dossier').close(); state.selected = null; }
+      }
+    }
+    function makeFolder(record) {
+      const folder = document.createElement('button'); folder.type = 'button'; folder.className = 'case-folder';
+      folder.setAttribute('aria-label', `Review ${record.title}, client ${record.client}, ${record.charge}`);
+      const image = document.createElement('img'); image.className = 'folder-art'; image.src = 'bg_props/archive_room/props/folder.png'; image.alt = ''; image.setAttribute('aria-hidden', 'true');
+      const clip = document.createElement('img'); clip.className = 'clip-art'; clip.src = 'bg_props/archive_room/props/clip.png'; clip.alt = ''; clip.setAttribute('aria-hidden', 'true');
+      folder.append(image, clip);
+      for (const [className, content] of [['file-label', record.source === 'shelf' ? 'Filed' : 'Intake'], ['folder-genre',record.genre], ['folder-title',record.title], ['folder-client',record.client], ['folder-charge',record.charge]]) {
+        const span = document.createElement('span'); span.className = className; span.textContent = content; folder.append(span);
+      }
+      const meta = document.createElement('span'); meta.className = 'folder-meta';
+      const difficulty = document.createElement('span'); difficulty.textContent = record.difficulty;
+      const date = document.createElement('span'); date.textContent = record.date;
+      meta.append(difficulty, date); folder.append(meta);
+      folder.addEventListener('click', () => openDossier(record, folder));
+      return folder;
+    }
+    function render() {
+      const terms = normalize($('search').value).split(' ').filter(Boolean);
+      const genre = $('genre').value, difficulty = $('difficulty').value;
+      state.visible = state.records.filter(r => (state.collection === 'all' || r.source === state.collection) && (genre === 'all' || r.genre === genre) && (difficulty === 'all' || r.difficulty === difficulty) && terms.every(term => normalize(`${r.title} ${r.client} ${r.charge} ${r.genre}`).includes(term)));
+      const order = $('sort').value;
+      state.visible.sort((a,b) => order === 'title' ? a.title.localeCompare(b.title) : order === 'oldest' ? a.timestamp - b.timestamp : b.timestamp - a.timestamp);
+      const fragment = document.createDocumentFragment(); state.visible.forEach(r => fragment.append(makeFolder(r))); $('case-grid').replaceChildren(fragment);
+      const filtered = terms.length || genre !== 'all' || difficulty !== 'all' || state.collection !== 'all';
+      $('results-count').textContent = filtered ? `${state.visible.length} of ${state.records.length} files shown` : `${state.records.length} saved ${state.records.length === 1 ? 'case' : 'cases'} · Select a folder to review`;
+      $('clear-filters').hidden = !filtered;
+      $('empty-card').hidden = state.visible.length !== 0;
+      $('empty-clear').hidden = !filtered;
+      $('find-case').hidden = !!filtered || state.problems.length > 0;
+      $('empty-title').textContent = state.problems.length && !state.records.length ? 'Files unavailable' : filtered ? 'No matching files' : 'Your next case awaits';
+      $('empty-description').textContent = state.problems.length && !state.records.length ? 'The archive could not read your saved collection. See the notice above.' : filtered ? 'Try another search or clear the filters to browse the whole collection.' : 'Cases you save from the overview will be filed here, ready for a closer look.';
+      document.querySelectorAll('[data-collection]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.collection === state.collection)));
+    }
+    function clearFilters() { state.collection = 'all'; $('search').value = ''; $('genre').value = 'all'; $('difficulty').value = 'all'; render(); $('search').focus(); }
+    function appendFact(label, value, wide = false) {
+      const field = document.createElement('div'); if (wide) field.className = 'wide';
+      const dt = document.createElement('dt'); dt.textContent = label;
+      const dd = document.createElement('dd'); dd.textContent = value;
+      field.append(dt, dd); $('case-facts').append(field);
+    }
+    function fillDossier() {
+      const r = state.selected, c = r.raw;
+      $('case-title').textContent = r.title; $('case-genre').textContent = r.genre;
+      $('case-facts').replaceChildren();
+      appendFact('Client', r.client); appendFact('Difficulty', r.difficulty);
+      appendFact('Charge', r.charge, true); appendFact('Judge',text(c.seed?.roster?.judge?.name)); appendFact('Prosecutor',text(c.seed?.roster?.da?.name));
+      if (Number.isFinite(Number(r.complexity)) && Number(r.complexity) > 0) appendFact('Complexity', `${r.complexity} / 5`);
+      appendFact('Created',r.date);
+      $('case-summary').textContent = text(c.scout?.crimeSummary,'No allegation summary has been saved for this file.');
+      $('exhibit-list').replaceChildren();
+      const exhibits = Array.isArray(c.scout?.starterExhibits) ? c.scout.starterExhibits : [];
+      if (!exhibits.length) { const p = document.createElement('p'); p.textContent = 'No initial exhibits are listed in this file.'; p.style.marginTop = '18px'; $('exhibit-list').append(p); }
+      exhibits.forEach(exhibit => {
+        if (!exhibit || typeof exhibit !== 'object') return;
+        const article = document.createElement('article'); article.className = 'exhibit';
+        const tag = document.createElement('p'); tag.className = 'exhibit-tag'; tag.textContent = [text(exhibit.id,''),text(exhibit.type,'')].filter(Boolean).join(' · ');
+        const title = document.createElement('h3'); title.textContent = text(exhibit.name,'Unnamed exhibit');
+        const details = document.createElement('p'); details.textContent = text(exhibit.details, text(exhibit.description,'No additional description is available.'));
+        article.append(tag, title, details); $('exhibit-list').append(article);
+      });
+      const ready = canStart(c) && state.problems.length === 0 && typeof startTrialWithCase === 'function';
+      $('accept-case').disabled = !ready;
+      $('case-unavailable').hidden = ready;
+      $('case-unavailable').textContent = state.problems.length ? 'Resolve the archive notice before accepting a case.' : typeof startTrialWithCase !== 'function' ? 'The trial controls are unavailable. Reload the page and try again.' : 'This file is missing information needed to begin a trial. You can still review what is available.';
+      const index = state.visible.findIndex(v => v.raw === c);
+      $('dossier-counter').textContent = index >= 0 ? `File ${index + 1} of ${state.visible.length}` : 'Case file';
+    }
+    function selectPage(page) {
+      $('page-brief').classList.toggle('is-current', page === 'brief'); $('page-evidence').classList.toggle('is-current', page === 'evidence');
+      $('brief-tab').setAttribute('aria-pressed',String(page === 'brief')); $('evidence-tab').setAttribute('aria-pressed',String(page === 'evidence'));
+    }
+    function openDossier(record, opener, addHistory = true) {
+      state.selected = record; state.opener = opener; fillDossier(); selectPage('brief');
+      $('page-brief').scrollTop = 0; $('page-evidence').scrollTop = 0;
+      $('dossier').showModal(); document.body.style.overflow = 'hidden';
+      if (addHistory && typeof record.raw.id === 'string' && record.raw.id) history.pushState({ archiveDossier: true }, '', '#case=' + encodeURIComponent(record.raw.id));
+    }
+    function startSelected() {
+      if (state.starting || !state.selected) return;
+      const c = state.selected.raw;
+      try {
+        // Re-read storage before a mutation, including changes made in another tab.
+        const saved = [...readArray(keys.shelf), ...readArray(keys.pending)];
+        const current = saved.find(item => item && item.id === c.id);
+        if (!current) throw new Error('This case is no longer in the archive. Close the file and refresh the collection.');
+        if (!canStart(current)) throw new Error('This case does not contain all information needed to begin a trial.');
+        readActive();
+        state.starting = true;
+        // Existing broker owns its active-trial confirmation, state setup, and redirect.
+        startTrialWithCase(current);
+        state.starting = false;
+        if ($('accept-confirmation').open) $('accept-confirmation').close();
+      } catch (error) {
+        state.starting = false;
+        if (!$('accept-confirmation').open) $('accept-confirmation').showModal();
+        $('confirm-error').textContent = error.message || 'The trial could not be started.'; $('confirm-error').hidden = false;
+      }
+    }
+    $('catalog').addEventListener('submit', event => event.preventDefault());
+    $('search').addEventListener('input', render);
+    for (const id of ['genre','difficulty','sort']) $(id).addEventListener('change',render);
+    document.querySelectorAll('[data-collection]').forEach(button => button.addEventListener('click', () => { state.collection = button.dataset.collection; render(); }));
+    $('clear-filters').addEventListener('click',clearFilters); $('empty-clear').addEventListener('click',clearFilters);
+    $('close-dossier').addEventListener('click', () => $('dossier').close());
+    $('dossier').addEventListener('close', () => { if ($('accept-confirmation').open) $('accept-confirmation').close(); document.body.style.overflow = ''; if (state.opener?.isConnected) state.opener.focus();
+      if (history.state?.archiveDossier) history.back();
+      else if (location.hash.startsWith('#case=')) history.replaceState(null, '', location.pathname + location.search);
+    });
+    $('brief-tab').addEventListener('click', () => selectPage('brief')); $('evidence-tab').addEventListener('click', () => selectPage('evidence'));
+    $('accept-case').addEventListener('click', () => {
+      if (!state.selected || $('accept-case').disabled) return;
+      $('confirm-title').textContent = state.selected.title; $('confirm-error').hidden = true;
+      try {
+        if (readActive()?.hasActiveCase) { startSelected(); return; }
+        $('accept-confirmation').showModal();
+      } catch (_) { $('confirm-error').textContent = 'The current trial could not be read. Reload the archive before accepting a case.'; $('confirm-error').hidden = false; $('accept-confirmation').showModal(); }
+    });
+    $('cancel-accept').addEventListener('click', () => $('accept-confirmation').close());
+    $('confirm-accept').addEventListener('click',startSelected);
+    document.addEventListener('click', event => { const menu = $('site-menu'); if (menu.open && !menu.contains(event.target)) menu.open = false; });
+    document.addEventListener('keydown',event => { if (event.key === 'Escape') $('site-menu').open = false; });
+    window.addEventListener('storage', event => { if (Object.values(keys).includes(event.key) || event.key === null) loadRecords(); });
+    window.addEventListener('pageshow',event => { if (event.persisted) loadRecords(); });
+    function followCaseLink() {
+      let id;
+      try { id = location.hash.startsWith('#case=') ? decodeURIComponent(location.hash.slice(6)) : ''; } catch (_) { id = ''; }
+      const record = state.records.find(r => r.raw.id === id);
+      if (record) {
+        if ($('dossier').open) { state.selected = record; fillDossier(); }
+        else openDossier(record, null, false);
+      } else if ($('dossier').open) $('dossier').close();
+    }
+    window.addEventListener('popstate', followCaseLink);
+    loadRecords();
+    followCaseLink();
+  })();
   </script>
 </body>
 </html>
