@@ -3,6 +3,34 @@ const RYCState = (() => {
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const clone = value => JSON.parse(JSON.stringify(value));
   const safeKey = key => !['__proto__', 'prototype', 'constructor'].includes(key);
+  const placeholder = value => typeof value !== 'string' || !value.trim() || /^(?:TBD|unknown|assigning case[.\s…]*)$/i.test(value.trim());
+  function intakeStatus(state) {
+    if (!state?.hasActiveCase) return 'none';
+    if (['title','client','judge','da'].some(key => placeholder(state.profile?.[key]))) return 'incomplete';
+    if (typeof state.intakeComplete === 'boolean') return state.intakeComplete ? 'ready' : 'incomplete';
+    // Legacy saves have no explicit marker. Player messages alone never prove initialization.
+    return Array.isArray(state.transcript) && state.transcript.some(e => object(e) && e.isUser !== true && typeof e.text === 'string' && e.text.trim()) ? 'ready' : 'incomplete';
+  }
+  function seedError(record) {
+    if (!object(record?.seed) || !object(record?.scout)) return 'The saved intake is missing its case seed or scout record.';
+    const paths = ['meta.genre_key','roster.client.name','roster.judge.name','roster.judge.style','roster.judge.temperament','roster.da.name','roster.da.style','roster.da.tactic','charge.charge','charge.statutory_definition','charge.mens_rea','narrative_seeds.venue.name','narrative_seeds.venue.category','narrative_seeds.primary_evidence_anchor.item','narrative_seeds.primary_evidence_anchor.type','narrative_seeds.constitutional_flaw.flaw','narrative_seeds.constitutional_flaw.legal_basis','narrative_seeds.witness_friction.friction','narrative_seeds.client_complication.complication','mechanics.da_misconduct_trap.name','mechanics.da_misconduct_trap.legal_basis','mechanics.jury_verdict_guide.pivot','mechanics.jury_verdict_guide.acquittal_test'];
+    for (const path of paths) {
+      const value = path.split('.').reduce((v, k) => v?.[k], record.seed);
+      if (typeof value !== 'string' || !value.trim()) return 'The saved intake is missing ' + path + '.';
+    }
+    if (!Number.isInteger(record.seed.meta.complexity) || record.seed.meta.complexity < 1 || record.seed.meta.complexity > 5) return 'The saved intake has an invalid complexity.';
+    for (const field of ['caseTitle','crimeSummary','unencryptedTruth']) if (typeof record.scout[field] !== 'string' || !record.scout[field].trim()) return 'The saved intake is missing ' + field + '.';
+    if (!Array.isArray(record.scout.starterExhibits) || record.scout.starterExhibits.length !== 2) return 'The saved intake needs two starter exhibits.';
+    try {
+      record.scout.starterExhibits.forEach(exhibit);
+      const ids = record.scout.starterExhibits.map(e => e.id || e.tag);
+      if (new Set(ids).size !== ids.length) return 'Starter exhibit identifiers must be unique.';
+    } catch (error) { return error.message; }
+    return '';
+  }
+  function emptyState(previous = {}) {
+    return {hasActiveCase:false,caseId:null,intakeComplete:false,profile:{title:'',client:'',judge:'',da:''},phase:'Phase 1: Intake',turn:1,ap:4,strikes:0,maxStrikes:3,notes:'',transcript:[],docket:[],facts:[],difficulty:'Normal',complexity:3,category:'Random Case File',selectedModel:typeof previous.selectedModel==='string'?previous.selectedModel:'gemini-3.8-flash',activeCaseSeed:null,trashedFacts:[],hiddenFacts:[],exhibitNotes:{},hasSeenTrashWarning:previous.hasSeenTrashWarning===true};
+  }
   function invalid(message) { const error = new Error(message); error.name = 'ResponseValidationError'; throw error; }
   function history(value) {
     if (!Array.isArray(value)) return [];
@@ -23,7 +51,9 @@ const RYCState = (() => {
   function normalize(saved, defaults) {
     const result = clone(defaults);
     if (!object(saved)) return result;
-    for (const key of ['hasActiveCase','hasSeenTrashWarning']) if(typeof saved[key]==='boolean') result[key]=saved[key];
+    for (const key of ['hasActiveCase','hasSeenTrashWarning','intakeComplete']) if(typeof saved[key]==='boolean') result[key]=saved[key];
+    if(typeof saved.caseId==='string') result.caseId=saved.caseId;
+    if(Number.isSafeInteger(saved.revision)&&saved.revision>=0)result.revision=saved.revision;
     for (const key of ['phase','notes','difficulty','category','selectedModel']) if(typeof saved[key]==='string') result[key]=saved[key];
     for (const key of ['turn','ap','strikes','maxStrikes','complexity']) if(Number.isSafeInteger(saved[key]) && saved[key]>=0) result[key]=saved[key];
     if (object(saved.profile)) for(const key of ['title','client','judge','da']) if(typeof saved.profile[key]==='string') result.profile[key]=saved.profile[key];
@@ -32,8 +62,21 @@ const RYCState = (() => {
     result.docket=[];
     if(Array.isArray(saved.docket)) for(const e of saved.docket) { try{result.docket.push(exhibit(e));}catch(_){} }
     result.exhibitNotes=Object.fromEntries(object(saved.exhibitNotes)?Object.entries(saved.exhibitNotes).filter(([k,v])=>safeKey(k)&&typeof v==='string'):[]);
-    if(object(saved.activeCaseSeed)) result.activeCaseSeed=saved.activeCaseSeed;
+    if(object(saved.activeCaseSeed)&&!seedError(saved.activeCaseSeed)) result.activeCaseSeed=saved.activeCaseSeed;
     return result;
+  }
+  function needsRecovery(saved) {
+    if(!object(saved))return true;
+    for(const key of ['hasActiveCase','hasSeenTrashWarning','intakeComplete'])if(saved[key]!==undefined&&typeof saved[key]!=='boolean')return true;
+    for(const key of ['phase','notes','difficulty','category','selectedModel'])if(saved[key]!==undefined&&typeof saved[key]!=='string')return true;
+    for(const key of ['turn','ap','strikes','maxStrikes','complexity'])if(saved[key]!==undefined&&(!Number.isSafeInteger(saved[key])||saved[key]<0))return true;
+    if(saved.profile!==undefined){if(!object(saved.profile))return true;for(const key of ['title','client','judge','da'])if(saved.profile[key]!==undefined&&typeof saved.profile[key]!=='string')return true;}
+    for(const key of ['facts','trashedFacts','hiddenFacts'])if(saved[key]!==undefined&&(!Array.isArray(saved[key])||saved[key].some(v=>typeof v!=='string')))return true;
+    if(saved.docket!==undefined){if(!Array.isArray(saved.docket))return true;try{saved.docket.forEach(exhibit);}catch(_){return true;}}
+    if(saved.transcript!==undefined&&(!Array.isArray(saved.transcript)||saved.transcript.some(e=>!object(e)||typeof e.text!=='string')))return true;
+    if(saved.exhibitNotes!==undefined&&(!object(saved.exhibitNotes)||Object.entries(saved.exhibitNotes).some(([k,v])=>!safeKey(k)||typeof v!=='string')))return true;
+    if(saved.activeCaseSeed!=null && seedError(saved.activeCaseSeed))return true;
+    return false;
   }
   function parse(raw) {
     if(typeof raw!=='string'||!raw.trim()) invalid('The server returned an empty or invalid reply.');
@@ -43,6 +86,11 @@ const RYCState = (() => {
     let update=null;
     if(blocks.length) {try{update=JSON.parse(blocks[0][1]);}catch(_){invalid('The state checkpoint is not valid JSON.');}if(!object(update))invalid('The state checkpoint must be an object.');}
     return {text:raw.replace(/<!--[\s\S]*?-->/g,'').trim(), update};
+  }
+  function validateInitialization(state, raw) {
+    if (!parse(raw).update) invalid('Setup response is missing its state checkpoint. Retry setup.');
+    if (['title','client','judge','da'].some(key=>placeholder(state.profile[key])) || state.docket.length < 2)
+      invalid('Setup response did not initialize the roster and two starter exhibits. Retry setup.');
   }
   function next(current, raw, channel='court') {
     const parsed=parse(raw), next=clone(current), u=parsed.update;
@@ -76,5 +124,5 @@ const RYCState = (() => {
     }
     return {state:next,text:parsed.text};
   }
-  return {object,clone,history,normalize,next,parse,exhibit};
+  return {object,clone,history,normalize,needsRecovery,next,parse,exhibit,placeholder,intakeStatus,seedError,emptyState,validateInitialization};
 })();

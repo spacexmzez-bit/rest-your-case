@@ -1,0 +1,32 @@
+/* Archive controls follow the same paper-and-ink UI as the rooms. */
+:root{color-scheme:only light}
+body{background:#ebe1d1;color:#342d24}
+.scene{background-position:center 62px;background-size:100% auto;background-repeat:no-repeat;background-image:url('bg_props/archive_room/bg/Archive_LS.jpg');background-color:#e3d2b9}
+.scene::after{background:linear-gradient(#fff2d714,transparent 38%,#e8dece 85%)}
+.topbar{position:sticky;top:0;z-index:40;background:#faf5ebeF;color:#4d402f;border-bottom:1px solid #d7c9b3;min-height:62px;backdrop-filter:blur(8px)}
+.brand span{color:#8c6b3e}.top-links{gap:16px;color:#6c5b46}
+.site-menu summary{border-color:#d4c4a9;background:#fffbf2;color:#6c5238;border-radius:8px}
+.site-menu nav{min-width:220px;width:min(260px,calc(100vw - 28px));border-color:#d6c8b1;border-radius:10px;background:#fffbf3;color:#4b3d2c;box-shadow:0 12px 30px #40312321;max-height:calc(100svh - 85px);overflow:auto}
+.site-menu nav a{font-size:13px;padding:11px 13px;min-height:42px}.site-menu nav a:hover{background:#eee2cb}
+.room-title{min-height:280px;padding:30px 16px 24px}
+.room-caption{background:#fff9eddc;color:#6e5b43;border-radius:8px;text-shadow:none;max-width:490px;padding:10px 18px;font-size:13px}
+.workbench{background:#fbf5e9ef;border:1px solid #cdbb9e;border-top:0;border-radius:14px;padding:24px;box-shadow:0 6px 30px #49392219;width:min(1160px,calc(100% - 32px))}
+.active-slip{background:#f3e8d5;border:1px solid #dac7a7;border-left:3px solid #895069;border-radius:8px;padding:16px 18px;margin-bottom:20px;align-items:center}
+.active-slip strong{font:500 19px Georgia,serif;color:#493828}.active-slip p{font:12px/1.6 system-ui,sans-serif;color:#887256}
+.active-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.active-actions .text-link,.purge-current{font:600 12px system-ui,sans-serif;min-height:40px;padding:9px 12px;border:1px solid #cdb796;border-radius:7px;text-decoration:none;background:#fff8eb;color:#6c463d;display:inline-flex;align-items:center;justify-content:center}
+.purge-current{border-color:#d2b0ae;color:#913b48;background:transparent}
+.collection-tabs{gap:5px;background:#e8decb;border:1px solid #d9c9ac;border-radius:9px;padding:4px;margin-bottom:16px}
+.collection-tab{background:transparent;filter:none;min-height:40px;padding:9px 15px;font:500 13px system-ui,sans-serif;color:#79634c;border-radius:6px}
+.collection-tab[aria-pressed="true"]{background:#fffaf0;color:#7e3e53;box-shadow:0 1px 5px #47372a12;text-decoration:none}
+.catalog{background:#f5ecdb;border:1px solid #ddceb4;border-radius:9px;padding:16px;gap:14px}
+.catalog label{font-size:10px;color:#85715b;letter-spacing:.07em}
+.catalog input,.catalog select{min-height:44px;border:1px solid #d9c7aa;border-radius:7px;padding:10px 12px;background:#fffcf5;color:#493d2e;font:14px system-ui,sans-serif}
+.primary,.secondary{border-radius:7px;font:600 13px system-ui,sans-serif}
+.primary{background:#7c4051;color:#fff9ef;border-color:#713649;box-shadow:none}.secondary{background:#fff8ec;border-color:#cfbb9d;color:#695239}
+.confirm-dialog{background:#fff9ed;border-image:none;border:1px solid #d2bfa0;border-radius:12px;padding:28px}
+.confirm-dialog input{width:100%;min-height:44px;background:#fffdf7;border:1px solid #cbbb9f;border-radius:7px;padding:10px 12px;margin-top:6px;font:16px system-ui,sans-serif;color:#493d2e}
+.confirm-dialog label{display:block;font:12px system-ui,sans-serif;color:#79634a}
+.confirm-dialog .error-message{margin:12px 0 0;font:13px/1.5 system-ui,sans-serif;color:#923d4a}
+footer{color:#8b7458;text-shadow:none}
+@media(max-width:899px) and (orientation:portrait){.scene{background-image:url('bg_props/archive_room/bg/Archive_PT.jpg')}.room-title{min-height:245px}.workbench{padding:16px;width:calc(100% - 24px)}.active-slip{align-items:flex-start;flex-direction:column;gap:12px}.active-actions{width:100%}.active-actions .text-link,.purge-current{flex:1}.collection-tab{padding:9px 12px;font-size:12px}.catalog{padding:14px}.catalog input,.catalog select{font-size:16px}}

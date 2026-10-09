@@ -2,6 +2,8 @@
 <!-- game.html -->
 <html lang="en">
 <head>
+  <meta name="color-scheme" content="only light">
+  <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Rest Your Case | Rooms & Case Notebook</title>
@@ -43,8 +45,8 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="visual-theme.css?v=3" />
-  <link rel="stylesheet" href="game-scene.css?v=3" />
+  <link rel="stylesheet" href="visual-theme.css?v=5" />
+  <link rel="stylesheet" href="game-scene.css?v=5" />
 </head>
 <body data-visual="game" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -83,17 +85,18 @@
     <div class="room-heading">
       <div><p class="eyebrow">REST YOUR CASE / <span id="scene-phase">Client intake</span></p><h1 id="room-title">Client interview</h1></div>
       <div class="case-stats" aria-label="Trial resources"><span>Turn <b id="term-turn">1</b></span><span>AP <b id="term-ap">4</b></span><span>Strikes <b id="term-strikes">0/3</b></span></div>
+      <button id="purge-case-btn" class="purge-case" type="button" onclick="openWipeModal()">Purge case</button>
       <div class="room-menu-wrap"><button id="room-menu-toggle" aria-label="Choose a room" aria-expanded="false" aria-controls="room-menu" type="button">•••</button>
         <nav id="room-menu" aria-label="Rooms" hidden>
           <button type="button" data-room="court">Courtroom</button><button type="button" data-room="office">Your office</button><button type="button" data-room="diaz">Investigator Diaz</button><button type="button" data-room="partner">Senior partner</button><button type="button" data-room="da">DA’s office</button><button type="button" data-room="intake">Client interview</button>
-          <a href="library.html">Legal library</a><a href="shelf.html">Case archive</a>
+          <a href="library.html">Legal library</a><a href="shelf.html">Case archive</a><button type="button" onclick="openWipeModal()">Purge current case</button>
         </nav>
       </div>
     </div>
     <nav class="room-bar" aria-label="Room navigation"><button type="button" data-room="court">Courtroom</button><button type="button" data-room="office">Your office</button><button type="button" data-room="diaz">Diaz</button><button type="button" data-room="partner">Partner</button><button type="button" data-room="da">DA’s office</button><button type="button" data-room="intake">Client</button></nav>
     <div class="scene-layout">
       <section class="room-scene" id="room-scene" aria-label="Illustrated room">
-        <div class="scene-camera" id="scene-camera"><div id="scene-plane"><picture id="scene-picture"><source id="scene-portrait" media="(orientation: portrait)" srcset="bg_props/game/bg/Intake_PT.jpg"><img id="scene-background" src="bg_props/game/bg/Intake_LS.jpg" alt="Client interview room" fetchpriority="high"></picture><div id="scene-objects"></div></div><div id="scene-image-notice" hidden>Room artwork unavailable. All room actions are available below.</div></div>
+        <div class="scene-camera" id="scene-camera"><div id="scene-plane"><picture id="scene-picture"><source id="scene-portrait" media="(max-width:899px) and (orientation:portrait)" srcset="bg_props/game/bg/Intake_PT.jpg"><img id="scene-background" src="bg_props/game/bg/Intake_LS.jpg" alt="Client interview room" fetchpriority="high"></picture><div id="scene-objects"></div></div><div id="scene-image-notice" hidden>Room artwork unavailable. All room actions are available below.</div></div>
         <div class="scene-caption"><span id="scene-case-title">No active case</span><span id="scene-channel">Client conversation</span></div>
       </section>
       <section class="dialogue-panel" id="dialogue-panel" aria-label="Conversation">
@@ -109,7 +112,7 @@
           </form>
           <form id="assistant-form" onsubmit="handleAssistantSubmit(event)" class="message-form hidden"><input id="assistant-input" type="text" aria-label="Private assistant message" placeholder="Ask for tactical advice…" autocomplete="off"><button type="submit" id="assistant-submit-btn" class="primary-button">Consult Partner</button></form>
           <div id="scene-actions" class="scene-actions" aria-label="Room actions"></div>
-          <div id="no-case-notice" hidden><a href="shelf.html">Choose a case from the archive</a> or <a href="index.html">start a new intake</a> to begin.</div>
+          <div id="intake-recovery" hidden><p>This intake has not started yet.</p><button type="button" onclick="completeCaseIntake()">Finish case setup</button></div><div id="no-case-notice" hidden><a href="shelf.html">Choose a case from the archive</a> or <a href="index.html">start a new intake</a> to begin.</div>
         </div>
       </section>
     </div>
@@ -134,7 +137,7 @@
         <div class="flex items-center gap-3">
           <button onclick="switchTab('terminal')" class="text-[10px] text-brand-muted hover:text-white px-2 py-0.5 rounded border border-brand-border bg-brand-surface transition">Return to room</button>
           <span class="text-brand-muted text-[10px] border-l border-brand-border pl-2">Auto-sync</span>
-          <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
+          <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Purge case</button>
         </div>
       </div>
 
@@ -306,10 +309,11 @@
   </footer>
 
   <!-- Scripts loaded in execution order -->
-  <script src="data.js?v=3"></script>
-  <script src="cases.js?v=3"></script>
-  <script src="game-state.js?v=3"></script>
-  <script src="game-scene.js?v=3"></script>
-  <script src="game.js?v=3"></script>
+  <script src="data.js?v=5"></script>
+  <script src="game-state.js?v=5"></script>
+  <script src="case-store.js?v=5"></script>
+  <script src="cases.js?v=5"></script>
+  <script src="game-scene.js?v=5"></script>
+  <script src="game.js?v=5"></script>
 </body>
 </html>

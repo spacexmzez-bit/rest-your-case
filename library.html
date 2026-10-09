@@ -2,6 +2,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="color-scheme" content="only light">
+  <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rest Your Case | Legal Library</title>
@@ -105,7 +107,7 @@
     }
   </style>
 
-<link rel="stylesheet" href="visual-theme.css?v=3"><link rel="stylesheet" href="library-shelf.css?v=3">
+<link rel="stylesheet" href="visual-theme.css?v=5"><link rel="stylesheet" href="library-shelf.css?v=5">
 </head>
 <body data-visual="library" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -139,7 +141,7 @@
   <section id="library-shelf" class="library-shelf" aria-labelledby="shelf-heading" hidden>
     <div class="shelf-heading"><div><p class="eyebrow">THE DEFENSE REFERENCE COLLECTION</p><h1 id="shelf-heading">Legal library</h1><p>Choose a section. Find the argument you need.</p></div><button type="button" id="library-browse-all">Browse all chapters</button></div>
     <form id="shelf-search-form" class="shelf-search"><label for="shelf-search">Search every chapter</label><input id="shelf-search" type="search" placeholder="Hearsay, DNA, self-defense…"><button type="submit">Search</button></form>
-    <div class="bookshelf-art"><picture><source media="(orientation: portrait)" srcset="bg_props/library/bg/Library_PT.jpg"><img id="bookshelf-background" src="bg_props/library/bg/Library_LS.jpg" alt="Wooden legal bookshelf with a central shelf arranged in five rows and two columns"></picture><nav id="shelf-chapters" class="shelf-chapters" aria-label="Nine library chapters"></nav></div>
+    <div class="bookshelf-art"><picture><source media="(orientation: portrait)" srcset="bg_props/game/bg/Library_PT.jpg"><img id="bookshelf-background" src="bg_props/game/bg/Library_LS.jpg" alt="Wooden legal bookshelf with a central shelf arranged in five rows and two columns"></picture><nav id="shelf-chapters" class="shelf-chapters" aria-label="Nine library chapters"></nav></div>
     <p class="shelf-caption">Nine chapters · Tap anywhere inside a chapter’s shelf section.</p>
   </section>
   <dialog open id="library-reader" aria-label="Legal reference book"><div class="reader-controls"><span class="eyebrow">LEGAL REFERENCE</span><button id="reader-close" type="button">Back to shelf ×</button></div>
@@ -853,6 +855,6 @@
     })();
   </script>
 
-  <script src="library-shelf.js?v=3"></script>
+  <script src="library-shelf.js?v=5"></script>
 </body>
 </html>

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="color-scheme" content="only light">
+  <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#493325">
@@ -158,6 +160,7 @@
     @media (orientation: landscape) { .scene { background-image: url('bg_props/archive_room/bg/Archive_LS.jpg'); background-size: cover; background-position: center -130px; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .case-folder:hover { transform: none; } }
   </style>
+<link rel="stylesheet" href="archive-interface.css?v=5">
 </head>
 <body>
   <a class="skip-link" href="#catalog">Skip to case files</a>
@@ -190,7 +193,7 @@
       <div id="storage-warning" class="storage-warning" role="alert" hidden></div>
       <aside id="active-slip" class="active-slip" aria-label="Current trial" hidden>
         <div><strong id="active-title"></strong><p id="active-phase"></p></div>
-        <a class="text-link" href="game.html#terminal">Resume trial →</a>
+        <div class="active-actions"><a id="active-resume" class="text-link" href="game.html#terminal">Resume trial</a><button id="purge-current-case" class="purge-current" type="button">Purge case</button></div>
       </aside>
       <div class="collection-tabs" role="group" aria-label="File collection">
         <button class="collection-tab" type="button" data-collection="all" aria-pressed="true">All files</button>
@@ -237,14 +240,18 @@
     <p id="confirm-error" class="error-message" role="alert" hidden></p>
     <div class="confirm-actions"><button class="secondary" id="cancel-accept" type="button" autofocus>Keep reviewing</button><button class="primary" id="confirm-accept" type="button">Begin trial →</button></div>
   </dialog>
+  <dialog id="purge-current-dialog" class="confirm-dialog" aria-labelledby="purge-current-title"><h2 id="purge-current-title">Purge current case?</h2><p>This removes the active trial, its notes and conversations. Your archived files and API key stay available.</p><label for="purge-current-input">Type CONFIRM to purge</label><input id="purge-current-input" autocomplete="off" spellcheck="false"><p id="purge-current-error" class="error-message" role="alert" hidden></p><div class="confirm-actions"><button id="purge-current-cancel" class="secondary" type="button">Cancel</button><button id="purge-current-confirm" class="primary" type="button">Purge case</button></div></dialog>
+  <script src="game-state.js?v=5"></script>
+  <script src="case-store.js?v=5"></script>
+  <script src="archive-trial.js?v=5"></script>
   <!-- Use the existing case broker; archive browsing makes no AI requests. -->
-  <script src="cases.js?v=3"></script>
+  <script src="cases.js?v=5"></script>
   <script>
   (() => {
     'use strict';
     const $ = id => document.getElementById(id);
     const keys = { shelf: 'ryc_shelf_cases', pending: 'ryc_pending_cases', active: 'rest_your_case_state' };
-    const state = { records: [], visible: [], selected: null, collection: 'all', problems: [], active: null, opener: null, starting: false };
+    const state = { activeRaw:null, purgeRaw:null, purging:false, records: [], visible: [], selected: null, collection: 'all', problems: [], active: null, opener: null, starting: false };
     const normalize = value => String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
     const text = (value, fallback = 'Not provided') => typeof value === 'string' && value.trim() ? value.trim() : fallback;
     const formatDate = value => {
@@ -260,15 +267,13 @@
       return parsed;
     }
     function readActive() {
-      const raw = localStorage.getItem(keys.active);
+      const raw = localStorage.getItem(keys.active);state.activeRaw=raw;
       if (!raw) return null;
       const active = JSON.parse(raw);
       if (!active || typeof active !== 'object' || Array.isArray(active)) throw new Error('The current trial has an unexpected format.');
       return active;
     }
-    function canStart(c) {
-      return !!(c && typeof c.id === 'string' && c.id && c.scout && typeof c.scout.caseTitle === 'string' && c.seed?.roster?.client?.name && c.seed?.roster?.judge?.name && c.seed?.roster?.da?.name && c.seed?.charge?.charge && c.seed?.meta && (!c.scout.starterExhibits || Array.isArray(c.scout.starterExhibits)));
-    }
+    function canStart(c) { return !!c&&typeof c.id==='string'&&!!c.id&&!RYCState.seedError(c); }
     function recordView(c, source, index) {
       return { raw: c, source, key: `${source}:${index}`, title: text(c.scout?.caseTitle, 'Untitled case'), client: text(c.seed?.roster?.client?.name), charge: text(c.seed?.charge?.charge), genre: text(c.seed?.meta?.genre_name, 'Unclassified'), difficulty: text(c.difficulty, 'Normal'), date: formatDate(c.timestamp), timestamp: Number(c.timestamp) || 0, complexity: c.seed?.meta?.complexity };
     }
@@ -299,7 +304,7 @@
       const active = state.active?.hasActiveCase;
       $('active-slip').hidden = !active;
       $('menu-resume').hidden = !active;
-      if (active) { $('active-title').textContent = text(state.active.profile?.title, 'Current trial'); $('active-phase').textContent = text(state.active.phase, 'In progress'); }
+      if(active){const trial=RYCArchiveTrial.describe(state.active);$('active-title').textContent=trial.title;$('active-phase').textContent=trial.phase;$('active-resume').textContent=trial.action;}
       const previousGenre = $('genre').value;
       $('genre').replaceChildren(new Option('All case types', 'all'));
       [...new Set(state.records.map(r => r.genre))].sort((a,b) => a.localeCompare(b)).forEach(genre => $('genre').add(new Option(genre, genre)));
@@ -388,7 +393,7 @@
       $('dossier').showModal(); document.body.style.overflow = 'hidden';
       if (addHistory && typeof record.raw.id === 'string' && record.raw.id) history.pushState({ archiveDossier: true }, '', '#case=' + encodeURIComponent(record.raw.id));
     }
-    function startSelected() {
+    async function startSelected() {
       if (state.starting || !state.selected) return;
       const c = state.selected.raw;
       try {
@@ -400,7 +405,7 @@
         readActive();
         state.starting = true;
         // Existing broker owns its active-trial confirmation, state setup, and redirect.
-        startTrialWithCase(current);
+        await startTrialWithCase(current);
         state.starting = false;
         if ($('accept-confirmation').open) $('accept-confirmation').close();
       } catch (error) {
@@ -430,6 +435,21 @@
     });
     $('cancel-accept').addEventListener('click', () => $('accept-confirmation').close());
     $('confirm-accept').addEventListener('click',startSelected);
+    $('purge-current-case').addEventListener('click',()=>{
+      state.purgeRaw=state.activeRaw;
+      $('purge-current-input').value='';$('purge-current-error').hidden=true;
+      $('purge-current-dialog').showModal();$('purge-current-input').focus();
+    });
+    $('purge-current-cancel').addEventListener('click',()=>$('purge-current-dialog').close());
+    $('purge-current-confirm').addEventListener('click',async()=>{
+      if(state.purging)return;
+      if($('purge-current-input').value!=='CONFIRM'){$('purge-current-error').textContent='Type CONFIRM to continue.';$('purge-current-error').hidden=false;return;}
+      state.purging=true;$('purge-current-confirm').disabled=true;
+      try{await RYCArchiveTrial.purge(state.purgeRaw);$('purge-current-dialog').close();loadRecords();}
+      catch(error){$('purge-current-error').textContent='Could not purge the case: '+error.message;$('purge-current-error').hidden=false;}
+      finally{state.purging=false;$('purge-current-confirm').disabled=false;}
+    });
+    window.addEventListener('scroll',()=>{$('site-menu').open=false;},{passive:true});
     document.addEventListener('click', event => { const menu = $('site-menu'); if (menu.open && !menu.contains(event.target)) menu.open = false; });
     document.addEventListener('keydown',event => { if (event.key === 'Escape') $('site-menu').open = false; });
     window.addEventListener('storage', event => { if (Object.values(keys).includes(event.key) || event.key === null) loadRecords(); });

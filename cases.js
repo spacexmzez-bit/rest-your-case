@@ -85,6 +85,7 @@ async function generateCase(diff, comp, cat, signal) {
 
   while (attempt < 2) {
     attempt++;
+    let retryable = false;
     try {
       // 1. Procedurally sample static variables
       const caseSeed = sampleCaseDocket(comp, cat);
@@ -103,19 +104,25 @@ async function generateCase(diff, comp, cat, signal) {
       
       if (signal) fetchOptions.signal = signal;
 
-      const response = await fetch(WORKER_URL, fetchOptions);
+      let response;
+      try { response = await fetch(WORKER_URL, fetchOptions); }
+      catch (error) { retryable = error.name !== 'AbortError'; throw error; }
       const data = await response.json().catch(() => null);
+      if (signal?.aborted) { const error=new Error('Search cancelled.');error.name='AbortError';throw error; }
 
       if (response.status === 429) {
         throw new Error("API Quota Exhausted. Please plug in a personal API key in settings.");
       }
       
       if (!response.ok || !data) {
+        retryable = response.status >= 500 || (response.ok && !data);
         throw new Error(data?.error?.message || data?.details || data?.error || `Server Error (${response.status})`);
       }
 
       // 3. Parse and strictly validate the JSON
-      const parsedScout = parseScoutResponse(data.reply);
+      let parsedScout;
+      try { parsedScout = parseScoutResponse(data.reply); }
+      catch (error) { retryable = true; throw error; }
 
       // 4. Assemble the final case entity
       const finalCase = {
@@ -138,7 +145,7 @@ async function generateCase(diff, comp, cat, signal) {
         throw new Error("Search cancelled.");
       }
       lastErrorMsg = err.message;
-      if (attempt >= 2) {
+      if (!retryable || attempt >= 2) {
         throw new Error(`Generation failed: ${lastErrorMsg}`);
       }
     }
@@ -155,18 +162,14 @@ async function generateCase(diff, comp, cat, signal) {
  * 
  * @param {object} caseObj - The fully assembled case object from pending or shelf
  */
-function startTrialWithCase(caseObj) {
+async function startTrialWithCase(caseObj) {
+  const seedError=RYCState.seedError(caseObj);if(seedError)throw new Error(seedError);
   // Check for active trial collision
   const existingStateStr = localStorage.getItem('rest_your_case_state');
-  if (existingStateStr) {
-    try {
-      const existingState = JSON.parse(existingStateStr);
-      if (existingState.hasActiveCase) {
-        const confirmWipe = confirm("You currently have an active trial. Accepting this case will permanently discard your active progress. Proceed?");
-        if (!confirmWipe) return false;
-      }
-    } catch (e) {}
-  }
+  let existingState=null;
+  if(existingStateStr){try{existingState=JSON.parse(existingStateStr);}catch(_){throw new Error('The current trial cannot be read. Recover or purge it before starting another case.');}}
+  if(existingState?.hasActiveCase&&!confirm("You currently have an active trial. Accepting this case will permanently discard your active progress. Proceed?"))return false;
+
 
   // Calculate mechanical variables
   const diff = caseObj.difficulty || 'Normal';
@@ -185,6 +188,8 @@ function startTrialWithCase(caseObj) {
   // 1. Build the fresh Game Engine State
   const freshState = {
     hasActiveCase: true,
+    caseId: RYCCaseStore.id(),
+    intakeComplete: false,
     profile: { 
       title: caseObj.scout.caseTitle, 
       client: caseObj.seed.roster.client.name, 
@@ -215,14 +220,9 @@ function startTrialWithCase(caseObj) {
   const diazGreeting = `Diaz here. Subpoenas cost 1 AP; field canvassing and forensic audits cost 2 AP. Advice costs 0 AP.`;
   freshState._histories={court:[],partner:[{role:'model',parts:[{text:partnerGreeting}]}],diaz:[{role:'model',parts:[{text:diazGreeting}]}]};
   freshState._requests={};
-  // Set the handshake flag first, then atomically replace the active case snapshot.
-  sessionStorage.setItem('trigger_engine_handshake','true');
-  try{localStorage.setItem('rest_your_case_state',JSON.stringify(freshState));}
-  catch(error){sessionStorage.removeItem('trigger_engine_handshake');throw new Error('Could not save the new trial. Your previous case is unchanged.');}
-  for(const [channel,key] of [['court','rest_your_case_history'],['partner','rest_your_case_partner_history'],['diaz','rest_your_case_diaz_history']]) {
-    try{localStorage.setItem(key,JSON.stringify(freshState._histories[channel]));}catch(_){}
-  }
-  try{localStorage.removeItem('terminal_draft');}catch(_){}
+  await RYCCaseStore.write(existingStateStr,freshState,{clearTrialExtras:true});
+  // If session storage is unavailable the game still offers Finish case setup.
+  try{sessionStorage.setItem('trigger_engine_handshake',freshState.caseId);}catch(_){}
 
   // The trial is saved before archive cleanup. A cleanup failure must not lose it.
   try {

@@ -23,6 +23,11 @@ let appState = {
 };
 
 let recoveryOriginal = null;
+let savedCaseRaw = null;
+let caseConflict = false;
+let caseSaveQueue = Promise.resolve();
+let activeEngineController = null;
+let autoInitialize = false;
 const pendingRequests = {};
 let trialHistory = [];
 let partnerHistory = [];
@@ -169,11 +174,12 @@ function clearCustomKey() {
 function initApp() {
   let saved = null;
   try { saved = localStorage.getItem('rest_your_case_state'); } catch (_) { storageNotice('Browser storage is unavailable. Saving may fail.'); }
+  savedCaseRaw = saved;
   let parsed = null;
   if (saved) {
     try { parsed = JSON.parse(saved); } catch (_) { storageNotice('The saved case could not be read. A backup will be kept before saving.'); }
     appState = RYCState.normalize(parsed, appState);
-    if (!parsed || JSON.stringify(appState) !== JSON.stringify(Object.fromEntries(Object.entries(parsed).filter(([k])=>!k.startsWith('_'))))) {
+    if (RYCState.needsRecovery(parsed)) {
       recoveryOriginal = saved;
       storageNotice('Some saved fields need recovery. Valid case data has been retained.');
     }
@@ -190,6 +196,9 @@ function initApp() {
     const request=parsed._requests[ch];
     if(RYCState.object(request)&&typeof request.prompt==='string') pendingRequests[ch]={prompt:request.prompt,isInit:request.isInit===true,started:request.started===true,response:RYCState.object(request.response)?request.response:undefined,error:typeof request.error==='string'&&request.error?request.error:'This action was interrupted. Retry when ready.'};
   }
+
+  if(appState.hasActiveCase&&!appState.caseId)appState.caseId=RYCCaseStore.id();
+  if(typeof appState.intakeComplete!=='boolean')appState.intakeComplete=RYCState.intakeStatus(appState)==='ready';
 
   let savedDraft=null;try{savedDraft=localStorage.getItem('terminal_draft');}catch(_){}
   if (savedDraft) document.getElementById('court-user-input').value = savedDraft;
@@ -211,23 +220,14 @@ function initApp() {
   renderAssistantFeeds();
   updateActiveModelDisplay();
 
-  // Check for auto-initialization handshake from startTrialWithCase()
-  let triggerHandshake=null;try{triggerHandshake=sessionStorage.getItem('trigger_engine_handshake');}catch(_){}
-  if (triggerHandshake && appState.activeCaseSeed && !pendingRequests.court) {
-    sessionStorage.removeItem('trigger_engine_handshake');
-    try{executeEngineInitializationHandshake(appState.activeCaseSeed);}catch(error){storageNotice('The saved intake could not initialize: '+error.message);}
-  } else {
-    // Check for legacy intake trigger
-    let triggerStart=null;try{triggerStart=sessionStorage.getItem('trigger_intake_start');}catch(_){}
-    if (triggerStart) {
-      sessionStorage.removeItem('trigger_intake_start');
-      try {
-        const { diff, comp, cat } = JSON.parse(triggerStart);
-        const legacyPrompt = `/start --mode=web --difficulty=${diff} --complexity=${comp} --category="${cat}"\n\nFAST-START MANDATE:\n1. Roll Roster (Judge, DA, Client).\n2. Generate Case Title and a 1-sentence crime summary.\n3. Mark exactly TWO starting exhibits in the docket.\n4. Output 2 lines of dialogue from the Client in holding.\n5. Enclose all state in the checkpoint block.`;
-        sendCourtAction(legacyPrompt, true);
-      } catch (e) {}
-    }
-  }
+  // Old session flags are hints only. Never initialize an inactive or completed trial.
+  let flag=null;
+  try {
+    flag=sessionStorage.getItem('trigger_engine_handshake')||sessionStorage.getItem('trigger_intake_start');
+    sessionStorage.removeItem('trigger_engine_handshake');sessionStorage.removeItem('trigger_intake_start');
+  } catch (_) {}
+  autoInitialize=!!flag&&RYCState.intakeStatus(appState)==='incomplete'&&!pendingRequests.court;
+
 }
 
 /**
@@ -235,6 +235,7 @@ function initApp() {
  * Uses the already-synthesized Scout data and sampled parameters.
  */
 function executeEngineInitializationHandshake(caseObj) {
+  const error=RYCState.seedError(caseObj);if(error)throw new Error(error);
   const seed = caseObj.seed;
   const scout = caseObj.scout;
   const diff = caseObj.difficulty || appState.difficulty || 'Normal';
@@ -284,7 +285,7 @@ ${base64Truth}
 3. Yield the floor IMMEDIATELY to **[Client ${seed.roster.client.name}]** in holding, speaking exactly two sentences of opening dialogue to Lead Defense Counsel.
 4. Output dialogue for NO OTHER NPC. Enclose the state checkpoint at the bottom.`;
 
-  sendCourtAction(handshakePrompt, true);
+  return sendCourtAction(handshakePrompt, true);
 }
 
 // State and histories commit in one localStorage value. Legacy history keys are mirrors.
@@ -293,27 +294,44 @@ function storageNotice(message) {
   if(!notice){notice=document.createElement('p');notice.id='save-notice';notice.setAttribute('role','alert');document.body.append(notice);}
   notice.textContent=message;notice.hidden=false;
 }
-function persist() {
-  try {
-    if(recoveryOriginal!==null){localStorage.setItem('rest_your_case_recovery_backup',recoveryOriginal);recoveryOriginal=null;}
-    localStorage.setItem('rest_your_case_state',JSON.stringify({...appState,_histories:{court:trialHistory,partner:partnerHistory,diaz:diazHistory},_requests:pendingRequests}));
-  } catch(error) {
-    storageNotice('Could not save this case. Your browser storage may be full or unavailable. Your unsent draft is retained.');
-    throw error;
-  }
-  for(const [key,value] of [['rest_your_case_history',trialHistory],['rest_your_case_partner_history',partnerHistory],['rest_your_case_diaz_history',diazHistory]]) {
-    try{localStorage.setItem(key,JSON.stringify(value));}catch(_){} // The single case snapshot is authoritative.
-  }
-  const notice=document.getElementById('save-notice');if(notice)notice.hidden=true;
+function invalidateCase() {
+  caseConflict=true;
+  activeEngineController?.abort();
+  for(const ch of Object.keys(pendingRequests))delete pendingRequests[ch];
+  storageNotice('This trial changed in another tab. Reload to use the latest saved case. Keep a copy of any unsent text before reloading.');
+  if(window.RYCScene?.ready)RYCScene.refresh();
 }
-function commitCase(next, histories={}) {
-  const previous={state:appState,court:trialHistory,partner:partnerHistory,diaz:diazHistory};
-  appState=next;trialHistory=histories.court??trialHistory;partnerHistory=histories.partner??partnerHistory;diazHistory=histories.diaz??diazHistory;
-  try{persist();}catch(error){appState=previous.state;trialHistory=previous.court;partnerHistory=previous.partner;diazHistory=previous.diaz;throw error;}
+function ensureCaseCurrent() {
+  if(caseConflict)throw RYCCaseStore.conflict();
+  try{RYCCaseStore.check(savedCaseRaw);}catch(error){if(error.name==='CaseConflictError')invalidateCase();throw error;}
+}
+function persist() { return commitCase(state=>state); }
+function commitCase(next, histories={}, requests, options={}) {
+  const run=async()=>{
+    try {
+      ensureCaseCurrent();
+      const proposed=typeof next==='function'?next(RYCState.clone(appState)):next;
+      const nextHistories={court:histories.court??trialHistory,partner:histories.partner??partnerHistory,diaz:histories.diaz??diazHistory};
+      const nextRequests=requests??pendingRequests;
+      const saved=await RYCCaseStore.write(savedCaseRaw,{...proposed,_histories:nextHistories,_requests:nextRequests},{backup:recoveryOriginal,...options});
+      savedCaseRaw=saved.raw;appState=RYCState.normalize(saved.state,RYCState.emptyState());
+      trialHistory=nextHistories.court;partnerHistory=nextHistories.partner;diazHistory=nextHistories.diaz;
+      if(requests!==undefined){for(const ch of Object.keys(pendingRequests))delete pendingRequests[ch];Object.assign(pendingRequests,requests);}
+      recoveryOriginal=null;
+      const notice=document.getElementById('save-notice');if(notice)notice.hidden=true;
+      return true;
+    } catch(error) {
+      if(error.name==='CaseConflictError')invalidateCase();
+      else storageNotice('Could not save this case. Your browser storage may be full or unavailable. Keep this page open to retain unsaved text.');
+      throw error;
+    }
+  };
+  const result=caseSaveQueue.then(run);caseSaveQueue=result.catch(()=>{});return result;
 }
 
 function saveDraft() {
-  try{localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);}catch(_){storageNotice('Your draft could not be saved. Keep this page open.');}
+  if(caseConflict)return;
+  try{ensureCaseCurrent();localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);}catch(_){storageNotice('Your draft could not be saved. Keep this page open.');}
 }
 
 // Autocomplete logic with strictly enforced 2-AP cap
@@ -406,11 +424,12 @@ document.addEventListener('click', function(event) {
   }
 });
 
-window.saveExhibitNote = function(exhibitId, value) {
+window.saveExhibitNote = async function(exhibitId, value) {
   if (!exhibitId || ['__proto__','constructor','prototype'].includes(exhibitId)) return;
-  appState.exhibitNotes[exhibitId] = value;
-  try{persist();}catch(_){}
+  try{await commitCase(next=>{next.exhibitNotes[exhibitId]=value;return next;});}
+  catch(_){return false;}
   document.querySelectorAll('textarea[data-exid]').forEach(input=>{if(input.dataset.exid===exhibitId&&input!==document.activeElement)input.value=value;});
+  return true;
 }
 
 function renderUI() {
@@ -423,7 +442,7 @@ function renderUI() {
     document.getElementById('term-strikes').innerText = `${appState.strikes}/${appState.maxStrikes}`;
     document.getElementById('nb-casetitle').innerText = appState.profile.title || 'State v. Unknown';
     document.getElementById('nb-phase').innerText = appState.phase;
-    document.getElementById('attorney-notes').value = appState.notes || '';
+    const notes=document.getElementById('attorney-notes');if(document.activeElement!==notes)notes.value=appState.notes||'';
     
     const diffSpan = document.getElementById('nb-diff');
     const compSpan = document.getElementById('nb-comp');
@@ -505,42 +524,44 @@ function toggleAssistantsDrawer() { RYCScene.selectRoom('partner'); }
 
 function switchAssistantTab(tabId) { RYCScene.selectRoom(tabId); }
 
-function saveNotes() { 
-  appState.notes = document.getElementById('attorney-notes').value; 
-  persist(); 
+async function saveCaseNotes(value) {
+  try{await commitCase(next=>{next.notes=value;return next;});return true;}catch(_){return false;}
 }
+function saveNotes() { return saveCaseNotes(document.getElementById('attorney-notes').value); }
 
 function openWipeModal() { 
   document.getElementById('wipe-confirm-input').value = ''; 
-  document.getElementById('wipe-modal').classList.remove('hidden'); 
+  document.getElementById('wipe-modal').classList.remove('hidden');
+  document.getElementById('wipe-confirm-input').focus(); 
 }
 
 function closeWipeModal() { 
   document.getElementById('wipe-modal').classList.add('hidden'); 
 }
 
-function executeWipe() {
-  if(engineLocked){alert('Wait for the current action to finish before deleting the case.');return;}
-  if (document.getElementById('wipe-confirm-input').value === 'CONFIRM') {
-    const warningState = appState.hasSeenTrashWarning;
-    appState = { 
-      hasActiveCase: false, profile: { title: '', client: '', judge: '', da: '' }, 
-      phase: 'Phase 1: Intake', turn: 1, ap: 4, strikes: 0, maxStrikes: 3, notes: '', 
-      transcript: [], docket: [], facts: [], difficulty: 'Normal', complexity: 3, 
-      category: 'Random Case File', selectedModel: 'gemini-3.8-flash', activeCaseSeed: null,
-      trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: warningState 
-    };
-    trialHistory = []; partnerHistory = []; diazHistory = [];
-    for(const ch of Object.keys(pendingRequests))delete pendingRequests[ch];
-    localStorage.removeItem('rest_your_case_history');
-    localStorage.removeItem('rest_your_case_partner_history');
-    localStorage.removeItem('rest_your_case_diaz_history');
-    persist(); 
-    closeWipeModal(); 
-    window.location.href = 'index.html';
-  } else { 
-    alert("Type exactly 'CONFIRM'"); 
+async function executeWipe() {
+  if(engineLocked){alert('Wait for the current action to finish before purging the case.');return false;}
+  if(document.getElementById('wipe-confirm-input').value!=='CONFIRM'){alert("Type exactly 'CONFIRM'");return false;}
+  try{await commitCase(next=>RYCState.emptyState(next),{court:[],partner:[],diaz:[]},{},{clearTrialExtras:true});}
+  catch(error){alert('The case could not be purged: '+error.message);return false;}
+  closeWipeModal();window.location.href='index.html';return true;
+}
+async function completeCaseIntake() {
+  if(engineLocked||caseConflict||RYCState.intakeStatus(appState)!=='incomplete')return false;
+  const pending=pendingRequests.court;
+  if(pending&&(pending.isInit||/^\/start(?:\s|$)/i.test(pending.prompt.trim()))){pending.isInit=true;return sendCourtAction('',true,true);}
+  if(pending){
+    // A failed player question is not initialization. Retain the visible transcript and start setup.
+    const requests={...pendingRequests};delete requests.court;
+    engineLocked=true;RYCScene.refresh();
+    try{await commitCase(state=>state,{},requests);}catch(_){return false;}
+    finally{engineLocked=false;RYCScene.refresh();}
   }
+  const record=appState.activeCaseSeed;
+  if(record&&!RYCState.seedError(record))return executeEngineInitializationHandshake(record);
+  if(record)storageNotice('The saved intake is incomplete. Setup will use the valid roster, evidence and facts already in your case.');
+  const prompt=`/start --mode=web --difficulty=${appState.difficulty} --complexity=${appState.complexity} --category="${appState.category}"\nInitialize this unfinished intake. Preserve the known case information below; fill in missing title and roster, mark exactly two starter exhibits, let the client open the conversation, and include a complete STATE_CHECKPOINT. Keep sealed truth hidden.\nKnown case: ${JSON.stringify({profile:appState.profile,docket:appState.docket,facts:appState.facts})}`;
+  return sendCourtAction(prompt,true);
 }
 
 function openAddExhibitModal() { 
@@ -554,35 +575,31 @@ function closeAddExhibitModal() {
   document.getElementById('modal-details').value = ''; 
 }
 
-function saveNewExhibit() {
-  appState.docket.push({ 
-    id: document.getElementById('modal-tag').value.trim() || `Ex. ${appState.docket.length + 1}`, 
-    name: document.getElementById('modal-title').value.trim() || 'Untitled', 
-    type: document.getElementById('modal-type') ? document.getElementById('modal-type').value : 'Documentary',
-    facts: document.getElementById('modal-details').value.trim(), 
-    status: 'Admitted',
-    isManual: true 
-  });
-  renderDocket(); 
-  persist(); 
-  closeAddExhibitModal();
+async function saveNewExhibit() {
+  const entered=document.getElementById('modal-tag').value.trim();
+  const item={id:entered,name:document.getElementById('modal-title').value.trim()||'Untitled',type:document.getElementById('modal-type')?.value||'Documentary',facts:document.getElementById('modal-details').value.trim(),status:'Admitted',isManual:true};
+  try {
+    await commitCase(next=>{
+      if(!entered){let number=next.docket.length+1;while(next.docket.some(e=>(e.id||e.tag)===`Ex. ${number}`))number++;item.id=`Ex. ${number}`;}
+      RYCState.exhibit(item);
+      if(next.docket.some(e=>(e.id||e.tag)===item.id))throw new Error('An exhibit with this identifier already exists. Choose a different identifier.');
+      next.docket.push(item);return next;
+    });
+    renderDocket();closeAddExhibitModal();return true;
+  } catch(error){alert(error.message);return false;}
 }
-
-function setExhibitStatus(index, newStatus) { 
-  appState.docket[index].status = newStatus; 
-  renderDocket(); 
-  persist(); 
+async function setExhibitStatus(index, newStatus) {
+  const id=appState.docket[index]?.id||appState.docket[index]?.tag;
+  try{await commitCase(next=>{const item=next.docket.find(e=>(e.id||e.tag)===id);if(item)item.status=newStatus;return next;});renderDocket();}catch(_){}
 }
-
-function deleteExhibit(index) { 
-  appState.docket.splice(index, 1); 
-  renderDocket(); 
-  persist(); 
+async function deleteExhibit(index) {
+  const id=appState.docket[index]?.id||appState.docket[index]?.tag;
+  try{await commitCase(next=>{next.docket=next.docket.filter(e=>(e.id||e.tag)!==id);return next;});renderDocket();}catch(_){}
 }
 
 function renderDocket() {
   const container = document.getElementById('docket-list');
-  if (!container) return; 
+  if (!container || container.contains(document.activeElement)) return; 
   container.innerHTML = '';
   
   if (!appState.docket || appState.docket.length === 0) { 
@@ -637,11 +654,8 @@ function renderDocket() {
   renderTerminalSidePanel(); 
 }
 
-window.toggleFactVisibility = function(factId) {
-  if (appState.hiddenFacts.includes(factId)) appState.hiddenFacts = appState.hiddenFacts.filter(f => f !== factId);
-  else appState.hiddenFacts.push(factId);
-  persist(); 
-  renderUI();
+window.toggleFactVisibility = async function(factId) {
+  try{await commitCase(next=>{next.hiddenFacts=next.hiddenFacts.includes(factId)?next.hiddenFacts.filter(f=>f!==factId):[...next.hiddenFacts,factId];return next;});renderUI();}catch(_){}
 }
 
 window.trashFact = function(factId) {
@@ -658,25 +672,18 @@ window.closeTrashWarning = function() {
   document.getElementById('trash-warning-modal').classList.add('hidden');
 }
 
-window.confirmTrashWarning = function() {
-  appState.hasSeenTrashWarning = true;
-  document.getElementById('trash-warning-modal').classList.add('hidden');
-  if (pendingTrashFactId) executeTrashFact(pendingTrashFactId);
-  pendingTrashFactId = null;
+window.confirmTrashWarning = async function() {
+  const id=pendingTrashFactId;
+  document.getElementById('trash-warning-modal').classList.add('hidden');pendingTrashFactId=null;
+  if(id)return executeTrashFact(id,true);
+}
+window.executeTrashFact = async function(factId, acknowledged=false) {
+  try{await commitCase(next=>{if(acknowledged)next.hasSeenTrashWarning=true;if(!next.trashedFacts.includes(factId))next.trashedFacts.push(factId);next.hiddenFacts=next.hiddenFacts.filter(f=>f!==factId);return next;});renderUI();}catch(_){}
+}
+window.restoreFact = async function(factId) {
+  try{await commitCase(next=>{next.trashedFacts=next.trashedFacts.filter(f=>f!==factId);return next;});renderUI();}catch(_){}
 }
 
-window.executeTrashFact = function(factId) {
-  if (!appState.trashedFacts.includes(factId)) appState.trashedFacts.push(factId);
-  appState.hiddenFacts = appState.hiddenFacts.filter(f => f !== factId);
-  persist(); 
-  renderUI();
-}
-
-window.restoreFact = function(factId) {
-  appState.trashedFacts = appState.trashedFacts.filter(f => f !== factId);
-  persist(); 
-  renderUI();
-}
 
 function renderFactLedger() {
   const activeContainer = document.getElementById('fact-ledger');
@@ -763,11 +770,8 @@ function appendErrorAlert(rawError,lastPrompt,isAssistant=false,assistantTab=act
   storageNotice('Could not complete the action: '+String(rawError));
 }
 
-function appendTranscriptMessage(sender, text, isUser = false) {
-  if (!appState.transcript) appState.transcript = [];
-  appState.transcript.push({ sender, text, isUser });
-  renderTranscriptFeed(); 
-  persist();
+async function appendTranscriptMessage(sender, text, isUser=false) {
+  await commitCase(next=>{next.transcript.push({sender,text,isUser});return next;});renderTranscriptFeed();
 }
 
 function renderTranscriptFeed() {
@@ -902,18 +906,25 @@ function handleAssistantSubmit(e) {
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
-  const controller = new AbortController();
+  const controller = new AbortController();activeEngineController=controller;
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
+    let data;
+    try{data=await response.json();}
+    catch(error){
+      if(controller.signal.aborted)throw error;
+      if(response.ok){const invalid=new Error('The server returned invalid JSON. No case update was applied.');invalid.name='ResponseValidationError';throw invalid;}
+    }
+    return {response,data};
   } catch (err) {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
+    if (controller.signal.aborted) {
       throw new Error(`Request timed out after ${timeoutMs / 1000}s.`);
     }
     throw err;
+  } finally {
+    clearTimeout(timeoutId);
+    if(activeEngineController===controller)activeEngineController=null;
   }
 }
 
@@ -921,10 +932,11 @@ async function requestReply(payload) {
   const headers={'Content-Type':'application/json'};
   if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;
   for(let attempt=0;attempt<3;attempt++) {
-    let response;
-    try {response=await fetchWithTimeout(GAME_WORKER_URL,{method:'POST',headers,body:JSON.stringify(payload)},45000);}
-    catch(error){if(attempt===2)throw error;await new Promise(resolve=>setTimeout(resolve,1000));continue;}
-    let data;try{data=await response.json();}catch(_){throw new Error('The server returned invalid JSON. No case update was applied.');}
+    ensureCaseCurrent();
+    let response,data;
+    try {({response,data}=await fetchWithTimeout(GAME_WORKER_URL,{method:'POST',headers,body:JSON.stringify(payload)},45000));}
+    catch(error){ensureCaseCurrent();if(error.name==='ResponseValidationError'||attempt===2)throw error;await new Promise(resolve=>setTimeout(resolve,1000));continue;}
+    ensureCaseCurrent();
     if(!response.ok) {
       const detail=typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message;
       const error=new Error(detail||`Worker HTTP ${response.status}`);
@@ -932,49 +944,60 @@ async function requestReply(payload) {
       throw error;
     }
     if(!RYCState.object(data)||typeof data.reply!=='string'||!data.reply.trim())throw new Error('The server returned an empty or invalid reply. No case update was applied.');
-    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw new Error('Invalid model metadata. No case update was applied.');
+    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw Object.assign(new Error('Invalid model metadata. No case update was applied.'),{name:'ResponseValidationError'});
     return data;
   }
 }
-function showRequestError(ch,error,request) {
+async function showRequestError(ch,error,request) {
+  if(caseConflict||error.name==='CaseConflictError'){invalidateCase();return;}
+  if(error.name==='ResponseValidationError')delete request.response;
   request.error=String(error.message||error);
   // Keep the retry in memory even if storage is unavailable.
-  try{persist();}catch(_){}
+  try{await persist();}catch(_){if(caseConflict)return;}
   if(window.RYCScene?.ready)RYCScene.errorAlert(request.error,request.prompt,ch,request.isInit);
   else storageNotice('Could not complete the action: '+request.error);
 }
 async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
-  if(engineLocked)return false;
+  if(engineLocked||caseConflict||!appState.hasActiveCase)return false;
   const request=isRetry&&pendingRequests.court?pendingRequests.court:{prompt:userPrompt,isInit,started:false};
+  if(isRetry&&RYCState.intakeStatus(appState)==='incomplete'&&!request.isInit)return completeCaseIntake();
+  if(!request.isInit&&RYCState.intakeStatus(appState)!=='ready'){storageNotice('Finish case setup before sending a trial action.');return false;}
   pendingRequests.court=request;userPrompt=request.prompt;isInit=request.isInit;
   engineLocked=true;
   try {
     RYCScene.refresh();
     if(isInit)showLoadingScreen();else toggleTypingIndicator('transcript-feed',true,'Court is deliberating');
     if(!request.started) {
-      const next=RYCState.clone(appState);
-      if(!isInit)next.transcript.push({sender:'DEFENSE COUNSEL',text:userPrompt,isUser:true});
       const history=isInit?[]:trialHistory;
       request.started=true;
-      try{commitCase(next,{court:history});}catch(error){request.started=false;throw error;}
+      try{await commitCase(state=>{if(!isInit)state.transcript.push({sender:'DEFENSE COUNSEL',text:userPrompt,isUser:true});return state;},{court:history});}catch(error){request.started=false;throw error;}
       renderTranscriptFeed();
     }
     request.error='';
     const baseHistory=userPrompt.trim().toLowerCase().startsWith('/undo')?trialHistory.slice(0,-2):trialHistory;
     const data=request.response||await requestReply({message:userPrompt,history:baseHistory,targetPersona:'court'});
-    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw new Error('Invalid model metadata. No case update was applied.');
-    const result=RYCState.next(appState,data.reply,'court');
-    if(data.activeModel)result.state.selectedModel=data.activeModel;
-    result.state.transcript.push({sender:'THE BENCH / RECORD',text:result.text,isUser:false});
-    request.response=data; // If saving fails, retry the same result without spending another request.
-    delete pendingRequests.court;
-    try{commitCase(result.state,{court:[...baseHistory,{role:'user',parts:[{text:userPrompt}]},{role:'model',parts:[{text:data.reply}]}]});}
-    catch(error){pendingRequests.court=request;throw error;}
+    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw Object.assign(new Error('Invalid model metadata. No case update was applied.'),{name:'ResponseValidationError'});
+    ensureCaseCurrent();
+    const apply=state=>{
+      const result=RYCState.next(state,data.reply,'court');
+      if(isInit){
+        RYCState.validateInitialization(result.state,data.reply);
+        result.state.intakeComplete=true;
+      }
+      if(data.activeModel)result.state.selectedModel=data.activeModel;
+      result.state.transcript.push({sender:'THE BENCH / RECORD',text:result.text,isUser:false});return result.state;
+    };
+    // Validate before caching. Invalid initialization must fetch a fresh answer on retry.
+    apply(RYCState.clone(appState));
+    request.response=data;
+    const requests={...pendingRequests};delete requests.court;
+    await commitCase(apply,{court:[...baseHistory,{role:'user',parts:[{text:userPrompt}]},{role:'model',parts:[{text:data.reply}]}]},requests);
     if(document.getElementById('court-user-input').value)saveDraft();else{try{localStorage.removeItem('terminal_draft');}catch(_){}}
     renderUI();return true;
   } catch(error) {
     // A rendering failure after a successful commit must not replay the action.
-    if(pendingRequests.court)showRequestError('court',error,request);
+    if(caseConflict||error.name==='CaseConflictError')invalidateCase();
+    else if(pendingRequests.court)await showRequestError('court',error,request);
     else storageNotice('The action was saved, but the display could not refresh. Reload to continue.');
     return false;
   } finally {
@@ -987,7 +1010,8 @@ function buildContextCapsule() {
   return `Case: ${appState.profile.title} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}\nMarked Docket: ${JSON.stringify(appState.docket)}\nEstablished Court Facts: ${JSON.stringify(appState.facts)}`;
 }
 async function sendAssistantAction(userPrompt,isRetry=false) {
-  if(engineLocked)return false;
+  if(engineLocked||caseConflict||!appState.hasActiveCase)return false;
+  if(RYCState.intakeStatus(appState)!=='ready'){storageNotice('Finish case setup before requesting a consultation.');return false;}
   const ch=activeAssistantTab==='diaz'?'diaz':'partner';
   const request=isRetry&&pendingRequests[ch]?pendingRequests[ch]:{prompt:userPrompt,started:false};
   pendingRequests[ch]=request;userPrompt=request.prompt;
@@ -998,35 +1022,41 @@ async function sendAssistantAction(userPrompt,isRetry=false) {
     let hist=ch==='diaz'?diazHistory:partnerHistory;
     if(!request.started) {
       request.started=true;
-      try{commitCase(appState,{[ch]:[...hist,{role:'user',parts:[{text:prefix+userPrompt}]}]});}catch(error){request.started=false;throw error;}
+      try{await commitCase(state=>state,{[ch]:[...hist,{role:'user',parts:[{text:prefix+userPrompt}]}]});}catch(error){request.started=false;throw error;}
     }
     hist=ch==='diaz'?diazHistory:partnerHistory;
     renderAssistantFeeds();toggleTypingIndicator(ch+'-feed',true,ch==='diaz'?'Diaz investigating':'Partner reviewing');
     request.error='';
     const directive=ch==='diaz'?'\nReport any completed investigation with a STATE_CHECKPOINT containing the remaining ap and newly discovered docket/facts. Investigations spend at most 2 AP, cannot overspend, and new exhibits are Marked. Advice alone costs 0 AP. Do not change court phase, judge, strikes, or admit evidence. Follow the established case; never expose sealed truth.':'';
     const data=request.response||await requestReply({message:prefix+userPrompt,history:hist.slice(0,-1),targetPersona:ch,capsule:buildContextCapsule()+directive});
-    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw new Error('Invalid model metadata. No case update was applied.');
-    let next=appState;
-    if(ch==='diaz')next=RYCState.next(appState,data.reply,'diaz').state;
-    else RYCState.parse(data.reply); // Partner advice never changes court resources.
-    next=RYCState.clone(next);if(data.activeModel)next.selectedModel=data.activeModel;
-    request.response=data;delete pendingRequests[ch];
-    try{commitCase(next,{[ch]:[...hist,{role:'model',parts:[{text:data.reply}]}]});}catch(error){pendingRequests[ch]=request;throw error;}
+    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw Object.assign(new Error('Invalid model metadata. No case update was applied.'),{name:'ResponseValidationError'});
+    ensureCaseCurrent();
+    const apply=state=>{
+      const next=ch==='diaz'?RYCState.next(state,data.reply,'diaz').state:state;
+      if(ch!=='diaz')RYCState.parse(data.reply);
+      if(data.activeModel)next.selectedModel=data.activeModel;return next;
+    };
+    apply(RYCState.clone(appState));request.response=data;
+    const requests={...pendingRequests};delete requests[ch];
+    await commitCase(apply,{[ch]:[...hist,{role:'model',parts:[{text:data.reply}]}]},requests);
     renderUI();renderAssistantFeeds();return true;
   } catch(error) {
-    if(pendingRequests[ch])showRequestError(ch,error,request);
+    if(caseConflict||error.name==='CaseConflictError')invalidateCase();
+    else if(pendingRequests[ch])await showRequestError(ch,error,request);
     else storageNotice('The consultation was saved, but the display could not refresh. Reload to continue.');
     return false;
   } finally {
     engineLocked=false;toggleTypingIndicator(ch+'-feed',false);updateActiveModelDisplay();RYCScene.refresh();
   }
 }
-function processCourtResponse(rawText) {
-  const result=RYCState.next(appState,rawText,'court');
-  result.state.transcript.push({sender:'THE BENCH / RECORD',text:result.text,isUser:false});
-  commitCase(result.state);renderUI();
+async function processCourtResponse(rawText) {
+  await commitCase(state=>{const result=RYCState.next(state,rawText,'court');result.state.transcript.push({sender:'THE BENCH / RECORD',text:result.text,isUser:false});return result.state;});renderUI();
 }
 
-// Initialize only after all state helpers are defined.
 initApp();
 RYCScene.init();
+window.addEventListener('storage',event=>{
+  if(event.key!==RYCCaseStore.key&&event.key!==null)return;
+  try{if(RYCCaseStore.read()!==savedCaseRaw)invalidateCase();}catch(_){storageNotice('Could not read the latest case. Reload before continuing.');}
+});
+if(autoInitialize)completeCaseIntake();

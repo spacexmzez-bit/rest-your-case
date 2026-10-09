@@ -19,7 +19,8 @@ window.RYCScene = (() => {
   const state = () => appState;
   const profile = () => state().profile || {};
   function displayName(key) {
-    return ({court: 'The court', judge: profile().judge || 'Judge', witness: 'Witness', client: profile().client || 'Your client', da: profile().da || 'Prosecutor', partner: 'Senior partner', diaz: 'Investigator Diaz'})[key];
+    const name=value=>typeof value==='string'&&value.trim()&&!/^(?:TBD|unknown|assigning case[.\s…]*)$/i.test(value.trim())?value:null;
+    return ({court: 'The court', judge: name(profile().judge) || 'Judge', witness: 'Witness', client: name(profile().client) || 'Your client', da: name(profile().da) || 'Prosecutor', partner: 'Senior partner', diaz: 'Investigator Diaz'})[key];
   }
   function rememberDraft() {
     const ch = channel();
@@ -73,11 +74,11 @@ window.RYCScene = (() => {
   function fitScene() {
     const camera=byId('scene-camera'),img=byId('scene-background'),plane=byId('scene-plane');
     if(!plane||!img.naturalWidth||!camera.clientWidth)return;
-    const scale=Math.max(camera.clientWidth/img.naturalWidth,camera.clientHeight/img.naturalHeight);
+    const scale=Math.min(camera.clientWidth/img.naturalWidth,camera.clientHeight/img.naturalHeight);
     const width=img.naturalWidth*scale,height=img.naturalHeight*scale;
     plane.style.width=width+'px';plane.style.height=height+'px';
     plane.style.left=(camera.clientWidth-width)/2+'px';
-    plane.style.top=(camera.clientHeight-height)*(matchMedia('(orientation: portrait)').matches?.7:.5)+'px';
+    plane.style.top=(camera.clientHeight-height)/2+'px';
   }
   function selectRecipient(value) {
     const map = {court:'court', judge:'court', witness:'court', client:'intake', da:'da', partner:'partner', diaz:'diaz'};
@@ -99,8 +100,19 @@ window.RYCScene = (() => {
   }
   function hotspot(label, kind, x, y, w, h, asset) {
     const el = button(label, () => openDocument(kind), 'scene-hotspot');
-    if(asset){const art=node('img');art.src='bg_props/props/'+asset+'.png';art.alt='';art.setAttribute('aria-hidden','true');el.textContent='';el.append(art,node('span',label));el.classList.add('scene-prop');}
-    el.style.left = x + '%'; el.style.top = y + '%'; el.style.width = w + '%'; el.style.height = h + '%'; return el;
+    el.textContent='';el.append(node('span',label));
+    el.setAttribute('aria-label','Open '+label);
+    const layouts={
+      office:{board:[[21,7,42,44],[4,18,76,28]],notebook:[[31,79,16,13],[8,70,35,14]],brief:[[52,77,19,15],[50,69,39,15]]},
+      diaz:{board:[[4,6,40,50],[0,16,65,38]],reports:[[20,60,48,31],[10,56,78,27]]},
+      court:{evidence:[[11,81,20,12],[0,78,57,16]]},
+      partner:{advice:[[66,77,23,14],[57,76,36,15]]},
+      da:{offers:[[63,77,28,13],[59,72,39,17]]},
+      intake:{statement:[[22,73,28,15],[13,72,66,21]]}
+    };
+    const [wide,portrait]=layouts[current]?.[kind]||[[x,y,w,h],[x,y,w,h]];
+    for(const [prefix,values]of [['desktop',wide],['portrait',portrait]])for(const [index,key]of ['x','y','w','h'].entries())el.style.setProperty(`--${prefix}-${key}`,values[index]+'%');
+    el.dataset.kind=kind;return el;
   }
   function renderObjects() {
     const group = byId('scene-objects'); group.replaceChildren();
@@ -132,7 +144,7 @@ window.RYCScene = (() => {
   }
   async function submitCourt() {
     const input = byId('court-user-input'); const text = input.value.trim();
-    if (!text || engineLocked || !state().hasActiveCase) return;
+    if (!text || engineLocked || caseConflict || RYCState.intakeStatus(state())!=='ready') return;
     const targets = {judge:'the judge', witness:'the witness currently on the stand', client:'my client', da:'the prosecutor'};
     const prompt = !text.startsWith('/') && targets[recipient] ? `To ${targets[recipient]}: ${text}` : text;
     input.value=''; drafts.set('court',''); byId('autocomplete-menu').classList.add('hidden');
@@ -142,7 +154,7 @@ window.RYCScene = (() => {
   }
   async function submitAssistant() {
     const input = byId('assistant-input'); const text = input.value.trim();
-    if (!text || engineLocked || !state().hasActiveCase) return;
+    if (!text || engineLocked || caseConflict || RYCState.intakeStatus(state())!=='ready') return;
     activeAssistantTab = channel() === 'diaz' ? 'diaz' : 'partner';
     const ch=channel();input.value=''; drafts.set(ch,'');
     const ok=await sendAssistantAction(text);
@@ -182,12 +194,19 @@ window.RYCScene = (() => {
   function refresh() {
     if (!ready) return;
     const active = !!state().hasActiveCase;
-    byId('scene-case-title').textContent = profile().title || (active ? 'Active case' : 'No active case');
+    byId('scene-case-title').textContent = /^(?:assigning case[.\s…]*|TBD)$/i.test(profile().title||'') ? (state().activeCaseSeed?.scout?.caseTitle||'Case setup incomplete') : profile().title || (active ? 'Active case' : 'No active case');
+    const incomplete=RYCState.intakeStatus(state())==='incomplete';
+    const locked=engineLocked||caseConflict;
+    byId('intake-recovery').hidden=!(incomplete&&!locked);
+    const request=pendingRequests.court;
+    byId('intake-recovery').querySelector('button').textContent=request&&(request.isInit||/^\/start(?:\s|$)/i.test(request.prompt.trim()))?'Retry case setup':'Finish case setup';
+    byId('purge-case-btn').hidden=!active;
     byId('scene-phase').textContent = state().phase || 'Case preparation';
     byId('no-case-notice').hidden = active;
-    byId('court-submit-btn').disabled = !active || engineLocked;
-    byId('assistant-submit-btn').disabled = !active || engineLocked;
+    byId('court-submit-btn').disabled = !active || locked || incomplete;
+    byId('assistant-submit-btn').disabled = !active || locked || incomplete;
     byId('dialogue-title').textContent = displayName(recipient);
+    document.querySelectorAll('[data-character]').forEach(el=>{const name=displayName(el.dataset.character);el.setAttribute('aria-label','Speak to '+name);const label=el.querySelector('.character-label');if(label)label.textContent=name;});
     document.querySelectorAll('button[data-room]').forEach(el => el.classList.toggle('has-update', unread.has(el.dataset.room)));
     byId('scene-activity').textContent = unread.size ? 'New conversation updates available' : '';
     // Open documents are snapshots. Never replace an active editor on request completion.
@@ -200,7 +219,7 @@ window.RYCScene = (() => {
     card.append(node('h3','Action not completed'),node('p','Review the error below and retry when ready.'));
     const details=node('details');details.append(node('summary','Show error'),node('pre',request.error));
     card.append(details,button('Retry',()=>{
-      if(engineLocked)return;
+      if(engineLocked||caseConflict)return;
       selectRoom(ch==='court'?'court':ch);
       if(ch==='court')sendCourtAction(request.prompt,request.isInit,true);
       else{activeAssistantTab=ch;sendAssistantAction(request.prompt,true);}
@@ -255,7 +274,7 @@ window.RYCScene = (() => {
       body.append(node('p','Established facts and your preparation notes. These notes do not create evidence.'));
       const list=node('ul',null,'board-facts'); knownFacts().forEach(f=>list.append(node('li',f)));body.append(list);
       const notes=node('textarea');notes.value=state().notes||'';notes.setAttribute('aria-label','Defense preparation notes');
-      notes.addEventListener('input',()=>{state().notes=notes.value;byId('attorney-notes').value=notes.value;try{persist();}catch(_){}});body.append(notes);
+      notes.addEventListener('input',()=>{byId('attorney-notes').value=notes.value;saveCaseNotes(notes.value);});body.append(notes);
     } else {
       let entries;
       if (kind==='reports' || kind==='advice') entries=(kind==='reports'?diazHistory:partnerHistory).filter(e=>e.role==='model').map(e=>e.parts?.[0]?.text||'');
@@ -285,6 +304,7 @@ window.RYCScene = (() => {
     byId('scene-background').addEventListener('error',()=>byId('scene-image-notice').hidden=false);
     byId('scene-background').addEventListener('load',()=>{byId('scene-image-notice').hidden=true;fitScene();});
     window.addEventListener('resize',fitScene);
+    const portraitQuery=matchMedia('(max-width:899px) and (orientation:portrait)');portraitQuery.addEventListener?.('change',fitScene);
     if(typeof ResizeObserver!=='undefined')new ResizeObserver(fitScene).observe(byId('scene-camera'));
     let initial=/intake/i.test(state().phase||'')?'intake':'court';
     try{const saved=localStorage.getItem('ryc_visual_room');if(rooms[saved] && !(state().hasActiveCase && state().turn===1 && !(state().transcript||[]).length))initial=saved;}catch(_){}
