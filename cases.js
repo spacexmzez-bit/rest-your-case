@@ -83,13 +83,13 @@ async function generateCase(diff, comp, cat, signal) {
   const reqHeaders = { "Content-Type": "application/json" };
   if (customKey) reqHeaders["X-Custom-Gemini-Key"] = customKey;
 
+  const caseSeed = sampleCaseDocket(comp, cat);
+  const scoutPromptText = buildScoutPrompt(caseSeed);
   while (attempt < 2) {
     attempt++;
     let retryable = false;
     try {
       // 1. Procedurally sample static variables
-      const caseSeed = sampleCaseDocket(comp, cat);
-      const scoutPromptText = buildScoutPrompt(caseSeed);
 
       // 2. Fetch Scout Generation
       const fetchOptions = {
@@ -121,7 +121,7 @@ async function generateCase(diff, comp, cat, signal) {
 
       // 3. Parse and strictly validate the JSON
       let parsedScout;
-      try { parsedScout = parseScoutResponse(data.reply); }
+      try { parsedScout = parseScoutResponse(data.reply, caseSeed); }
       catch (error) { retryable = true; throw error; }
 
       // 4. Assemble the final case entity
