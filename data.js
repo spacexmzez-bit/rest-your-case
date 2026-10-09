@@ -7,6 +7,7 @@
  */
 
 const GAME_DATA = {
+  client_occupations: ["civilian", "police", "expert"],
   // =========================================================================
   // 1. COURTROOM ROSTERS (Bench & Prosecution)
   // =========================================================================
@@ -744,7 +745,8 @@ function sampleCaseDocket(complexity = 3, categoryKey = "Random Case File") {
       da: pickedDA,
       client: {
         name: clientName,
-        ethnicity: chosenEthnicity
+        ethnicity: chosenEthnicity,
+        occupation: pickRandom(GAME_DATA.client_occupations)
       },
       investigator: "Investigator Carlos Diaz"
     },

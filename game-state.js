@@ -4,6 +4,27 @@ const RYCState = (() => {
   const clone = value => JSON.parse(JSON.stringify(value));
   const safeKey = key => !['__proto__', 'prototype', 'constructor'].includes(key);
   const placeholder = value => typeof value !== 'string' || !value.trim() || /^(?:TBD|unknown|assigning case[.\s…]*)$/i.test(value.trim());
+  const occupations = Object.freeze({civilian:'Civilian', police:'Police officer', expert:'Expert'});
+  const validOccupation = value => typeof value === 'string' && Object.prototype.hasOwnProperty.call(occupations,value);
+  // Null means a legacy case still needs classification, not a fourth occupation.
+  const occupation = value => validOccupation(value) ? value : null;
+  const recordOccupation = record => occupation(record?.seed?.roster?.client?.occupation) ?? occupation(record?.scout?.clientOccupation);
+  const clientOccupation = state => occupation(state?.activeCaseSeed?.seed?.roster?.client?.occupation) ?? occupation(state?.profile?.clientOccupation) ?? recordOccupation(state?.activeCaseSeed);
+  const occupationLabel = value => validOccupation(value) ? occupations[value] : 'Not yet classified';
+  function repairOccupationRecord(record, fallback = null) {
+    if (!object(record)) return record;
+    const repaired = clone(record);
+    const role = occupation(repaired.seed?.roster?.client?.occupation) ?? occupation(fallback) ?? occupation(repaired.scout?.clientOccupation);
+    if (object(repaired.seed?.roster?.client)) {
+      if (role) repaired.seed.roster.client.occupation = role;
+      else delete repaired.seed.roster.client.occupation;
+    }
+    if (object(repaired.scout)) {
+      if (role) repaired.scout.clientOccupation = role;
+      else delete repaired.scout.clientOccupation;
+    }
+    return repaired;
+  }
   function intakeStatus(state) {
     if (!state?.hasActiveCase) return 'none';
     if (['title','client','judge','da'].some(key => placeholder(state.profile?.[key]))) return 'incomplete';
@@ -13,6 +34,9 @@ const RYCState = (() => {
   }
   function seedError(record) {
     if (!object(record?.seed) || !object(record?.scout)) return 'The saved intake is missing its case seed or scout record.';
+    const seeded = record.seed.roster?.client?.occupation, scouted = record.scout.clientOccupation;
+    if ((seeded !== undefined && !validOccupation(seeded)) || (scouted !== undefined && !validOccupation(scouted))) return 'The saved intake has an invalid client occupation.';
+    if (seeded !== undefined && scouted !== undefined && seeded !== scouted) return 'The saved intake has conflicting client occupations.';
     const paths = ['meta.genre_key','roster.client.name','roster.judge.name','roster.judge.style','roster.judge.temperament','roster.da.name','roster.da.style','roster.da.tactic','charge.charge','charge.statutory_definition','charge.mens_rea','narrative_seeds.venue.name','narrative_seeds.venue.category','narrative_seeds.primary_evidence_anchor.item','narrative_seeds.primary_evidence_anchor.type','narrative_seeds.constitutional_flaw.flaw','narrative_seeds.constitutional_flaw.legal_basis','narrative_seeds.witness_friction.friction','narrative_seeds.client_complication.complication','mechanics.da_misconduct_trap.name','mechanics.da_misconduct_trap.legal_basis','mechanics.jury_verdict_guide.pivot','mechanics.jury_verdict_guide.acquittal_test'];
     for (const path of paths) {
       const value = path.split('.').reduce((v, k) => v?.[k], record.seed);
@@ -29,7 +53,7 @@ const RYCState = (() => {
     return '';
   }
   function emptyState(previous = {}) {
-    return {hasActiveCase:false,caseId:null,intakeComplete:false,profile:{title:'',client:'',judge:'',da:''},phase:'Phase 1: Intake',turn:1,ap:4,strikes:0,maxStrikes:3,notes:'',transcript:[],docket:[],facts:[],difficulty:'Normal',complexity:3,category:'Random Case File',selectedModel:typeof previous.selectedModel==='string'?previous.selectedModel:'gemini-3.8-flash',activeCaseSeed:null,trashedFacts:[],hiddenFacts:[],exhibitNotes:{},hasSeenTrashWarning:previous.hasSeenTrashWarning===true};
+    return {hasActiveCase:false,caseId:null,intakeComplete:false,profile:{title:'',client:'',judge:'',da:'',clientOccupation:'civilian'},phase:'Phase 1: Intake',turn:1,ap:4,strikes:0,maxStrikes:3,notes:'',transcript:[],docket:[],facts:[],difficulty:'Normal',complexity:3,category:'Random Case File',selectedModel:typeof previous.selectedModel==='string'?previous.selectedModel:'gemini-3.8-flash',activeCaseSeed:null,trashedFacts:[],hiddenFacts:[],exhibitNotes:{},hasSeenTrashWarning:previous.hasSeenTrashWarning===true};
   }
   function invalid(message) { const error = new Error(message); error.name = 'ResponseValidationError'; throw error; }
   function history(value) {
@@ -62,7 +86,10 @@ const RYCState = (() => {
     result.docket=[];
     if(Array.isArray(saved.docket)) for(const e of saved.docket) { try{result.docket.push(exhibit(e));}catch(_){} }
     result.exhibitNotes=Object.fromEntries(object(saved.exhibitNotes)?Object.entries(saved.exhibitNotes).filter(([k,v])=>safeKey(k)&&typeof v==='string'):[]);
-    if(object(saved.activeCaseSeed)&&!seedError(saved.activeCaseSeed)) result.activeCaseSeed=saved.activeCaseSeed;
+    const repairedRecord = repairOccupationRecord(saved.activeCaseSeed, saved.profile?.clientOccupation);
+    if(object(repairedRecord)&&!seedError(repairedRecord)) result.activeCaseSeed=repairedRecord;
+    result.profile.clientOccupation = occupation(result.activeCaseSeed?.seed?.roster?.client?.occupation) ?? occupation(saved.profile?.clientOccupation) ?? recordOccupation(result.activeCaseSeed);
+    if (!result.hasActiveCase && result.profile.clientOccupation === null) result.profile.clientOccupation = 'civilian';
     return result;
   }
   function needsRecovery(saved) {
@@ -76,6 +103,9 @@ const RYCState = (() => {
     if(saved.transcript!==undefined&&(!Array.isArray(saved.transcript)||saved.transcript.some(e=>!object(e)||typeof e.text!=='string')))return true;
     if(saved.exhibitNotes!==undefined&&(!object(saved.exhibitNotes)||Object.entries(saved.exhibitNotes).some(([k,v])=>!safeKey(k)||typeof v!=='string')))return true;
     if(saved.activeCaseSeed!=null && seedError(saved.activeCaseSeed))return true;
+    if(saved.profile?.clientOccupation!==undefined && saved.profile.clientOccupation!==null && !validOccupation(saved.profile.clientOccupation))return true;
+    const seededRole=recordOccupation(saved.activeCaseSeed);
+    if(seededRole && validOccupation(saved.profile?.clientOccupation) && seededRole!==saved.profile.clientOccupation)return true;
     return false;
   }
   function parse(raw) {
@@ -95,6 +125,15 @@ const RYCState = (() => {
   function next(current, raw, channel='court') {
     const parsed=parse(raw), next=clone(current), u=parsed.update;
     if(!u || !current.hasActiveCase) { if(channel==='court'&&current.hasActiveCase)next.turn++;return {state:next,text:parsed.text}; }
+    const lockedRole = clientOccupation(current);
+    const reportedRoles = [u.clientOccupation,u.case?.clientOccupation].filter(value=>value!==undefined);
+    for (const value of reportedRoles) {
+      if (!validOccupation(value) || (lockedRole && value !== lockedRole)) invalid('Checkpoint cannot change the client occupation.');
+    }
+    if (new Set(reportedRoles).size > 1) invalid('Checkpoint has conflicting client occupations.');
+    // Only the court can classify an unresolved legacy client, once.
+    next.profile.clientOccupation = lockedRole ?? (channel==='court' ? reportedRoles[0] ?? null : null);
+    if (next.profile.clientOccupation && object(next.activeCaseSeed)) next.activeCaseSeed=repairOccupationRecord(next.activeCaseSeed,next.profile.clientOccupation);
     for(const key of ['turn','ap','strikes']) if(u[key]!==undefined) {
       if(!Number.isSafeInteger(u[key])||u[key]<0) invalid('Invalid checkpoint '+key+'.');
       if(channel==='court'||key==='ap')next[key]=u[key];
@@ -124,5 +163,5 @@ const RYCState = (() => {
     }
     return {state:next,text:parsed.text};
   }
-  return {object,clone,history,normalize,needsRecovery,next,parse,exhibit,placeholder,intakeStatus,seedError,emptyState,validateInitialization};
+  return {occupations,validOccupation,occupation,recordOccupation,clientOccupation,occupationLabel,repairOccupationRecord,object,clone,history,normalize,needsRecovery,next,parse,exhibit,placeholder,intakeStatus,seedError,emptyState,validateInitialization};
 })();

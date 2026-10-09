@@ -163,6 +163,7 @@ async function generateCase(diff, comp, cat, signal) {
  * @param {object} caseObj - The fully assembled case object from pending or shelf
  */
 async function startTrialWithCase(caseObj) {
+  caseObj=RYCState.repairOccupationRecord(caseObj);
   const seedError=RYCState.seedError(caseObj);if(seedError)throw new Error(seedError);
   // Check for active trial collision
   const existingStateStr = localStorage.getItem('rest_your_case_state');
@@ -192,7 +193,8 @@ async function startTrialWithCase(caseObj) {
     intakeComplete: false,
     profile: { 
       title: caseObj.scout.caseTitle, 
-      client: caseObj.seed.roster.client.name, 
+      client: caseObj.seed.roster.client.name,
+      clientOccupation: RYCState.recordOccupation(caseObj), 
       judge: caseObj.seed.roster.judge.name, 
       da: caseObj.seed.roster.da.name 
     },

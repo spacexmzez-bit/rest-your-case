@@ -90,9 +90,13 @@ window.RYCScene = (() => {
     const el = node('button', label, className); el.type = 'button'; el.addEventListener('click', action); return el;
   }
   // Replace these CSS silhouettes with character PNGs later without changing routing.
+  function markClientOccupation(el) {
+    const role=RYCState.clientOccupation(state());
+    if(role)el.dataset.occupation=role;else delete el.dataset.occupation;
+  }
   function character(key, x, y, size) {
     const el = button('', () => selectRecipient(key), 'scene-character');
-    el.dataset.character = key; el.style.setProperty('--desktop-x', x + '%'); el.style.setProperty('--desktop-y', y + '%'); el.style.setProperty('--size', size + '%');
+    el.dataset.character = key; if(key==='client')markClientOccupation(el); el.style.setProperty('--desktop-x', x + '%'); el.style.setProperty('--desktop-y', y + '%'); el.style.setProperty('--size', size + '%');
     el.setAttribute('aria-label', 'Speak to ' + displayName(key));
     const shape = node('span', '', 'silhouette'); shape.setAttribute('aria-hidden','true');
     const label = node('span', displayName(key), 'character-label');
@@ -206,7 +210,7 @@ window.RYCScene = (() => {
     byId('court-submit-btn').disabled = !active || locked || incomplete;
     byId('assistant-submit-btn').disabled = !active || locked || incomplete;
     byId('dialogue-title').textContent = displayName(recipient);
-    document.querySelectorAll('[data-character]').forEach(el=>{const name=displayName(el.dataset.character);el.setAttribute('aria-label','Speak to '+name);const label=el.querySelector('.character-label');if(label)label.textContent=name;});
+    document.querySelectorAll('[data-character]').forEach(el=>{const name=displayName(el.dataset.character);if(el.dataset.character==='client')markClientOccupation(el);el.setAttribute('aria-label','Speak to '+name);const label=el.querySelector('.character-label');if(label)label.textContent=name;});
     document.querySelectorAll('button[data-room]').forEach(el => el.classList.toggle('has-update', unread.has(el.dataset.room)));
     byId('scene-activity').textContent = unread.size ? 'New conversation updates available' : '';
     // Open documents are snapshots. Never replace an active editor on request completion.
@@ -249,6 +253,7 @@ window.RYCScene = (() => {
     if (kind==='brief') {
       documentText(body,'Case',profile().title || 'Active case');
       for (const [key,label] of [['client','Client'],['judge','Judge'],['da','Prosecutor']]) documentText(body,label,profile()[key]||'Not yet assigned');
+      documentText(body,'Client occupation',RYCState.occupationLabel(RYCState.clientOccupation(state())));
       documentText(body,'Current phase',state().phase);
       documentText(body,'Resources',`${state().ap} AP · ${state().strikes}/${state().maxStrikes} judicial strikes · Turn ${state().turn}`);
       const facts=knownFacts(); body.append(node('h3','Established facts'));

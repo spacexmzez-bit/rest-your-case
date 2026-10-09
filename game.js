@@ -1,7 +1,7 @@
 // game.js
 let appState = {
   hasActiveCase: false, 
-  profile: { title: '', client: '', judge: '', da: '' },
+  profile: { title: '', client: '', judge: '', da: '', clientOccupation: 'civilian' },
   phase: 'Phase 1: Intake', 
   turn: 1, 
   ap: 4, 
@@ -235,6 +235,7 @@ function initApp() {
  * Uses the already-synthesized Scout data and sampled parameters.
  */
 function executeEngineInitializationHandshake(caseObj) {
+  caseObj=RYCState.repairOccupationRecord(caseObj,appState.profile.clientOccupation);
   const error=RYCState.seedError(caseObj);if(error)throw new Error(error);
   const seed = caseObj.seed;
   const scout = caseObj.scout;
@@ -257,6 +258,9 @@ CASE INTAKE PARAMETERS & ESTABLISHED GROUND RECORD:
 - Presiding Judge: ${seed.roster.judge.name} (${seed.roster.judge.style} | Temperament: ${seed.roster.judge.temperament})
 - Prosecutor: ${seed.roster.da.name} (${seed.roster.da.style} | Tactic: ${seed.roster.da.tactic})
 - Defendant / Client: ${seed.roster.client.name}
+- Client occupation: ${RYCState.recordOccupation(caseObj) ?? "Unclassified legacy client; resolve from the established story before locking."}
+- Initial AP: ${appState.ap}
+- Maximum judicial strikes: ${appState.maxStrikes}
 - Charge: ${seed.charge.charge}
 - Statutory Definition: ${seed.charge.statutory_definition}
 - Required Mens Rea: ${seed.charge.mens_rea}
@@ -929,6 +933,15 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
 }
 
 async function requestReply(payload) {
+  // Include the lock in the message as well as metadata, for older worker versions.
+  const role=RYCState.clientOccupation(appState);
+  const roleInstruction=role
+    ? 'clientOccupation='+role+'. Preserve this fixed occupation in narrative and checkpoints.'
+    : 'Client occupation is not yet classified. Preserve the existing story. Court only: resolve civilian, police, or expert from established client information and include clientOccupation in the next STATE_CHECKPOINT; use civilian only if no occupation was established. Consultations must not invent or classify the occupation.';
+  const legacyContext=!role && payload.targetPersona==='court'
+    ? '\nEstablished client information: '+JSON.stringify({client:appState.profile.client,summary:appState.activeCaseSeed?.scout?.crimeSummary ?? '',facts:appState.facts,transcript:appState.transcript}) : '';
+  payload={...payload,message:payload.message+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'.]'};
+  if(role)payload.clientOccupation=role;
   const headers={'Content-Type':'application/json'};
   if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;
   for(let attempt=0;attempt<3;attempt++) {
@@ -1007,7 +1020,7 @@ async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
 }
 function buildContextCapsule() {
   if(!appState.hasActiveCase)return 'No active case.';
-  return `Case: ${appState.profile.title} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}\nMarked Docket: ${JSON.stringify(appState.docket)}\nEstablished Court Facts: ${JSON.stringify(appState.facts)}`;
+  return `Case: ${appState.profile.title} | Client: ${appState.profile.client} | Client occupation: ${RYCState.clientOccupation(appState) ?? "Unclassified; preserve established story"} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}\nMarked Docket: ${JSON.stringify(appState.docket)}\nEstablished Court Facts: ${JSON.stringify(appState.facts)}`;
 }
 async function sendAssistantAction(userPrompt,isRetry=false) {
   if(engineLocked||caseConflict||!appState.hasActiveCase)return false;

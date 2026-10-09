@@ -280,6 +280,7 @@
           <div class="grid grid-cols-2 gap-2 text-xs font-mono text-slate-300">
             <div><span class="text-brand-muted">Charge: </span><span id="card-charge" class="text-rose-300 font-bold">Murder 1st</span></div>
             <div><span class="text-brand-muted">Client: </span><span id="card-client" class="text-slate-200">Defendant</span></div>
+            <div><span class="text-brand-muted">Occupation: </span><span id="card-client-occupation" class="text-slate-200">Civilian</span></div>
             <div><span class="text-brand-muted">Judge: </span><span id="card-judge" class="text-slate-200">Hon. Vance</span></div>
             <div><span class="text-brand-muted">Prosecutor: </span><span id="card-da" class="text-rose-300">ADA Miller</span></div>
           </div>
@@ -355,11 +356,11 @@
   </footer>
 
   <!-- Scripts loaded in execution order with cache busting -->
-  <script src="data.js?v=5"></script>
-  <script src="scout_prompt.js?v=6"></script>
-  <script src="game-state.js?v=5"></script>
+  <script src="data.js?v=7"></script>
+  <script src="scout_prompt.js?v=7"></script>
+  <script src="game-state.js?v=8"></script>
   <script src="case-store.js?v=5"></script>
-  <script src="cases.js?v=6"></script>
+  <script src="cases.js?v=8"></script>
   <script>
     let customGeminiKey=null;try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
     function showStorageError(error){let el=document.getElementById('overview-storage-error');if(!el){el=document.createElement('p');el.id='overview-storage-error';el.setAttribute('role','alert');document.body.prepend(el);}el.textContent='Could not access saved cases: '+error.message;}
@@ -502,6 +503,7 @@
       document.getElementById('card-title').innerText = scout.caseTitle;
       document.getElementById('card-charge').innerText = seed.charge.charge;
       document.getElementById('card-client').innerText = seed.roster.client.name;
+      document.getElementById('card-client-occupation').innerText = RYCState.occupationLabel(RYCState.recordOccupation(currentCase));
       document.getElementById('card-judge').innerText = seed.roster.judge.name;
       document.getElementById('card-da').innerText = seed.roster.da.name;
       document.getElementById('card-summary').innerText = `"${scout.crimeSummary}"`;
