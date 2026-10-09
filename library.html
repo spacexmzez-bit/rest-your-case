@@ -105,8 +105,9 @@
     }
   </style>
 
+<link rel="stylesheet" href="visual-theme.css?v=3"><link rel="stylesheet" href="library-shelf.css?v=3">
 </head>
-<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
+<body data-visual="library" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
   <a class="library-skip" href="#library-main">Skip to library</a>
 
@@ -134,16 +135,14 @@
     </div>
   </header>
 
-  <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
-    <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
-      ⚖️ TIP: Every major move costs Action Points (AP). Plan carefully. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: You cannot Admit an exhibit without laying a foundation first. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: Use /inspect on marked exhibits to uncover hidden details. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: Consult your Senior Partner or Investigator Diaz without spending AP.
-    </div>
-  </div>
-
   <!-- ================= TAB 5: LEGAL LIBRARY CONTENT ================= -->
+  <section id="library-shelf" class="library-shelf" aria-labelledby="shelf-heading" hidden>
+    <div class="shelf-heading"><div><p class="eyebrow">THE DEFENSE REFERENCE COLLECTION</p><h1 id="shelf-heading">Legal library</h1><p>Choose a section. Find the argument you need.</p></div><button type="button" id="library-browse-all">Browse all chapters</button></div>
+    <form id="shelf-search-form" class="shelf-search"><label for="shelf-search">Search every chapter</label><input id="shelf-search" type="search" placeholder="Hearsay, DNA, self-defense…"><button type="submit">Search</button></form>
+    <div class="bookshelf-art"><picture><source media="(orientation: portrait)" srcset="bg_props/library/bg/Library_PT.jpg"><img id="bookshelf-background" src="bg_props/library/bg/Library_LS.jpg" alt="Wooden legal bookshelf with a central shelf arranged in five rows and two columns"></picture><nav id="shelf-chapters" class="shelf-chapters" aria-label="Nine library chapters"></nav></div>
+    <p class="shelf-caption">Nine chapters · Tap anywhere inside a chapter’s shelf section.</p>
+  </section>
+  <dialog open id="library-reader" aria-label="Legal reference book"><div class="reader-controls"><span class="eyebrow">LEGAL REFERENCE</span><button id="reader-close" type="button">Back to shelf ×</button></div>
   <main id="library-main" tabindex="-1">
     <header>
       <p class="library-kicker">The defense reference collection</p>
@@ -657,6 +656,7 @@
       </ul>
     </section>
   </main>
+  </dialog>
 
   <!-- ================= NAVIGATION SIDEBAR DRAWER ================= -->
   <div id="nav-drawer-backdrop" onclick="toggleNavDrawer()" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"></div>
@@ -817,7 +817,7 @@
         sections.forEach(section => {
           let sectionCount = 0;
           section.querySelectorAll('.library-entry').forEach(entry => {
-            const visible = (topic.value === 'all' || section.dataset.topic === topic.value) && terms.every(term => searchable.get(entry).includes(term));
+            const visible = (topic.value === 'all' || section.dataset.topic === topic.value || (topic.value === 'verdicts' && section.dataset.topic === 'courtroom')) && terms.every(term => searchable.get(entry).includes(term));
             entry.hidden = !visible;
             if (visible) sectionCount++;
           });
@@ -831,6 +831,7 @@
       function revealHash() {
         const target = document.getElementById(location.hash.slice(1));
         if (!target || !target.closest('#library-collection')) return;
+        window.RYCLibrary?.openTarget(target);
         clearFilters();
         requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
       }
@@ -852,5 +853,6 @@
     })();
   </script>
 
+  <script src="library-shelf.js?v=3"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Rest Your Case | Field Manual & Setup</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -38,8 +38,9 @@
       }
     }
   </script>
+<link rel="stylesheet" href="visual-theme.css?v=3"><link rel="stylesheet" href="overview-guide.css?v=3">
 </head>
-<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
+<body data-visual="guide" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
   <!-- ================= TOP HUD NAV ================= -->
   <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
@@ -75,8 +76,10 @@
   </div>
 
   <!-- ================= FIELD MANUAL SECTION ================= -->
+  <section class="guide-hero"><picture><source media="(orientation: portrait)" srcset="bg_props/info/bg/Guide_PT.jpg"><img src="bg_props/info/bg/Guide_LS.jpg" alt="Illustrated reference workspace"></picture><div><p class="eyebrow">THE FIELD MANUAL</p><h1>Build your defense</h1><a href="#howtoplay-section">Open the manual ↓</a></div></section>
   <main id="howtoplay-section" class="max-w-5xl mx-auto px-4 py-8 space-y-10 flex-grow w-full">
-    <div class="border-b border-brand-border pb-4">
+    <aside class="manual-update"><h2>Your rooms</h2><p>Use the room bar on wider screens or the three-dot room menu on phones. Choose a recipient to address the judge, witness, client, or prosecutor. Visit Diaz for investigation and your senior partner for private strategy advice. Changing rooms costs nothing and sends no message.</p><p>Open documents from a room object or its labeled button. Long records scroll at a readable size. History reveals earlier dialogue. Your office contains the case folder, notebook, and defense board; the library’s nine shelf sections open the reference collection.</p></aside>
+<div class="border-b border-brand-border pb-4">
       <h1 class="text-3xl font-serif text-white font-semibold">Field Manual: How to Play</h1>
       <p class="text-brand-muted text-sm mt-2">Complete operational directives for the Rest Your Case tactical engine.</p>
     </div>
@@ -93,15 +96,7 @@
       </section>
 
       <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
-        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">2. The Cockpit & Terminal</h2>
-        <div class="text-sm text-slate-300 space-y-3 font-sans">
-          <p>The <strong class="text-white">Live Terminal</strong> uses a Split-Bench system.</p>
-          <ul class="list-disc pl-5 space-y-1">
-            <li><strong class="text-white">Desktop:</strong> The Left Panel acts as an immutable ledger (tracking marked evidence and established facts). The Right Panel is the real-time dialogue stream.</li>
-            <li><strong class="text-white">Mobile:</strong> The cold-data panel is hidden to save vertical space. You can review all logged evidence and facts securely in the <strong class="text-white">Notebook</strong> tab at any time.</li>
-          </ul>
-          <p class="pt-2 italic text-xs text-brand-muted">Note: The input bar and objection button (`!`) are permanently pinned to the bottom of your screen. They will never scroll out of view.</p>
-        </div>
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">2. Rooms &amp; Conversations</h2><div class="text-sm text-slate-300 space-y-3 font-sans"><p>The scene shows your current room and the conversation stays alongside it or below it.</p><ul class="list-disc pl-5 space-y-1"><li><strong>Desktop:</strong> Use the room bar to move between offices and court. The scene and dialogue appear side by side.</li><li><strong>Mobile:</strong> Use the three-dot room menu. The scene sits above dialogue; opening the keyboard reduces the scene to leave writing space.</li></ul><p>Choose a recipient before sending. History shows earlier conversation. Case brief, evidence, and notebook buttons remain available regardless of which objects are visible in the scene.</p></div>
       </section>
     </div>
 
@@ -135,11 +130,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">
-        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">5. Legal Assistants Drawer</h2>
-        <div class="text-sm text-slate-300 space-y-2 font-sans">
-          <p>Stuck? Click the floating <strong class="text-brand-gold uppercase text-[10px] tracking-wider">Assistants</strong> tab on the right edge of the screen.</p>
-          <p>This opens a secure, independent consultation channel with your firm's Senior Partner and Investigator Diaz. You can switch between them with tabs. <strong class="text-emerald-400">Consultations cost 0 AP and 0 Strikes.</strong></p>
-        </div>
+        <h2 class="text-brand-gold font-mono text-sm uppercase tracking-wider border-b border-brand-border pb-2">5. Your Legal Team</h2><div class="text-sm text-slate-300 space-y-2 font-sans"><p>Visit the Senior Partner’s office for private strategy advice, or Diaz’s room for investigation. Each keeps its own conversation history.</p><p>Strategy consultations cost 0 AP. Investigative actions follow the existing AP rules; changing rooms costs nothing. Use the advice notes and report buttons to review their recorded responses.</p></div>
       </section>
 
       <section class="bg-brand-surface border border-brand-border rounded p-5 space-y-3">

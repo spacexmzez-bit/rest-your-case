@@ -14,8 +14,10 @@ const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 function getPendingCases() {
   try {
     const data = localStorage.getItem('ryc_pending_cases');
-    return data ? JSON.parse(data) : [];
-  } catch (e) { return []; }
+    const list=data?JSON.parse(data):[];
+    if(!Array.isArray(list))throw new Error('Saved case collection is damaged.');
+    return list;
+  } catch (e) { throw new Error('Cannot read the case collection: '+e.message); }
 }
 
 function savePendingCases(cases) {
@@ -23,22 +25,24 @@ function savePendingCases(cases) {
     // Cap pending cases at 10 to prevent bloat
     if (cases.length > 10) cases = cases.slice(-10);
     localStorage.setItem('ryc_pending_cases', JSON.stringify(cases));
-  } catch (e) { console.warn("Failed to save pending cases:", e); }
+  } catch (e) { throw new Error('Could not save pending cases. Check browser storage.'); }
 }
 
 function getShelfCases() {
   try {
     const data = localStorage.getItem('ryc_shelf_cases');
-    return data ? JSON.parse(data) : [];
-  } catch (e) { return []; }
+    const list=data?JSON.parse(data):[];
+    if(!Array.isArray(list))throw new Error('Saved case collection is damaged.');
+    return list;
+  } catch (e) { throw new Error('Cannot read the case collection: '+e.message); }
 }
 
 function saveShelfCases(cases) {
   try {
     // Cap shelf cases at 30 (FIFO - drop oldest)
-    if (cases.length > 30) cases = cases.slice(-30);
+    if (cases.length > 30) cases = cases.slice(0,30);
     localStorage.setItem('ryc_shelf_cases', JSON.stringify(cases));
-  } catch (e) { console.warn("Failed to save shelf cases:", e); }
+  } catch (e) { throw new Error('Could not save the archive. Check browser storage.'); }
 }
 
 /**
@@ -159,7 +163,7 @@ function startTrialWithCase(caseObj) {
       const existingState = JSON.parse(existingStateStr);
       if (existingState.hasActiveCase) {
         const confirmWipe = confirm("You currently have an active trial. Accepting this case will permanently discard your active progress. Proceed?");
-        if (!confirmWipe) return;
+        if (!confirmWipe) return false;
       }
     } catch (e) {}
   }
@@ -207,27 +211,27 @@ function startTrialWithCase(caseObj) {
     hasSeenTrashWarning: prevWarning
   };
 
-  // 2. Wipe old histories and apply fresh state
-  localStorage.setItem('rest_your_case_state', JSON.stringify(freshState));
-  localStorage.removeItem('rest_your_case_history');
-  localStorage.removeItem('terminal_draft');
+  const partnerGreeting = `I reviewed ${caseObj.scout.caseTitle}. Consult me for strategy at 0 AP.`;
+  const diazGreeting = `Diaz here. Subpoenas cost 1 AP; field canvassing and forensic audits cost 2 AP. Advice costs 0 AP.`;
+  freshState._histories={court:[],partner:[{role:'model',parts:[{text:partnerGreeting}]}],diaz:[{role:'model',parts:[{text:diazGreeting}]}]};
+  freshState._requests={};
+  // Set the handshake flag first, then atomically replace the active case snapshot.
+  sessionStorage.setItem('trigger_engine_handshake','true');
+  try{localStorage.setItem('rest_your_case_state',JSON.stringify(freshState));}
+  catch(error){sessionStorage.removeItem('trigger_engine_handshake');throw new Error('Could not save the new trial. Your previous case is unchanged.');}
+  for(const [channel,key] of [['court','rest_your_case_history'],['partner','rest_your_case_partner_history'],['diaz','rest_your_case_diaz_history']]) {
+    try{localStorage.setItem(key,JSON.stringify(freshState._histories[channel]));}catch(_){}
+  }
+  try{localStorage.removeItem('terminal_draft');}catch(_){}
 
-  // 3. Seed Assistants
-  const partnerGreeting = `I reviewed the preliminary docket for ${caseObj.scout.caseTitle}. We're in front of ${caseObj.seed.roster.judge.name}, and ${caseObj.seed.roster.da.name} has the file. Keep an eye on our AP budget and consult me anytime at 0 AP.`;
-  const diazGreeting = `Diaz here. I'm assigned to ${caseObj.scout.caseTitle}. Subpoenas are 1 AP; field canvassing and forensic audits cost 2 AP. Let's dig in.`;
-  
-  localStorage.setItem('rest_your_case_partner_history', JSON.stringify([{ role: 'model', parts: [{ text: partnerGreeting }] }]));
-  localStorage.setItem('rest_your_case_diaz_history', JSON.stringify([{ role: 'model', parts: [{ text: diazGreeting }] }]));
-
-  // 4. Remove case from Storage (Shelf or Pending)
-  const pending = getPendingCases().filter(c => c.id !== caseObj.id);
-  savePendingCases(pending);
-  const shelf = getShelfCases().filter(c => c.id !== caseObj.id);
-  saveShelfCases(shelf);
-
-  // 5. Trigger auto-initialization via sessionStorage and Redirect
-  sessionStorage.setItem('trigger_engine_handshake', 'true');
-  window.location.href = 'game.html#terminal';
+  // The trial is saved before archive cleanup. A cleanup failure must not lose it.
+  try {
+    const pending=getPendingCases().filter(c=>c.id!==caseObj.id);
+    const shelf=getShelfCases().filter(c=>c.id!==caseObj.id);
+    saveShelfCases([...pending.reverse(),...shelf]);savePendingCases([]);
+  }catch(error){console.warn(error.message);}
+  window.location.href='game.html#terminal';
+  return true;
 }
 
 // Module export for Node or Browser inclusion

@@ -3,8 +3,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Rest Your Case | Trial Bench & Notebook</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Rest Your Case | Rooms & Case Notebook</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -43,8 +43,10 @@
       }
     }
   </script>
+  <link rel="stylesheet" href="visual-theme.css?v=3" />
+  <link rel="stylesheet" href="game-scene.css?v=3" />
 </head>
-<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
+<body data-visual="game" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
   <!-- ================= TOP HUD NAV ================= -->
   <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
@@ -77,93 +79,46 @@
     </div>
   </header>
 
-  <div class="bg-black border-b border-brand-border overflow-hidden whitespace-nowrap py-1 flex items-center shrink-0">
-    <div class="inline-block animate-scrollMarquee text-[11px] text-brand-gold font-mono whitespace-nowrap">
-      ⚖️ TIP: Every major move costs Action Points (AP). Subpoenas cost 1 AP; field canvass costs 2 AP. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️️ TIP: You cannot Admit an exhibit without laying a foundation first. &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; 
-      ⚖️ TIP: Consult your Senior Partner (/consult) or Investigator Diaz without spending AP.
-    </div>
-  </div>
-
-  <!-- ================= VIEW 1: GAME TERMINAL (SPLIT BENCH) ================= -->
-  <main id="tab-terminal" class="max-w-7xl mx-auto px-2 sm:px-4 py-2 flex-grow w-full flex flex-col h-[calc(100dvh-4.5rem)]">
-    <!-- Top HUD Bar -->
-    <div class="px-3 py-2 bg-brand-dark border border-brand-border rounded-t flex items-center justify-between shrink-0">
-      <div class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider">Courtroom Bench</h3>
-        <span id="engine-status" class="text-[10px] font-mono text-brand-muted sm:ml-2">Active</span>
-      </div>
-      <div id="terminal-stats" class="flex items-center space-x-2 sm:space-x-4 font-mono text-[10px] sm:text-xs">
-        <div><span class="text-brand-muted">Turn </span><span id="term-turn" class="text-white font-bold">1</span></div>
-        <div><span class="text-brand-muted">AP </span><span id="term-ap" class="text-brand-gold font-bold">4</span></div>
-        <div><span class="text-brand-muted">Strikes </span><span id="term-strikes" class="text-rose-400 font-bold">0/3</span></div>
-        <button onclick="switchTab('notebook')" class="text-[10px] text-brand-muted hover:text-white px-1.5 py-0.5 rounded border border-brand-border bg-brand-surface ml-2 transition">📁 Notebook</button>
-        <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-1.5 py-0.5 rounded border border-rose-900/50">Delete</button>
+  <main id="tab-terminal" class="game-workspace">
+    <div class="room-heading">
+      <div><p class="eyebrow">REST YOUR CASE / <span id="scene-phase">Client intake</span></p><h1 id="room-title">Client interview</h1></div>
+      <div class="case-stats" aria-label="Trial resources"><span>Turn <b id="term-turn">1</b></span><span>AP <b id="term-ap">4</b></span><span>Strikes <b id="term-strikes">0/3</b></span></div>
+      <div class="room-menu-wrap"><button id="room-menu-toggle" aria-label="Choose a room" aria-expanded="false" aria-controls="room-menu" type="button">•••</button>
+        <nav id="room-menu" aria-label="Rooms" hidden>
+          <button type="button" data-room="court">Courtroom</button><button type="button" data-room="office">Your office</button><button type="button" data-room="diaz">Investigator Diaz</button><button type="button" data-room="partner">Senior partner</button><button type="button" data-room="da">DA’s office</button><button type="button" data-room="intake">Client interview</button>
+          <a href="library.html">Legal library</a><a href="shelf.html">Case archive</a>
+        </nav>
       </div>
     </div>
-
-    <!-- Main Workspace Container -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 border-x border-b border-brand-border bg-brand-surface rounded-b flex-grow overflow-hidden shadow-xl">
-      
-      <!-- Cold Data Panel -->
-      <aside class="hidden lg:flex lg:col-span-4 border-r border-brand-border bg-[#0e1115] flex-col h-full overflow-y-auto p-3 space-y-4 font-mono text-xs">
-        <div class="text-[10px] font-bold text-brand-gold uppercase tracking-widest border-b border-brand-border pb-1">Case Briefing</div>
-        <div class="p-2 rounded bg-brand-surface/50 border border-brand-border space-y-1">
-          <div class="text-white font-bold" id="panel-case-title">State v. Null</div>
-          <div class="text-[11px] text-brand-muted">Client: <span id="panel-client-name" class="text-slate-200">TBD</span></div>
-          <div class="text-[11px] text-brand-muted">Judge: <span id="panel-judge-name" class="text-slate-200">TBD</span></div>
-          <div class="text-[11px] text-brand-muted">Prosecutor: <span id="panel-da-name" class="text-rose-300">TBD</span></div>
-        </div>
-        <div>
-          <span class="text-[10px] text-brand-muted uppercase block mb-1">Marked Evidence (<span id="panel-evidence-count">0</span>)</span>
-          <div id="panel-evidence-list" class="space-y-1 max-h-40 overflow-y-auto pr-1"></div>
-        </div>
-        <div>
-          <span class="text-[10px] text-brand-muted uppercase block mb-1">Established Facts</span>
-          <div id="panel-fact-list" class="space-y-1 text-slate-300 text-[11px] max-h-48 overflow-y-auto pr-1"></div>
-        </div>
-      </aside>
-
-      <!-- Dialogue Section -->
-      <section class="lg:col-span-8 flex flex-col h-full bg-[#0d0f12] overflow-hidden">
-        <div id="transcript-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12] relative"></div>
-
-        <div class="p-2.5 bg-brand-dark border-t border-brand-border shrink-0 z-20 space-y-2">
-          
-          <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="flex gap-1.5 w-full relative">
-            <div class="relative">
-              <button type="button" onclick="toggleObjectionMenu(event)" class="h-full px-3 bg-rose-950 hover:bg-rose-900 border border-rose-900 rounded text-rose-300 font-bold text-sm transition" title="Courtroom Objections">!</button>
-              <div id="objection-menu" class="hidden absolute bottom-full mb-2 left-0 w-64 bg-brand-dark border border-brand-border rounded shadow-xl flex flex-col font-mono text-xs z-50 max-h-60 overflow-y-auto">
-                <button type="button" onclick="selectObjection('FRE 404(b): Propensity / Character')" class="text-left px-3 py-2 hover:bg-brand-surface text-amber-300 border-b border-brand-border">FRE 404(b): Propensity Trap</button>
-                <button type="button" onclick="selectObjection('FRE 611(a): Compound / Assumes Facts')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 611: Compound / Assumes Facts</button>
-                <button type="button" onclick="selectObjection('FRE 701: Speculative Lay Opinion')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 701: Lay Opinion</button>
-                <button type="button" onclick="selectObjection('FRE 802: Hearsay')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 802: Hearsay</button>
-                <button type="button" onclick="selectObjection('FRE 611(c): Leading Question on Direct')" class="text-left px-3 py-2 hover:bg-brand-surface text-slate-200 border-b border-brand-border">FRE 611(c): Leading (Direct)</button>
-                <button type="button" onclick="selectObjection('Brady Violation: Concealed Witness Deal')" class="text-left px-3 py-2 hover:bg-brand-surface text-rose-300">Brady Violation: Concealed Deal</button>
-              </div>
-            </div>
-            
-            <div class="relative flex-grow min-w-0">
-              <div id="autocomplete-menu" class="hidden absolute bottom-full mb-2 left-0 right-0 bg-brand-dark border border-brand-border rounded shadow-2xl font-mono text-xs z-50 max-h-52 overflow-y-auto divide-y divide-brand-border/40"></div>
-              <input id="court-user-input" type="text" placeholder="Question client, cross-examine, or file motion..." oninput="handleInputDraft()" class="w-full bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
-            </div>
-
-            <button type="submit" id="court-submit-btn" class="bg-brand-gold text-brand-dark px-3 py-2 rounded text-xs font-mono font-bold uppercase shrink-0">Dispatch</button>
+    <nav class="room-bar" aria-label="Room navigation"><button type="button" data-room="court">Courtroom</button><button type="button" data-room="office">Your office</button><button type="button" data-room="diaz">Diaz</button><button type="button" data-room="partner">Partner</button><button type="button" data-room="da">DA’s office</button><button type="button" data-room="intake">Client</button></nav>
+    <div class="scene-layout">
+      <section class="room-scene" id="room-scene" aria-label="Illustrated room">
+        <div class="scene-camera" id="scene-camera"><div id="scene-plane"><picture id="scene-picture"><source id="scene-portrait" media="(orientation: portrait)" srcset="bg_props/game/bg/Intake_PT.jpg"><img id="scene-background" src="bg_props/game/bg/Intake_LS.jpg" alt="Client interview room" fetchpriority="high"></picture><div id="scene-objects"></div></div><div id="scene-image-notice" hidden>Room artwork unavailable. All room actions are available below.</div></div>
+        <div class="scene-caption"><span id="scene-case-title">No active case</span><span id="scene-channel">Client conversation</span></div>
+      </section>
+      <section class="dialogue-panel" id="dialogue-panel" aria-label="Conversation">
+        <header class="dialogue-heading"><div><p class="eyebrow">CURRENT CONVERSATION</p><h2 id="dialogue-title">Your client</h2></div><button id="history-toggle" aria-pressed="false" type="button">History</button></header>
+        <p class="channel-hint" id="channel-hint">Prepare your questions before entering court.</p>
+        <div class="conversation-stack"><div id="transcript-feed" class="conversation-feed" role="log" aria-label="Court and case conversation"></div><div id="partner-feed" class="conversation-feed hidden" role="log" aria-label="Senior partner conversation"></div><div id="diaz-feed" class="conversation-feed hidden" role="log" aria-label="Investigator conversation"></div></div>
+        <div class="compose-area">
+          <div class="recipient-line"><label for="scene-recipient">Speak to</label><select id="scene-recipient"><option value="court">The court</option><option value="judge">Judge</option><option value="witness">Witness</option><option value="client">Client</option><option value="da">Prosecutor</option><option value="partner">Senior partner</option><option value="diaz">Investigator Diaz</option></select><span id="engine-status" role="status">Active</span></div>
+          <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="message-form">
+            <div class="objection-wrap"><button type="button" onclick="toggleObjectionMenu(event)" title="Courtroom objections" aria-label="Courtroom objections" class="objection-button">!</button><div id="objection-menu" class="hidden action-popover">
+              <button type="button" onclick="selectObjection('FRE 404(b): Propensity / Character')">FRE 404(b): Propensity</button><button type="button" onclick="selectObjection('FRE 611(a): Compound / Assumes Facts')">FRE 611: Compound / Assumes Facts</button><button type="button" onclick="selectObjection('FRE 701: Speculative Lay Opinion')">FRE 701: Lay Opinion</button><button type="button" onclick="selectObjection('FRE 802: Hearsay')">FRE 802: Hearsay</button><button type="button" onclick="selectObjection('FRE 611(c): Leading Question on Direct')">FRE 611(c): Leading on Direct</button><button type="button" onclick="selectObjection('Brady Violation: Concealed Witness Deal')">Concealed witness deal</button></div></div>
+            <div class="input-wrap"><div id="autocomplete-menu" class="hidden action-popover"></div><input id="court-user-input" aria-label="Message to selected recipient" type="text" placeholder="Ask a question or make your next move…" oninput="handleInputDraft()" autocomplete="off"></div><button type="submit" id="court-submit-btn" class="primary-button">Send</button>
           </form>
-          <div class="flex items-center gap-2 overflow-x-auto font-mono text-[10px] py-0.5">
-            <button type="button" onclick="quickAction('/recap', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-gold whitespace-nowrap">/recap</button>
-            <button type="button" onclick="quickAction('/inspect ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/inspect (0 AP)</button>
-            <button type="button" onclick="quickAction('/subpoena ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-brand-muted whitespace-nowrap">/subpoena (1 AP)</button>
-            <button type="button" onclick="quickAction('Motion to Suppress ', event)" class="px-2 py-0.5 rounded bg-brand-surface border border-brand-border text-rose-400 whitespace-nowrap">Suppress [Ex]</button>
-          </div>
+          <form id="assistant-form" onsubmit="handleAssistantSubmit(event)" class="message-form hidden"><input id="assistant-input" type="text" aria-label="Private assistant message" placeholder="Ask for tactical advice…" autocomplete="off"><button type="submit" id="assistant-submit-btn" class="primary-button">Consult Partner</button></form>
+          <div id="scene-actions" class="scene-actions" aria-label="Room actions"></div>
+          <div id="no-case-notice" hidden><a href="shelf.html">Choose a case from the archive</a> or <a href="index.html">start a new intake</a> to begin.</div>
         </div>
       </section>
     </div>
+    <div class="case-strip"><button type="button" onclick="RYCScene.openDocument('brief')">Case brief</button><button type="button" onclick="RYCScene.openDocument('evidence')">Evidence</button><button type="button" onclick="RYCScene.openDocument('notebook')">Notebook</button><a href="library.html">Legal library ↗</a><span id="scene-activity" aria-live="polite"></span></div>
   </main>
 
   <!-- ================= VIEW 2: NOTEBOOK ================= -->
-  <main id="tab-notebook" class="hidden max-w-5xl mx-auto px-4 py-6 flex-grow w-full">
+  <main id="tab-notebook" aria-label="Case notebook" class="hidden max-w-5xl mx-auto px-4 py-6 flex-grow w-full">
+    <div class="notebook-topline"><h1>Case notebook</h1><button type="button" onclick="switchTab('terminal')">Back to room ×</button></div>
     <div id="view-no-case-notebook" class="flex flex-col items-center justify-center h-full space-y-4 py-20">
       <span class="text-4xl">📁</span>
       <h2 class="text-xl font-serif text-white">Notebook Locked</h2>
@@ -177,7 +132,7 @@
           <span class="text-white border-l border-brand-border pl-3" id="nb-phase">Phase 1: Intake</span>
         </div>
         <div class="flex items-center gap-3">
-          <button onclick="switchTab('terminal')" class="text-[10px] text-brand-muted hover:text-white px-2 py-0.5 rounded border border-brand-border bg-brand-surface transition">💻 Terminal</button>
+          <button onclick="switchTab('terminal')" class="text-[10px] text-brand-muted hover:text-white px-2 py-0.5 rounded border border-brand-border bg-brand-surface transition">Return to room</button>
           <span class="text-brand-muted text-[10px] border-l border-brand-border pl-2">Auto-sync</span>
           <button onclick="openWipeModal()" class="text-[10px] text-rose-400 hover:text-white px-2 py-0.5 rounded border border-rose-900/50 hover:bg-rose-900/50 transition">Delete Case</button>
         </div>
@@ -231,7 +186,7 @@
   
     <nav class="p-4 flex flex-col space-y-2 font-mono text-xs overflow-y-auto flex-grow">
       <a href="index.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Overview</a>
-      <button id="tab-terminal-btn" onclick="navToTab('terminal')" class="w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition">Live Terminal</button>
+      <button id="tab-terminal-btn" onclick="navToTab('terminal')" class="w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition">Live rooms</button>
       <button id="tab-notebook-btn" onclick="navToTab('notebook')" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition">Notebook</button>
       <a href="shelf.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition flex items-center justify-between">
         <span>Case Shelf</span>
@@ -246,34 +201,6 @@
       Procedural Engine &copy; 2026
     </div>
   </aside>
-
-  <!-- ================= UNIFIED ASSISTANTS DRAWER UI ================= -->
-  <button onclick="toggleAssistantsDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 bg-brand-surface border border-r-0 border-brand-border hover:border-brand-gold text-brand-gold px-1.5 py-4 rounded-l-md font-mono text-xs z-50 shadow-xl flex items-center transition group">
-    <span class="transform -rotate-90 block whitespace-nowrap text-brand-gold font-bold tracking-widest text-[11px] group-hover:text-white uppercase">Assistants</span>
-  </button>
-
-  <div id="assistants-drawer" class="fixed right-0 top-0 h-full w-full sm:w-96 bg-brand-dark border-l border-brand-border z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
-    <div class="px-4 py-3 bg-brand-surface border-b border-brand-border flex items-center justify-between shrink-0">
-      <div class="flex gap-2 bg-brand-dark p-1 rounded border border-brand-border font-mono text-[10px]">
-        <button id="tab-partner" onclick="switchAssistantTab('partner')" class="px-3 py-1 rounded bg-brand-surface text-brand-gold font-bold border border-brand-gold/30">Senior Partner</button>
-        <button id="tab-diaz" onclick="switchAssistantTab('diaz')" class="px-3 py-1 rounded text-brand-muted hover:text-slate-200 border border-transparent">Inv. Diaz</button>
-      </div>
-      <button onclick="toggleAssistantsDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
-    </div>
-
-    <div id="partner-feed" class="p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]">
-      <div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private legal strategy channel. Consultations cost 0 AP.</div>
-    </div>
-
-    <div id="diaz-feed" class="hidden p-4 space-y-4 flex-grow overflow-y-auto font-sans text-sm bg-[#0d0f12]">
-      <div class="text-brand-muted text-[10px] font-mono italic text-center mt-6 mb-4">Private investigation channel. Max 2 AP per action.</div>
-    </div>
-
-    <form id="assistant-form" onsubmit="handleAssistantSubmit(event)" class="p-3 bg-brand-dark border-t border-brand-border flex flex-col gap-2 shrink-0">
-      <input id="assistant-input" type="text" placeholder="Ask for tactical advice..." class="w-full bg-brand-surface border border-brand-border rounded px-3 py-2 text-xs text-white outline-none focus:border-brand-gold font-mono" autocomplete="off" />
-      <button type="submit" id="assistant-submit-btn" class="w-full bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold py-2 rounded text-xs font-mono font-bold transition">Consult Partner</button>
-    </form>
-  </div>
 
   <!-- ================= TRASH WARNING MODAL ================= -->
   <div id="trash-warning-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -373,14 +300,16 @@
     </div>
   </div>
 
+  <dialog id="scene-document" class="scene-document" aria-labelledby="scene-document-title"><div class="document-shell"><header><p class="eyebrow">CASE DOCUMENTS</p><button id="document-close" type="button" aria-label="Close document">Close ×</button></header><h2 id="scene-document-title">Case brief</h2><div id="document-body" class="document-body"></div></div></dialog>
   <footer class="border-t border-brand-border py-2 px-4 text-[10px] font-mono text-brand-muted max-w-7xl mx-auto w-full shrink-0">
     Rest Your Case &copy; 2026. Local-First Client Storage.
   </footer>
 
   <!-- Scripts loaded in execution order -->
-  <script src="data.js?v=1"></script>
-  <script src="scout_prompt.js?v=1"></script>
-  <script src="cases.js?v=1"></script>
-  <script src="game.js?v=1"></script>
+  <script src="data.js?v=3"></script>
+  <script src="cases.js?v=3"></script>
+  <script src="game-state.js?v=3"></script>
+  <script src="game-scene.js?v=3"></script>
+  <script src="game.js?v=3"></script>
 </body>
 </html>

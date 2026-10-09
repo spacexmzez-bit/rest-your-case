@@ -22,6 +22,8 @@ let appState = {
   hasSeenTrashWarning: false
 };
 
+let recoveryOriginal = null;
+const pendingRequests = {};
 let trialHistory = [];
 let partnerHistory = [];
 let diazHistory = [];
@@ -29,7 +31,7 @@ let activeAssistantTab = 'partner';
 let engineLocked = false;
 let pendingTrashFactId = null;
 let customGeminiKey = null; // BYOK State
-const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
+const GAME_WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
 
 // Loading Tips
 let loadingInterval;
@@ -41,6 +43,10 @@ const loadingTips = [
   "TIP: Suppressing tainted evidence removes all derivative fruits under the 4th Amendment.",
   "TIP: Consult your Senior Partner (/consult) without spending any AP."
 ];
+
+function escapeGameText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
 
 function hashFact(str) {
   let hash = 0;
@@ -54,6 +60,7 @@ function toggleNavDrawer() {
 }
 
 function switchTab(tabId) {
+  if(tabId==='notebook'){renderDocket();document.getElementById('attorney-notes').value=appState.notes;}
   const tabs = ['terminal', 'notebook'];
   tabs.forEach(t => {
     const view = document.getElementById(`tab-${t}`);
@@ -160,33 +167,37 @@ function clearCustomKey() {
 }
 
 function initApp() {
-  const saved = localStorage.getItem('rest_your_case_state');
-  if (saved) { 
-    try { 
-      const parsed = JSON.parse(saved); 
-      appState = { ...appState, ...parsed }; 
-      if (!appState.trashedFacts) appState.trashedFacts = [];
-      if (!appState.hiddenFacts) appState.hiddenFacts = [];
-      if (!appState.exhibitNotes) appState.exhibitNotes = {};
-    } catch (e) {} 
+  let saved = null;
+  try { saved = localStorage.getItem('rest_your_case_state'); } catch (_) { storageNotice('Browser storage is unavailable. Saving may fail.'); }
+  let parsed = null;
+  if (saved) {
+    try { parsed = JSON.parse(saved); } catch (_) { storageNotice('The saved case could not be read. A backup will be kept before saving.'); }
+    appState = RYCState.normalize(parsed, appState);
+    if (!parsed || JSON.stringify(appState) !== JSON.stringify(Object.fromEntries(Object.entries(parsed).filter(([k])=>!k.startsWith('_'))))) {
+      recoveryOriginal = saved;
+      storageNotice('Some saved fields need recovery. Valid case data has been retained.');
+    }
   }
-  
-  const savedHistory = localStorage.getItem('rest_your_case_history');
-  if (savedHistory) { try { trialHistory = JSON.parse(savedHistory); } catch (e) {} }
+  const loadHistory = (channel, key) => {
+    let value = parsed?._histories?.[channel];
+    if (value === undefined) { try { value = JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { value = []; } }
+    return RYCState.history(value);
+  };
+  trialHistory = loadHistory('court','rest_your_case_history');
+  partnerHistory = loadHistory('partner','rest_your_case_partner_history');
+  diazHistory = loadHistory('diaz','rest_your_case_diaz_history');
+  if(RYCState.object(parsed?._requests)) for(const ch of ['court','partner','diaz']) {
+    const request=parsed._requests[ch];
+    if(RYCState.object(request)&&typeof request.prompt==='string') pendingRequests[ch]={prompt:request.prompt,isInit:request.isInit===true,started:request.started===true,response:RYCState.object(request.response)?request.response:undefined,error:typeof request.error==='string'&&request.error?request.error:'This action was interrupted. Retry when ready.'};
+  }
 
-  const savedPartnerHistory = localStorage.getItem('rest_your_case_partner_history');
-  if (savedPartnerHistory) { try { partnerHistory = JSON.parse(savedPartnerHistory); } catch (e) {} }
-
-  const savedDiazHistory = localStorage.getItem('rest_your_case_diaz_history');
-  if (savedDiazHistory) { try { diazHistory = JSON.parse(savedDiazHistory); } catch (e) {} }
-
-  const savedDraft = localStorage.getItem('terminal_draft');
+  let savedDraft=null;try{savedDraft=localStorage.getItem('terminal_draft');}catch(_){}
   if (savedDraft) document.getElementById('court-user-input').value = savedDraft;
 
   // Init BYOK & Shelf count
-  customGeminiKey = localStorage.getItem('rest_your_case_custom_gemini_key') || null;
+  try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
   updateKeyIndicator();
-  updateShelfBadge();
+  try{updateShelfBadge();}catch(_){storageNotice('The archive could not be read. Your active case is still available.');}
 
   // Check URL Hash for initial tab
   const hash = window.location.hash.replace('#', '');
@@ -201,13 +212,13 @@ function initApp() {
   updateActiveModelDisplay();
 
   // Check for auto-initialization handshake from startTrialWithCase()
-  const triggerHandshake = sessionStorage.getItem('trigger_engine_handshake');
-  if (triggerHandshake && appState.activeCaseSeed) {
+  let triggerHandshake=null;try{triggerHandshake=sessionStorage.getItem('trigger_engine_handshake');}catch(_){}
+  if (triggerHandshake && appState.activeCaseSeed && !pendingRequests.court) {
     sessionStorage.removeItem('trigger_engine_handshake');
-    executeEngineInitializationHandshake(appState.activeCaseSeed);
+    try{executeEngineInitializationHandshake(appState.activeCaseSeed);}catch(error){storageNotice('The saved intake could not initialize: '+error.message);}
   } else {
     // Check for legacy intake trigger
-    const triggerStart = sessionStorage.getItem('trigger_intake_start');
+    let triggerStart=null;try{triggerStart=sessionStorage.getItem('trigger_intake_start');}catch(_){}
     if (triggerStart) {
       sessionStorage.removeItem('trigger_intake_start');
       try {
@@ -276,12 +287,33 @@ ${base64Truth}
   sendCourtAction(handshakePrompt, true);
 }
 
-function persist() { 
-  localStorage.setItem('rest_your_case_state', JSON.stringify(appState)); 
+// State and histories commit in one localStorage value. Legacy history keys are mirrors.
+function storageNotice(message) {
+  let notice=document.getElementById('save-notice');
+  if(!notice){notice=document.createElement('p');notice.id='save-notice';notice.setAttribute('role','alert');document.body.append(notice);}
+  notice.textContent=message;notice.hidden=false;
+}
+function persist() {
+  try {
+    if(recoveryOriginal!==null){localStorage.setItem('rest_your_case_recovery_backup',recoveryOriginal);recoveryOriginal=null;}
+    localStorage.setItem('rest_your_case_state',JSON.stringify({...appState,_histories:{court:trialHistory,partner:partnerHistory,diaz:diazHistory},_requests:pendingRequests}));
+  } catch(error) {
+    storageNotice('Could not save this case. Your browser storage may be full or unavailable. Your unsent draft is retained.');
+    throw error;
+  }
+  for(const [key,value] of [['rest_your_case_history',trialHistory],['rest_your_case_partner_history',partnerHistory],['rest_your_case_diaz_history',diazHistory]]) {
+    try{localStorage.setItem(key,JSON.stringify(value));}catch(_){} // The single case snapshot is authoritative.
+  }
+  const notice=document.getElementById('save-notice');if(notice)notice.hidden=true;
+}
+function commitCase(next, histories={}) {
+  const previous={state:appState,court:trialHistory,partner:partnerHistory,diaz:diazHistory};
+  appState=next;trialHistory=histories.court??trialHistory;partnerHistory=histories.partner??partnerHistory;diazHistory=histories.diaz??diazHistory;
+  try{persist();}catch(error){appState=previous.state;trialHistory=previous.court;partnerHistory=previous.partner;diazHistory=previous.diaz;throw error;}
 }
 
 function saveDraft() {
-  localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);
+  try{localStorage.setItem('terminal_draft', document.getElementById('court-user-input').value);}catch(_){storageNotice('Your draft could not be saved. Keep this page open.');}
 }
 
 // Autocomplete logic with strictly enforced 2-AP cap
@@ -294,12 +326,16 @@ function handleInputDraft() {
   if (val.startsWith('/inspect')) {
     const exhibits = (appState.docket || []).map(e => e.id || e.tag).filter(Boolean);
     if (exhibits.length > 0) {
-      menu.innerHTML = exhibits.map(ex => `
-        <button type="button" onmousedown="fillAutocomplete('/inspect ${ex}')" class="block w-full text-left px-3 py-2 bg-brand-dark hover:bg-brand-surface text-slate-200 hover:text-brand-gold transition flex items-center justify-between">
-          <span>${ex}</span>
-          <span class="text-[10px] text-brand-muted uppercase">0 AP</span>
-        </button>
-      `).join('');
+      menu.replaceChildren();
+      exhibits.forEach(ex => {
+        const option=document.createElement('button');option.type='button';
+        option.className='block w-full text-left px-3 py-2';
+        const label=document.createElement('span');label.textContent=ex;
+        const cost=document.createElement('span');cost.textContent=' · 0 AP';
+        option.append(label,cost);
+        option.addEventListener('click',()=>fillAutocomplete('/inspect '+ex));
+        menu.append(option);
+      });
       menu.classList.remove('hidden');
     } else {
       menu.innerHTML = `<div class="px-3 py-2 text-[10px] text-brand-muted italic">No marked exhibits in docket yet.</div>`;
@@ -371,9 +407,10 @@ document.addEventListener('click', function(event) {
 });
 
 window.saveExhibitNote = function(exhibitId, value) {
-  if (!exhibitId) return;
+  if (!exhibitId || ['__proto__','constructor','prototype'].includes(exhibitId)) return;
   appState.exhibitNotes[exhibitId] = value;
-  persist();
+  try{persist();}catch(_){}
+  document.querySelectorAll('textarea[data-exid]').forEach(input=>{if(input.dataset.exid===exhibitId&&input!==document.activeElement)input.value=value;});
 }
 
 function renderUI() {
@@ -399,6 +436,7 @@ function renderUI() {
   }
   renderTranscriptFeed();
   updateActiveModelDisplay();
+  window.RYCScene?.refresh();
 }
 
 function renderTerminalSidePanel() {
@@ -423,8 +461,8 @@ function renderTerminalSidePanel() {
     } else {
       evList.innerHTML = appState.docket.map(item => `
         <div class="p-1.5 rounded bg-brand-surface/70 border border-brand-border flex justify-between items-center text-[10px]">
-          <span class="text-brand-gold font-bold truncate max-w-[140px]">${item.id || item.tag}: ${item.name || item.title}</span>
-          <span class="text-[8px] px-1 rounded ${item.status === 'Admitted' ? 'text-emerald-400 bg-emerald-950' : item.status === 'SUPPRESSED' ? 'text-rose-400 line-through bg-rose-950/40' : 'text-amber-400 bg-amber-950/40'}">${item.status || 'Marked'}</span>
+          <span class="text-brand-gold font-bold truncate max-w-[140px]">${escapeGameText(item.id || item.tag)}: ${escapeGameText(item.name || item.title)}</span>
+          <span class="text-[8px] px-1 rounded ${item.status === 'Admitted' ? 'text-emerald-400 bg-emerald-950' : item.status === 'SUPPRESSED' ? 'text-rose-400 line-through bg-rose-950/40' : 'text-amber-400 bg-amber-950/40'}">${escapeGameText(item.status || 'Marked')}</span>
         </div>
       `).join('');
     }
@@ -444,7 +482,7 @@ function renderTerminalSidePanel() {
         const id = hashFact(fact);
         return `
           <div class="py-1 border-b border-brand-border/40 last:border-0 flex justify-between items-start gap-1">
-            <span class="leading-relaxed flex-grow">• ${fact}</span>
+            <span class="leading-relaxed flex-grow">• ${escapeGameText(fact)}</span>
             <div class="flex gap-1 shrink-0 pt-0.5">
               <button onclick="toggleFactVisibility('${id}')" class="text-brand-muted hover:text-white px-1 text-[10px]" title="Hide from Terminal">👁</button>
               <button onclick="trashFact('${id}')" class="text-brand-muted hover:text-rose-400 px-1 text-[10px]" title="Archive Fact">🗑</button>
@@ -463,33 +501,9 @@ function selectObjection(ruleStr) {
   input.focus();
 }
 
-function toggleAssistantsDrawer() { 
-  document.getElementById('assistants-drawer').classList.toggle('translate-x-full'); 
-}
+function toggleAssistantsDrawer() { RYCScene.selectRoom('partner'); }
 
-function switchAssistantTab(tabId) {
-  activeAssistantTab = tabId;
-  document.getElementById('partner-feed').classList.toggle('hidden', tabId !== 'partner');
-  document.getElementById('diaz-feed').classList.toggle('hidden', tabId !== 'diaz');
-  
-  const pBtn = document.getElementById('tab-partner');
-  const dBtn = document.getElementById('tab-diaz');
-  
-  if (tabId === 'partner') {
-    pBtn.className = "px-3 py-1 rounded bg-brand-surface text-brand-gold font-bold border border-brand-gold/30";
-    dBtn.className = "px-3 py-1 rounded text-brand-muted hover:text-slate-200 border border-transparent";
-    document.getElementById('assistant-submit-btn').innerText = "Consult Partner";
-    document.getElementById('assistant-input').placeholder = "Ask for tactical advice...";
-  } else {
-    dBtn.className = "px-3 py-1 rounded bg-brand-surface text-brand-gold font-bold border border-brand-gold/30";
-    pBtn.className = "px-3 py-1 rounded text-brand-muted hover:text-slate-200 border border-transparent";
-    document.getElementById('assistant-submit-btn').innerText = "Consult Diaz";
-    document.getElementById('assistant-input').placeholder = "Ask for records or alibi check...";
-  }
-  
-  const feed = document.getElementById(tabId + '-feed');
-  if (feed) feed.scrollTop = feed.scrollHeight;
-}
+function switchAssistantTab(tabId) { RYCScene.selectRoom(tabId); }
 
 function saveNotes() { 
   appState.notes = document.getElementById('attorney-notes').value; 
@@ -506,6 +520,7 @@ function closeWipeModal() {
 }
 
 function executeWipe() {
+  if(engineLocked){alert('Wait for the current action to finish before deleting the case.');return;}
   if (document.getElementById('wipe-confirm-input').value === 'CONFIRM') {
     const warningState = appState.hasSeenTrashWarning;
     appState = { 
@@ -516,6 +531,7 @@ function executeWipe() {
       trashedFacts: [], hiddenFacts: [], exhibitNotes: {}, hasSeenTrashWarning: warningState 
     };
     trialHistory = []; partnerHistory = []; diazHistory = [];
+    for(const ch of Object.keys(pendingRequests))delete pendingRequests[ch];
     localStorage.removeItem('rest_your_case_history');
     localStorage.removeItem('rest_your_case_partner_history');
     localStorage.removeItem('rest_your_case_diaz_history');
@@ -576,9 +592,9 @@ function renderDocket() {
   
   appState.docket.forEach((item, index) => {
     const isSuppressed = item.status === 'SUPPRESSED';
-    const tag = item.id || item.tag || '';
-    const notes = appState.exhibitNotes[tag] || '';
-    const itemType = item.type || 'Documentary';
+    const tag = escapeGameText(item.id || item.tag || '');
+    const notes = escapeGameText(appState.exhibitNotes[item.id || item.tag || ''] || '');
+    const itemType = escapeGameText(item.type || 'Documentary');
     
     const typeBadgeColor = 
       itemType === 'Physical' ? 'text-blue-400 bg-blue-950 border-blue-800' :
@@ -603,15 +619,15 @@ function renderDocket() {
       <div class="p-3 rounded border flex flex-col ${isSuppressed ? 'bg-brand-surface/20 border-brand-border/40 opacity-50' : 'bg-brand-surface border-brand-border'} space-y-2 font-mono text-xs">
         <div class="flex justify-between items-start gap-2">
           <div class="flex flex-col">
-            <span class="font-bold ${isSuppressed ? 'text-brand-muted line-through' : 'text-brand-gold'}">${item.id || item.tag}: ${item.name || item.title}</span>
+            <span class="font-bold ${isSuppressed ? 'text-brand-muted line-through' : 'text-brand-gold'}">${escapeGameText(item.id || item.tag)}: ${escapeGameText(item.name || item.title)}</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded border w-fit mt-1 ${typeBadgeColor}">${itemType}</span>
           </div>
           <div class="flex flex-col items-end gap-1">
-            <span class="text-[9px] px-2 py-0.5 rounded font-bold whitespace-nowrap ${item.status === 'Admitted' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : item.status === 'Marked' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}">${item.status || 'Logged'}</span>
+            <span class="text-[9px] px-2 py-0.5 rounded font-bold whitespace-nowrap ${item.status === 'Admitted' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : item.status === 'Marked' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}">${escapeGameText(item.status || 'Logged')}</span>
             ${item.isApi ? '<span class="text-[8px] text-brand-muted uppercase tracking-widest" title="Generated by Court Engine">Locked</span>' : '<span class="text-[8px] text-brand-gold uppercase tracking-widest" title="Added Manually">Manual</span>'}
           </div>
         </div>
-        <p class="text-brand-muted text-[11px] font-sans flex-grow">${item.facts || item.details || 'No forensic notes.'}</p>
+        <p class="text-brand-muted text-[11px] font-sans flex-grow">${escapeGameText(item.facts || item.details || 'No forensic notes.')}</p>
         <div class="mt-2 pt-2 border-t border-brand-border/30">
           <textarea placeholder="Defense Annotations..." data-exid="${tag}" onchange="saveExhibitNote(this.dataset.exid, this.value)" class="w-full bg-brand-dark border border-brand-border rounded p-1.5 text-slate-300 text-[10px] font-mono outline-none resize-none focus:border-brand-gold" rows="2">${notes}</textarea>
         </div>
@@ -683,14 +699,14 @@ function renderFactLedger() {
         archiveCount++;
         archiveContainer.innerHTML += `
           <div class="pb-2 border-b border-brand-border/40 last:border-0 flex justify-between items-start gap-2">
-            <span class="pr-2 line-through text-slate-500">• ${fact}</span>
+            <span class="pr-2 line-through text-slate-500">• ${escapeGameText(fact)}</span>
             <button onclick="restoreFact('${id}')" class="text-[10px] px-2 py-0.5 rounded border border-emerald-900/50 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900 transition shrink-0" title="Restore to active record">Restore</button>
           </div>`;
       } else {
         activeCount++;
         activeContainer.innerHTML += `
           <div class="pb-2 border-b border-brand-border/50 last:border-0 flex justify-between items-start gap-2">
-            <span class="pr-2 ${isHidden ? 'opacity-40 line-through' : ''}">• ${fact}</span>
+            <span class="pr-2 ${isHidden ? 'opacity-40 line-through' : ''}">• ${escapeGameText(fact)}</span>
             <div class="flex gap-1.5 shrink-0 pt-0.5">
               <button onclick="toggleFactVisibility('${id}')" class="px-1.5 py-0.5 rounded border border-brand-border bg-brand-dark hover:border-brand-gold text-slate-300 hover:text-white transition text-xs" title="${isHidden ? 'Show in Terminal' : 'Hide from Terminal'}">
                 ${isHidden ? '🙈' : '👁'}
@@ -740,35 +756,11 @@ function retryAction(encodedPrompt, isAssistant) {
   }
 }
 
-function appendErrorAlert(rawError, lastPrompt, isAssistant = false) {
-  const feedId = isAssistant ? `${activeAssistantTab}-feed` : 'transcript-feed';
-  const feed = document.getElementById(feedId);
-  let humanError = "The server link dropped unexpectedly. Check worker availability or resubmit.";
-  if (rawError.includes("503") || rawError.includes("high demand") || rawError.includes("UNAVAILABLE")) {
-    humanError = "All Gemini endpoints are experiencing peak traffic. Please wait a few seconds and hit Retry.";
-  } else if (rawError.includes("MAX_TOKENS") || rawError.includes("token limit")) {
-    humanError = "The maximum token limit per request was reached. Rephrase your inquiry or run /recap to condense the record context.";
-  } else if (rawError.includes("429") || rawError.includes("rate limit")) {
-    humanError = "API request threshold exceeded. Plug in your own personal Google AI Studio key via Settings (⚙) to bypass rate limits.";
-  } else if (rawError.includes("timed out")) {
-    humanError = "The AI model is taking too long to respond. The request has been aborted to prevent freezing.";
-  }
-  
-  const errorId = 'err-' + Date.now();
-  const alertHtml = `
-    <div class="bg-rose-950/30 border border-rose-900 rounded p-3 mb-4 space-y-2">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <span class="text-rose-400 font-bold text-xs uppercase tracking-wider">Transmission Interrupted</span>
-          <button onclick="document.getElementById('${errorId}').classList.toggle('hidden')" class="w-4 h-4 rounded-full bg-rose-900 text-rose-300 text-[10px] font-bold flex items-center justify-center hover:bg-rose-700 transition">!</button>
-        </div>
-        <button onclick="retryAction('${encodeURIComponent(lastPrompt)}', ${isAssistant})" class="px-2 py-1 bg-rose-900 hover:bg-rose-700 text-white rounded text-[10px] font-mono font-bold transition shadow">Retry</button>
-      </div>
-      <p class="text-rose-200 text-xs font-sans">${humanError}</p>
-      <div id="${errorId}" class="hidden mt-2 p-2 bg-brand-dark border border-rose-900/50 rounded text-[10px] font-mono text-rose-400 break-words"><strong>Raw Trace:</strong> ${rawError}</div>
-    </div>`;
-  feed.insertAdjacentHTML('beforeend', alertHtml);
-  feed.scrollTop = feed.scrollHeight;
+function appendErrorAlert(rawError,lastPrompt,isAssistant=false,assistantTab=activeAssistantTab) {
+  const ch=isAssistant?assistantTab:'court';
+  if(window.RYCScene?.ready)return RYCScene.errorAlert(String(rawError),lastPrompt,ch);
+  pendingRequests[ch]={prompt:lastPrompt,error:String(rawError)};
+  storageNotice('Could not complete the action: '+String(rawError));
 }
 
 function appendTranscriptMessage(sender, text, isUser = false) {
@@ -779,6 +771,7 @@ function appendTranscriptMessage(sender, text, isUser = false) {
 }
 
 function renderTranscriptFeed() {
+  if (window.RYCScene?.ready) return RYCScene.renderCourtFeed();
   const feed = document.getElementById('transcript-feed');
   if (!feed) return; 
   feed.innerHTML = '';
@@ -790,8 +783,8 @@ function renderTranscriptFeed() {
     const item = document.createElement('div');
     item.className = "flex flex-col space-y-1 mb-4";
     const tagColor = entry.isUser ? "text-brand-gold" : "text-emerald-400";
-    const displayHtml = entry.isUser ? entry.text : parseTranscriptFormat(entry.text);
-    item.innerHTML = `<span class="text-[10px] font-bold ${tagColor} uppercase tracking-wider font-mono">${entry.sender}</span>
+    const displayHtml = entry.isUser ? escapeGameText(entry.text) : parseTranscriptFormat(escapeGameText(entry.text));
+    item.innerHTML = `<span class="text-[10px] font-bold ${tagColor} uppercase tracking-wider font-mono">${escapeGameText(entry.sender)}</span>
                       <div class="text-slate-200 text-sm leading-relaxed ${entry.isUser ? 'pl-2 border-l border-brand-gold/50 text-brand-gold/90' : ''}">${displayHtml}</div>`;
     feed.appendChild(item);
   });
@@ -799,6 +792,7 @@ function renderTranscriptFeed() {
 }
 
 function renderAssistantFeeds() {
+  if (window.RYCScene?.ready) return RYCScene.renderAssistantFeeds();
   ['partner', 'diaz'].forEach(tab => {
     const feed = document.getElementById(`${tab}-feed`);
     if (!feed) return;
@@ -819,7 +813,7 @@ function renderAssistantFeeds() {
       const item = document.createElement('div');
       item.className = "flex flex-col space-y-1 mb-4";
       const tagColor = isUser ? "text-brand-muted" : "text-brand-gold";
-      const displayHtml = isUser ? rawText : parseTranscriptFormat(rawText);
+      const displayHtml = isUser ? escapeGameText(rawText) : parseTranscriptFormat(escapeGameText(rawText));
       item.innerHTML = `<span class="text-[10px] font-bold ${tagColor} uppercase tracking-wider font-mono">${senderName}</span>
                         <div class="text-slate-200 text-sm leading-relaxed ${isUser ? 'pl-2 border-l border-brand-muted/50 text-brand-muted' : ''}">${displayHtml}</div>`;
       feed.appendChild(item);
@@ -887,7 +881,8 @@ function toggleTypingIndicator(feedId, show, label = "Processing") {
 }
 
 function handleCourtActionSubmit(e) { 
-  e.preventDefault(); 
+  e.preventDefault();
+  if (window.RYCScene) return RYCScene.submitCourt(); 
   const input = document.getElementById('court-user-input'); 
   const val = input.value.trim(); 
   if (!val) return; 
@@ -897,7 +892,8 @@ function handleCourtActionSubmit(e) {
 }
 
 function handleAssistantSubmit(e) { 
-  e.preventDefault(); 
+  e.preventDefault();
+  if (window.RYCScene) return RYCScene.submitAssistant(); 
   const input = document.getElementById('assistant-input'); 
   const val = input.value.trim(); 
   if (!val) return; 
@@ -921,243 +917,116 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
   }
 }
 
-async function sendCourtAction(userPrompt, isInit = false, isRetry = false) {
-  if (engineLocked) return;
-  engineLocked = true;
-
-  const statusBadge = document.getElementById('engine-status');
-  const submitBtn = document.getElementById('court-submit-btn');
-  if (submitBtn) submitBtn.disabled = true;
-
-  if (!isInit && !isRetry) {
-    appendTranscriptMessage("DEFENSE COUNSEL", userPrompt, true);
-    localStorage.removeItem('terminal_draft');
-  } else if (isInit) {
-    trialHistory = [];
-    localStorage.removeItem('rest_your_case_history');
-  }
-
-  if (userPrompt.trim().toLowerCase().startsWith('/undo') && trialHistory.length >= 2) {
-    trialHistory.splice(-2, 2);
-  }
-
-  if (isInit) showLoadingScreen();
-  else toggleTypingIndicator('transcript-feed', true, 'Court is Deliberating');
-
-  const MAX_RETRIES = 2;
-  let attempt = 0;
-  let success = false;
-
-  const reqHeaders = { "Content-Type": "application/json" };
-  if (customGeminiKey) {
-    reqHeaders["X-Custom-Gemini-Key"] = customGeminiKey;
-  }
-
-  try {
-    while (attempt <= MAX_RETRIES && !success) {
-      attempt++;
-      if (statusBadge) statusBadge.innerText = attempt === 1 ? "Processing..." : `Retrying (${attempt}/${MAX_RETRIES + 1})...`;
-
-      try {
-        const response = await fetchWithTimeout(WORKER_URL, {
-          method: "POST",
-          headers: reqHeaders,
-          body: JSON.stringify({ 
-            message: userPrompt, 
-            history: trialHistory, 
-            targetPersona: 'court'
-          })
-        }, 45000);
-
-        let data;
-        try {
-          data = await response.json();
-        } catch (e) {
-          data = null;
-        }
-
-        if (response.status === 429 && data?.error === "QUOTA_EXHAUSTED") {
-          if (data.activeModel) {
-            appState.selectedModel = data.activeModel;
-          }
-          appendTranscriptMessage("THE BENCH / RECORD", data.reply, false);
-          success = true;
-          break;
-        }
-
-        if (!response.ok) {
-          throw new Error(data?.details || data?.error?.message || `Worker HTTP ${response.status}`);
-        }
-
-        if (data && data.activeModel) {
-          appState.selectedModel = data.activeModel;
-        }
-        
-        trialHistory.push({ role: "user", parts: [{ text: userPrompt }] });
-        trialHistory.push({ role: "model", parts: [{ text: data.reply }] });
-        localStorage.setItem('rest_your_case_history', JSON.stringify(trialHistory));
-        processCourtResponse(data.reply);
-        success = true;
-
-      } catch (err) {
-        console.warn(`Courtroom attempt ${attempt} failed: ${err.message}`);
-        if (attempt <= MAX_RETRIES) {
-          await new Promise(res => setTimeout(res, 1000));
-        } else {
-          appendErrorAlert(err.message, userPrompt, false);
-        }
-      }
+async function requestReply(payload) {
+  const headers={'Content-Type':'application/json'};
+  if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;
+  for(let attempt=0;attempt<3;attempt++) {
+    let response;
+    try {response=await fetchWithTimeout(GAME_WORKER_URL,{method:'POST',headers,body:JSON.stringify(payload)},45000);}
+    catch(error){if(attempt===2)throw error;await new Promise(resolve=>setTimeout(resolve,1000));continue;}
+    let data;try{data=await response.json();}catch(_){throw new Error('The server returned invalid JSON. No case update was applied.');}
+    if(!response.ok) {
+      const detail=typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message;
+      const error=new Error(detail||`Worker HTTP ${response.status}`);
+      if(response.status>=500 && attempt<2){await new Promise(resolve=>setTimeout(resolve,1000));continue;}
+      throw error;
     }
-  } finally {
-    engineLocked = false;
-    if (isInit) hideLoadingScreen();
-    else toggleTypingIndicator('transcript-feed', false);
-    updateActiveModelDisplay();
-    if (submitBtn) submitBtn.disabled = false;
+    if(!RYCState.object(data)||typeof data.reply!=='string'||!data.reply.trim())throw new Error('The server returned an empty or invalid reply. No case update was applied.');
+    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw new Error('Invalid model metadata. No case update was applied.');
+    return data;
   }
 }
-
+function showRequestError(ch,error,request) {
+  request.error=String(error.message||error);
+  // Keep the retry in memory even if storage is unavailable.
+  try{persist();}catch(_){}
+  if(window.RYCScene?.ready)RYCScene.errorAlert(request.error,request.prompt,ch,request.isInit);
+  else storageNotice('Could not complete the action: '+request.error);
+}
+async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
+  if(engineLocked)return false;
+  const request=isRetry&&pendingRequests.court?pendingRequests.court:{prompt:userPrompt,isInit,started:false};
+  pendingRequests.court=request;userPrompt=request.prompt;isInit=request.isInit;
+  engineLocked=true;
+  try {
+    RYCScene.refresh();
+    if(isInit)showLoadingScreen();else toggleTypingIndicator('transcript-feed',true,'Court is deliberating');
+    if(!request.started) {
+      const next=RYCState.clone(appState);
+      if(!isInit)next.transcript.push({sender:'DEFENSE COUNSEL',text:userPrompt,isUser:true});
+      const history=isInit?[]:trialHistory;
+      request.started=true;
+      try{commitCase(next,{court:history});}catch(error){request.started=false;throw error;}
+      renderTranscriptFeed();
+    }
+    request.error='';
+    const baseHistory=userPrompt.trim().toLowerCase().startsWith('/undo')?trialHistory.slice(0,-2):trialHistory;
+    const data=request.response||await requestReply({message:userPrompt,history:baseHistory,targetPersona:'court'});
+    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw new Error('Invalid model metadata. No case update was applied.');
+    const result=RYCState.next(appState,data.reply,'court');
+    if(data.activeModel)result.state.selectedModel=data.activeModel;
+    result.state.transcript.push({sender:'THE BENCH / RECORD',text:result.text,isUser:false});
+    request.response=data; // If saving fails, retry the same result without spending another request.
+    delete pendingRequests.court;
+    try{commitCase(result.state,{court:[...baseHistory,{role:'user',parts:[{text:userPrompt}]},{role:'model',parts:[{text:data.reply}]}]});}
+    catch(error){pendingRequests.court=request;throw error;}
+    if(document.getElementById('court-user-input').value)saveDraft();else{try{localStorage.removeItem('terminal_draft');}catch(_){}}
+    renderUI();return true;
+  } catch(error) {
+    // A rendering failure after a successful commit must not replay the action.
+    if(pendingRequests.court)showRequestError('court',error,request);
+    else storageNotice('The action was saved, but the display could not refresh. Reload to continue.');
+    return false;
+  } finally {
+    engineLocked=false;hideLoadingScreen();toggleTypingIndicator('transcript-feed',false);
+    updateActiveModelDisplay();RYCScene.refresh();
+  }
+}
 function buildContextCapsule() {
-  if (!appState.hasActiveCase) return "No active case.";
-  const docketStr = (appState.docket || []).map(d => `${d.id}(${d.status})`).join(', ') || 'None';
-  const factStr = (appState.facts || []).join('; ') || 'None established';
-  return `Case: ${appState.profile.title || 'Unknown'} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}
-Marked Docket: ${docketStr}
-Established Court Facts: ${factStr}`;
+  if(!appState.hasActiveCase)return 'No active case.';
+  return `Case: ${appState.profile.title} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}\nMarked Docket: ${JSON.stringify(appState.docket)}\nEstablished Court Facts: ${JSON.stringify(appState.facts)}`;
 }
-
-async function sendAssistantAction(userPrompt, isRetry = false) {
-  if (engineLocked) return;
-  engineLocked = true;
-
-  const submitBtn = document.getElementById('assistant-submit-btn');
-  if (submitBtn) submitBtn.disabled = true;
-
-  const tabId = activeAssistantTab;
-  const histArray = tabId === 'partner' ? partnerHistory : diazHistory;
-  const rolePrefix = tabId === 'partner' ? '[SENIOR PARTNER CONSULTATION]: ' : '[INVESTIGATOR CONSULTATION]: ';
-  const senderName = tabId === 'partner' ? 'SENIOR PARTNER' : 'INV. DIAZ';
-  const typingLabel = tabId === 'partner' ? 'Partner Reviewing' : 'Diaz Investigating';
-
-  if (!isRetry) {
-    histArray.push({ role: 'user', parts: [{ text: rolePrefix + userPrompt }] });
-    renderAssistantFeeds();
-  }
-
-  toggleTypingIndicator(`${tabId}-feed`, true, typingLabel);
-
-  const reqHeaders = { "Content-Type": "application/json" };
-  if (customGeminiKey) {
-    reqHeaders["X-Custom-Gemini-Key"] = customGeminiKey;
-  }
-
-  let attempt = 0, success = false;
+async function sendAssistantAction(userPrompt,isRetry=false) {
+  if(engineLocked)return false;
+  const ch=activeAssistantTab==='diaz'?'diaz':'partner';
+  const request=isRetry&&pendingRequests[ch]?pendingRequests[ch]:{prompt:userPrompt,started:false};
+  pendingRequests[ch]=request;userPrompt=request.prompt;
+  const prefix=ch==='diaz'?'[INVESTIGATOR CONSULTATION]: ':'[SENIOR PARTNER CONSULTATION]: ';
+  engineLocked=true;
   try {
-    while (attempt <= 2 && !success) {
-      attempt++;
-      try {
-        const response = await fetchWithTimeout(WORKER_URL, {
-          method: "POST", 
-          headers: reqHeaders,
-          body: JSON.stringify({ 
-            message: rolePrefix + userPrompt, 
-            history: histArray.slice(0, -1),
-            targetPersona: tabId,
-            capsule: buildContextCapsule()
-          })
-        }, 45000); // 45s assistant budget
-
-        let data;
-        try {
-          data = await response.json();
-        } catch (e) {
-          data = null;
-        }
-
-        if (response.status === 429 && data?.error === "QUOTA_EXHAUSTED") {
-          if (data.activeModel) {
-            appState.selectedModel = data.activeModel;
-          }
-          appendAssistantMessage(tabId, senderName, data.reply, false, true);
-          renderAssistantFeeds();
-          success = true;
-          break;
-        }
-
-        if (!response.ok) {
-          throw new Error(data?.details || `Worker HTTP ${response.status}`);
-        }
-
-        if (data && data.activeModel) {
-          appState.selectedModel = data.activeModel;
-        }
-
-        histArray.push({ role: "model", parts: [{ text: data.reply }] });
-        localStorage.setItem(`rest_your_case_${tabId}_history`, JSON.stringify(histArray));
-        
-        renderAssistantFeeds();
-        success = true;
-
-      } catch (err) {
-        if (attempt > 2) appendErrorAlert(err.message, userPrompt, true);
-        else await new Promise(res => setTimeout(res, 1000));
-      }
+    RYCScene.refresh();
+    let hist=ch==='diaz'?diazHistory:partnerHistory;
+    if(!request.started) {
+      request.started=true;
+      try{commitCase(appState,{[ch]:[...hist,{role:'user',parts:[{text:prefix+userPrompt}]}]});}catch(error){request.started=false;throw error;}
     }
+    hist=ch==='diaz'?diazHistory:partnerHistory;
+    renderAssistantFeeds();toggleTypingIndicator(ch+'-feed',true,ch==='diaz'?'Diaz investigating':'Partner reviewing');
+    request.error='';
+    const directive=ch==='diaz'?'\nReport any completed investigation with a STATE_CHECKPOINT containing the remaining ap and newly discovered docket/facts. Investigations spend at most 2 AP, cannot overspend, and new exhibits are Marked. Advice alone costs 0 AP. Do not change court phase, judge, strikes, or admit evidence. Follow the established case; never expose sealed truth.':'';
+    const data=request.response||await requestReply({message:prefix+userPrompt,history:hist.slice(0,-1),targetPersona:ch,capsule:buildContextCapsule()+directive});
+    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw new Error('Invalid model metadata. No case update was applied.');
+    let next=appState;
+    if(ch==='diaz')next=RYCState.next(appState,data.reply,'diaz').state;
+    else RYCState.parse(data.reply); // Partner advice never changes court resources.
+    next=RYCState.clone(next);if(data.activeModel)next.selectedModel=data.activeModel;
+    request.response=data;delete pendingRequests[ch];
+    try{commitCase(next,{[ch]:[...hist,{role:'model',parts:[{text:data.reply}]}]});}catch(error){pendingRequests[ch]=request;throw error;}
+    renderUI();renderAssistantFeeds();return true;
+  } catch(error) {
+    if(pendingRequests[ch])showRequestError(ch,error,request);
+    else storageNotice('The consultation was saved, but the display could not refresh. Reload to continue.');
+    return false;
   } finally {
-    engineLocked = false;
-    toggleTypingIndicator(`${tabId}-feed`, false);
-    updateActiveModelDisplay();
-    if (submitBtn) submitBtn.disabled = false;
+    engineLocked=false;toggleTypingIndicator(ch+'-feed',false);updateActiveModelDisplay();RYCScene.refresh();
   }
 }
-
 function processCourtResponse(rawText) {
-  const oldAp = appState.ap;
-  
-  const checkpointMatch = rawText.match(/<!--STATE_CHECKPOINT:\s*({[\s\S]*?})-->/);
-  if (checkpointMatch && appState.hasActiveCase) {
-    try {
-      const stateUpdate = JSON.parse(checkpointMatch[1]);
-      appState.turn = stateUpdate.turn ?? appState.turn;
-      appState.ap = stateUpdate.ap ?? appState.ap;
-      appState.strikes = stateUpdate.strikes ?? appState.strikes;
-      appState.phase = stateUpdate.phase ?? appState.phase;
-      if (stateUpdate.case && stateUpdate.case.title) appState.profile.title = stateUpdate.case.title;
-      if (stateUpdate.caseTitle) appState.profile.title = stateUpdate.caseTitle; 
-      if (stateUpdate.case && stateUpdate.case.client) appState.profile.client = stateUpdate.case.client;
-      if (stateUpdate.clientName) appState.profile.client = stateUpdate.clientName; 
-      if (stateUpdate.judge) appState.profile.judge = stateUpdate.judge;
-      if (stateUpdate.da) appState.profile.da = stateUpdate.da;
-      if (stateUpdate.facts) appState.facts = stateUpdate.facts;
-      
-      if (stateUpdate.docket) {
-        const manualItems = (appState.docket || []).filter(d => d.isManual);
-        const apiItems = stateUpdate.docket.map(d => ({ ...d, isApi: true }));
-        appState.docket = [...apiItems, ...manualItems];
-      }
-    } catch (e) { console.error("Checkpoint parse error", e); }
-  } else if (appState.hasActiveCase) { appState.turn++; }
-
-  const cleanText = rawText.replace(/<!--[\s\S]*?-->/g, "").trim();
-  appendTranscriptMessage("THE BENCH / RECORD", cleanText, false);
-  
-  if (appState.hasActiveCase && appState.ap < oldAp) {
-     const apDiff = oldAp - appState.ap;
-     const alertHtml = `
-      <div class="flex items-center justify-center my-4">
-        <div class="px-3 py-1 bg-amber-950/40 border border-amber-900/50 rounded-full flex items-center gap-2 shadow-sm">
-          <span class="text-amber-500 text-xs">⚡</span>
-          <span class="text-amber-400 font-mono text-[10px] font-bold tracking-widest uppercase">-${apDiff} AP Consumed (Remaining: ${appState.ap})</span>
-        </div>
-      </div>`;
-     const feed = document.getElementById('transcript-feed');
-     feed.insertAdjacentHTML('beforeend', alertHtml);
-     feed.scrollTop = feed.scrollHeight;
-  }
-  
-  persist(); 
-  renderUI();
+  const result=RYCState.next(appState,rawText,'court');
+  result.state.transcript.push({sender:'THE BENCH / RECORD',text:result.text,isUser:false});
+  commitCase(result.state);renderUI();
 }
 
-// Direct initialization after DOM tree parse
+// Initialize only after all state helpers are defined.
 initApp();
+RYCScene.init();

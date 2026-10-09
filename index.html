@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Rest Your Case | Procedural Defense Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -42,8 +42,9 @@
       }
     }
   </script>
+<link rel="stylesheet" href="visual-theme.css?v=3"><link rel="stylesheet" href="overview-guide.css?v=3">
 </head>
-<body class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
+<body data-visual="overview" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
   <!-- ================= TOP HUD NAV ================= -->
   <header class="border-b border-brand-border bg-brand-surface/90 backdrop-blur sticky top-0 z-40 shrink-0">
@@ -352,11 +353,13 @@
   </footer>
 
   <!-- Scripts loaded in execution order with cache busting -->
-  <script src="data.js?v=1"></script>
-  <script src="scout_prompt.js?v=1"></script>
-  <script src="cases.js?v=1"></script>
+  <script src="data.js?v=3"></script>
+  <script src="scout_prompt.js?v=3"></script>
+  <script src="cases.js?v=3"></script>
   <script>
-    let customGeminiKey = localStorage.getItem('rest_your_case_custom_gemini_key') || null;
+    let customGeminiKey=null;try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
+    function showStorageError(error){let el=document.getElementById('overview-storage-error');if(!el){el=document.createElement('p');el.id='overview-storage-error';el.setAttribute('role','alert');document.body.prepend(el);}el.textContent='Could not access saved cases: '+error.message;}
+    function archiveSafely(){try{archivePending();return true;}catch(error){showStorageError(error);return false;}}
     let currentDossierIndex = 0;
     let activeSearchAbortController = null;
 
@@ -427,7 +430,7 @@
     }
 
     function startOrResumeTrial() {
-      const saved = localStorage.getItem('rest_your_case_state');
+      let saved=null;try{saved=localStorage.getItem('rest_your_case_state');}catch(error){showStorageError(error);}
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -453,8 +456,8 @@
         activeSearchAbortController = null;
       }
       // Archive pending cases so they are preserved on the shelf
-      archivePending();
-      updateShelfBadges();
+      archiveSafely();
+      try{updateShelfBadges();}catch(error){showStorageError(error);}
       document.getElementById('intake-modal').classList.add('hidden');
     }
 
@@ -570,29 +573,22 @@
       // Apply currently chosen difficulty from the dropdown
       chosenCase.difficulty = document.getElementById('intake-diff').value;
 
-      // Archive remaining unchosen cases to the Shelf
-      const others = pending.filter((_, idx) => idx !== currentDossierIndex);
-      if (others.length > 0) {
-        const shelf = getShelfCases();
-        saveShelfCases([...others.reverse(), ...shelf]);
-      }
-      savePendingCases([]);
+      try{startTrialWithCase(chosenCase);}catch(error){alert(error.message);}
 
-      startTrialWithCase(chosenCase);
     }
 
     // Auto-archive pending cases if user exits page
     window.addEventListener('beforeunload', () => {
-      archivePending();
+      archiveSafely();
     });
 
     // Page initialization
     (function initLauncher() {
       updateKeyIndicator();
-      archivePending(); // Ensure any previous dangling intakes are saved to shelf
-      updateShelfBadges();
+      archiveSafely(); // Ensure any previous dangling intakes are saved to shelf
+      try{updateShelfBadges();}catch(error){showStorageError(error);}
 
-      const saved = localStorage.getItem('rest_your_case_state');
+      let saved=null;try{saved=localStorage.getItem('rest_your_case_state');}catch(error){showStorageError(error);}
       let hasActive = false;
       if (saved) {
         try {
