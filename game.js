@@ -1,3 +1,4 @@
+/* File name: game.js */
 // game.js
 let appState = {
   hasActiveCase: false, 
@@ -148,6 +149,8 @@ function closeKeyModal() {
 function toggleKeyVisibility() {
   const input = document.getElementById('key-input');
   input.type = input.type === 'password' ? 'text' : 'password';
+  const button=document.getElementById('key-visibility-btn');
+  if(button)button.textContent=input.type==='password'?'Show key':'Hide key';
 }
 
 function saveCustomKey() {
@@ -507,8 +510,8 @@ function renderTerminalSidePanel() {
           <div class="py-1 border-b border-brand-border/40 last:border-0 flex justify-between items-start gap-1">
             <span class="leading-relaxed flex-grow">• ${escapeGameText(fact)}</span>
             <div class="flex gap-1 shrink-0 pt-0.5">
-              <button onclick="toggleFactVisibility('${id}')" class="text-brand-muted hover:text-white px-1 text-[10px]" title="Hide from Terminal">👁</button>
-              <button onclick="trashFact('${id}')" class="text-brand-muted hover:text-rose-400 px-1 text-[10px]" title="Archive Fact">🗑</button>
+              <button onclick="toggleFactVisibility('${id}')" class="text-brand-muted hover:text-white px-1 text-[10px]" title="Hide from Terminal">Hide</button>
+              <button onclick="trashFact('${id}')" class="text-brand-muted hover:text-rose-400 px-1 text-[10px]" title="Archive Fact">Archive</button>
             </div>
           </div>
         `;
@@ -720,10 +723,10 @@ function renderFactLedger() {
             <span class="pr-2 ${isHidden ? 'opacity-40 line-through' : ''}">• ${escapeGameText(fact)}</span>
             <div class="flex gap-1.5 shrink-0 pt-0.5">
               <button onclick="toggleFactVisibility('${id}')" class="px-1.5 py-0.5 rounded border border-brand-border bg-brand-dark hover:border-brand-gold text-slate-300 hover:text-white transition text-xs" title="${isHidden ? 'Show in Terminal' : 'Hide from Terminal'}">
-                ${isHidden ? '🙈' : '👁'}
+                ${isHidden ? 'Show' : 'Hide'}
               </button>
               <button onclick="trashFact('${id}')" class="px-1.5 py-0.5 rounded border border-brand-border bg-brand-dark hover:border-rose-700 text-slate-400 hover:text-rose-400 transition text-xs" title="Move to Archive">
-                🗑
+                Archive
               </button>
             </div>
           </div>`;
@@ -940,7 +943,7 @@ async function requestReply(payload) {
     : 'Client occupation is not yet classified. Preserve the existing story. Court only: resolve civilian, police, or expert from established client information and include clientOccupation in the next STATE_CHECKPOINT; use civilian only if no occupation was established. Consultations must not invent or classify the occupation.';
   const legacyContext=!role && payload.targetPersona==='court'
     ? '\nEstablished client information: '+JSON.stringify({client:appState.profile.client,summary:appState.activeCaseSeed?.scout?.crimeSummary ?? '',facts:appState.facts,transcript:appState.transcript}) : '';
-  payload={...payload,message:payload.message+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'.]'};
+  payload={...payload,message:payload.message+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Players may address any known witness from either side, on or off stand. Respond as the explicitly addressed person; addressing a witness alone does not call them to the stand, switch the trial phase, or make an informal conversation sworn testimony. Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'.]'};
   if(role)payload.clientOccupation=role;
   const headers={'Content-Type':'application/json'};
   if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;

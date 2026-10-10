@@ -1,3 +1,4 @@
+/* File name: game-state.js */
 /* Pure validation: rejected replies never mutate the current case. */
 const RYCState = (() => {
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -82,6 +83,7 @@ const RYCState = (() => {
     for (const key of ['turn','ap','strikes','maxStrikes','complexity']) if(Number.isSafeInteger(saved[key]) && saved[key]>=0) result[key]=saved[key];
     if (object(saved.profile)) for(const key of ['title','client','judge','da']) if(typeof saved.profile[key]==='string') result.profile[key]=saved.profile[key];
     for (const key of ['facts','trashedFacts','hiddenFacts']) result[key]=Array.isArray(saved[key])?saved[key].filter(v=>typeof v==='string'):[];
+    result.knownWitnesses=Array.isArray(saved.knownWitnesses)?[...new Set(saved.knownWitnesses.filter(v=>typeof v==='string'&&v.trim()&&v.length<=100&&!/[<>\r\n]/.test(v)).map(v=>v.trim()))]:[];
     result.transcript=Array.isArray(saved.transcript)?saved.transcript.filter(e=>object(e)&&typeof e.text==='string').map(e=>({sender:typeof e.sender==='string'?e.sender:'Court record',text:e.text,isUser:e.isUser===true})):[];
     result.docket=[];
     if(Array.isArray(saved.docket)) for(const e of saved.docket) { try{result.docket.push(exhibit(e));}catch(_){} }

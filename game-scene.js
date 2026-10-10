@@ -1,4 +1,4 @@
-/* Visual rooms sit above the existing game engine. No model or save-schema migration. */
+/* File name: game-scene.js — labeled room controls and recipient routing. */
 window.RYCScene = (() => {
   const rooms = {
     court: { title: 'Courtroom', image: 'Court', recipient: 'court', hint: 'Address the bench, examine a witness, or challenge the prosecution.' },
@@ -19,8 +19,66 @@ window.RYCScene = (() => {
   const state = () => appState;
   const profile = () => state().profile || {};
   function displayName(key) {
+    if (key.startsWith('witness:')) return key.slice(8) + ' (witness)';
     const name=value=>typeof value==='string'&&value.trim()&&!/^(?:TBD|unknown|assigning case[.\s…]*)$/i.test(value.trim())?value:null;
     return ({court: 'The court', judge: name(profile().judge) || 'Judge', witness: 'Witness', client: name(profile().client) || 'Your client', da: name(profile().da) || 'Prosecutor', partner: 'Senior partner', diaz: 'Investigator Diaz'})[key];
+  }
+  function knownWitnesses() {
+    const names = new Map();
+    const add = value => {
+      if (typeof value !== 'string') return;
+      const name = value.replace(/[*\[\]]/g, '').trim();
+      if (!name || name.length > 100 || /[\n\r<>]/.test(name) || /^(?:unknown|TBD|witness|name)$/i.test(name)) return;
+      names.set(name.toLocaleLowerCase(), name);
+    };
+    (state().knownWitnesses || []).forEach(add);
+    // Read only public records, never the sealed truth or the private case seed.
+    const publicEntries=[...(state().transcript||[]),...diazHistory.filter(e=>e.role==='model').map(e=>({text:e.parts?.[0]?.text||''}))];
+    for (const entry of publicEntries) {
+      if (entry.isUser) continue;
+      for (const line of plain(entry.text).split('\n')) {
+        const clean = line.replace(/[*#\[\]]/g, '').trim();
+        const match = clean.match(/^(.{1,100}?)\s*\(witness\)\s*:/i)
+          || clean.match(/^witness\s*\(([^)]+)\)\s*:/i)
+          || clean.match(/^(?:state(?:'s)?|defense|prosecution)?\s*witness\s*[-–:]\s*([^:]{1,100}):/i)
+          || clean.match(/^(?:state(?:'s)?|defense|prosecution)?\s*witness\s+([^:]{1,100}):/i)
+          || clean.match(/^(?:state(?:'s)?|defense|prosecution)\s+witness\s*:\s*([^:]{1,100})$/i);
+        if (match) add(match[1]);
+      }
+    }
+    return [...names.values()].sort((a,b)=>a.localeCompare(b));
+  }
+  function refreshRecipients() {
+    const select = byId('scene-recipient');
+    const options = ['court','judge','client','da','partner','diaz'].map(key=>[key,displayName(key)]);
+    options.push(['witness','Choose a witness…']);
+    const witnesses=knownWitnesses();
+    witnesses.forEach(name=>options.push(['witness:'+name,name+' (witness)']));
+    if(recipient.startsWith('witness:') && !witnesses.includes(recipient.slice(8))) options.push([recipient,displayName(recipient)]);
+    select.replaceChildren(...options.map(([value,label])=>new Option(label,value)));
+    select.value=recipient;
+    const picker=byId('witness-select');
+    picker.replaceChildren(new Option('Select a known witness',''),...witnesses.map(name=>new Option(name+' (witness)',name)));
+    picker.value=recipient.startsWith('witness:')?recipient.slice(8):'';
+    byId('witness-status').textContent=witnesses.length?'Choose anyone from either side, or enter another known witness’s name.':'Enter a witness’s name from your case to address them.';
+  }
+  function openWitnessPicker() {
+    byId('witness-picker').hidden=false;
+    refreshRecipients();
+    byId(knownWitnesses().length?'witness-select':'witness-name').focus();
+    byId('witness-picker').scrollIntoView({block:'nearest'});
+  }
+  async function addWitness() {
+    const input=byId('witness-name'), name=input.value.trim();
+    const status=byId('witness-status');
+    if(!name || name.length>100 || /[\r\n<>]/.test(name)) {status.textContent='Enter a name between 1 and 100 characters.';return;}
+    if(!state().hasActiveCase || caseConflict) {status.textContent='Open an active case first.';return;}
+    const save=byId('witness-add');save.disabled=true;
+    try {
+      await commitCase(next=>{next.knownWitnesses=[...new Set([...(next.knownWitnesses||[]),name])];return next;});
+      input.value='';selectRecipient('witness:'+name);
+    } catch(error) {status.textContent=String(error.message||error);}
+    finally {save.disabled=false;}
   }
   function rememberDraft() {
     const ch = channel();
@@ -30,6 +88,7 @@ window.RYCScene = (() => {
     if (!rooms[id] || !ready) return;
     rememberDraft();
     current = id;
+    byId('witness-picker').hidden=true;
     if (!keepRecipient) recipient = rooms[id].recipient;
     activeAssistantTab = id === 'diaz' ? 'diaz' : 'partner';
     try { localStorage.setItem('ryc_visual_room', current); } catch (_) {}
@@ -81,63 +140,52 @@ window.RYCScene = (() => {
     plane.style.top=(camera.clientHeight-height)/2+'px';
   }
   function selectRecipient(value) {
+    if(value==='witness') {openWitnessPicker();byId('scene-recipient').value=recipient;return;}
     const map = {court:'court', judge:'court', witness:'court', client:'intake', da:'da', partner:'partner', diaz:'diaz'};
+    if(value.startsWith('witness:'))map[value]='court';
     if (!map[value]) return;
     recipient = value;
+    byId('witness-picker').hidden=true;
     selectRoom(map[value], true);
   }
   function button(label, action, className = '') {
     const el = node('button', label, className); el.type = 'button'; el.addEventListener('click', action); return el;
   }
-  // Replace these CSS silhouettes with character PNGs later without changing routing.
-  function markClientOccupation(el) {
-    const role=RYCState.clientOccupation(state());
-    if(role)el.dataset.occupation=role;else delete el.dataset.occupation;
+  // Coordinates are percentages of the complete image plane: [x,y,width,height].
+  const controls = {
+    court:[
+      ['Speak to judge','judge',[46,35,14,17],[41,47,19,14]],
+      ['Speak to DA','da',[71,60,28,19],[70,64,29,13]],
+      ['Witnesses','witness',[33,44,11,18],[20,55,19,16]],
+      ['Investigator Diaz','diaz',[0,72,13,17],[0,73,13,8]],
+      ['Notebook','notebook',[16,79,19,17],[17,78,28,10]],
+      ['Evidence docket','evidence',[65,33,12,25],[67,46,20,18]]
+    ],
+    office:[['Case board','board',[21,7,42,44],[4,18,76,28]],['Notebook','notebook',[31,79,16,13],[8,70,35,14]],['Case folder','brief',[52,77,19,15],[50,69,39,15]],['Legal library','library',[85,12,14,66],[92,6,8,47]]],
+    diaz:[['Clues board','board',[4,6,40,50],[0,16,65,38]],['Reports','reports',[8,68,60,29],[3,68,76,19]]],
+    partner:[['Speak to partner','partner',[40,40,19,31],[27,50,40,22]],['Advice notes','advice',[24,33,16,36],[3,51,23,20]]],
+    da:[['Speak to DA','da',[39,45,18,29],[30,52,36,20]],['DA overview','da-overview',[5,75,17,17],[0,72,18,10]],['Offers & disclosure','offers',[57,76,15,14],[58,74,31,10]]],
+    intake:[['Speak to client','client',[38,35,17,20],[41,59,37,14]],['Client statement','statement',[76,42,23,13],[79,59,20,13]]]
+  };
+  function controlAction(kind) {
+    if(['judge','da','client','partner','diaz'].includes(kind))selectRecipient(kind);
+    else if(kind==='witness')openWitnessPicker();
+    else if(kind==='library')location.href='library.html';
+    else openDocument(kind);
   }
-  function character(key, x, y, size) {
-    const el = button('', () => selectRecipient(key), 'scene-character');
-    el.dataset.character = key; if(key==='client')markClientOccupation(el); el.style.setProperty('--desktop-x', x + '%'); el.style.setProperty('--desktop-y', y + '%'); el.style.setProperty('--size', size + '%');
-    el.setAttribute('aria-label', 'Speak to ' + displayName(key));
-    const shape = node('span', '', 'silhouette'); shape.setAttribute('aria-hidden','true');
-    const label = node('span', displayName(key), 'character-label');
-    el.append(shape, label); return el;
-  }
-  function hotspot(label, kind, x, y, w, h, asset) {
-    const el = button(label, () => openDocument(kind), 'scene-hotspot');
-    el.textContent='';el.append(node('span',label));
-    el.setAttribute('aria-label','Open '+label);
-    const layouts={
-      office:{board:[[21,7,42,44],[4,18,76,28]],notebook:[[31,79,16,13],[8,70,35,14]],brief:[[52,77,19,15],[50,69,39,15]]},
-      diaz:{board:[[4,6,40,50],[0,16,65,38]],reports:[[20,60,48,31],[10,56,78,27]]},
-      court:{evidence:[[11,81,20,12],[0,78,57,16]]},
-      partner:{advice:[[66,77,23,14],[57,76,36,15]]},
-      da:{offers:[[63,77,28,13],[59,72,39,17]]},
-      intake:{statement:[[22,73,28,15],[13,72,66,21]]}
-    };
-    const [wide,portrait]=layouts[current]?.[kind]||[[x,y,w,h],[x,y,w,h]];
+  function hotspot([label,kind,wide,portrait]) {
+    const el=button('',()=>controlAction(kind),'scene-hotspot');
+    el.append(node('span',label));el.setAttribute('aria-label',label);el.dataset.kind=kind;
     for(const [prefix,values]of [['desktop',wide],['portrait',portrait]])for(const [index,key]of ['x','y','w','h'].entries())el.style.setProperty(`--${prefix}-${key}`,values[index]+'%');
-    el.dataset.kind=kind;return el;
+    return el;
   }
   function renderObjects() {
-    const group = byId('scene-objects'); group.replaceChildren();
-    if (current === 'court') {
-      group.append(character('judge', 60, 64, 9), character('witness', 79, 70, 8), character('da', 29, 80, 10), hotspot('Evidence', 'evidence', 11, 81, 20, 12, 'paper-b-4'));
-    } else if (current === 'office') {
-      group.append(hotspot('Case board', 'board', 29, 8, 35, 42), hotspot('Notebook', 'notebook', 31, 79, 16, 13, 'paper-a-1'), hotspot('Case folder', 'brief', 52, 77, 19, 15));
-    } else if (current === 'diaz') {
-      group.append(hotspot('Clues board', 'board', 4, 10, 40, 47), hotspot('Reports', 'reports', 33, 59, 23, 15, 'details-2'));
-    } else if (current === 'partner') {
-      group.append(character('partner', 52, 58, 13), hotspot('Advice notes', 'advice', 66, 77, 23, 14, 'paper-b-1'));
-    } else if (current === 'da') {
-      group.append(character('da', 53, 57, 13), hotspot('Offers & disclosure', 'offers', 63, 77, 28, 13, 'paper-b-2'));
-    } else {
-      group.append(character('client', 55, 58, 12), hotspot('Client statement', 'statement', 22, 73, 28, 15, 'paper-b-3'));
-    }
+    byId('scene-objects').replaceChildren(...controls[current].map(hotspot));
   }
   function renderActions() {
     const group = byId('scene-actions'); group.replaceChildren();
     const items = {
-      court: [['Object', (event) => { recipient='judge'; byId('scene-recipient').value='judge'; toggleObjectionMenu(event); refresh(); }], ['Present evidence', () => openDocument('evidence')], ['Judge', () => selectRecipient('judge')], ['Witness', () => selectRecipient('witness')], ['Recap', () => quickAction('/recap')]],
+      court: [['Object', (event) => { recipient='judge'; byId('scene-recipient').value='judge'; toggleObjectionMenu(event); refresh(); }], ['Present evidence', () => openDocument('evidence')], ['Recap', () => quickAction('/recap')]],
       office: [['Notebook', () => openDocument('notebook')], ['Case folder', () => openDocument('brief')], ['Defense board', () => openDocument('board')]],
       diaz: [['Reports', () => openDocument('reports')], ['Clues board', () => openDocument('board')]],
       partner: [['Advice notes', () => openDocument('advice')], ['Legal library', () => { location.href='library.html'; }]],
@@ -145,12 +193,15 @@ window.RYCScene = (() => {
       intake: [['Client statement', () => openDocument('statement')], ['Evidence', () => openDocument('evidence')]]
     };
     items[current].forEach(([label, action]) => group.append(button(label, action)));
+    const extras=controls[current].filter(([label])=>!items[current].some(([existing])=>existing===label));
+    extras.forEach(([label,kind])=>group.append(button(label,()=>controlAction(kind))));
   }
   async function submitCourt() {
     const input = byId('court-user-input'); const text = input.value.trim();
     if (!text || engineLocked || caseConflict || RYCState.intakeStatus(state())!=='ready') return;
-    const targets = {judge:'the judge', witness:'the witness currently on the stand', client:'my client', da:'the prosecutor'};
-    const prompt = !text.startsWith('/') && targets[recipient] ? `To ${targets[recipient]}: ${text}` : text;
+    const targets = {judge:displayName('judge'),client:displayName('client'),da:displayName('da')};
+    const target=recipient.startsWith('witness:')?displayName(recipient):targets[recipient];
+    const prompt = !text.startsWith('/') && target ? `To ${target}: ${text}` : text;
     input.value=''; drafts.set('court',''); byId('autocomplete-menu').classList.add('hidden');
     const ok=await sendCourtAction(prompt, false);
     if(!ok&&!input.value){input.value=text;drafts.set('court',text);saveDraft();}
@@ -210,7 +261,7 @@ window.RYCScene = (() => {
     byId('court-submit-btn').disabled = !active || locked || incomplete;
     byId('assistant-submit-btn').disabled = !active || locked || incomplete;
     byId('dialogue-title').textContent = displayName(recipient);
-    document.querySelectorAll('[data-character]').forEach(el=>{const name=displayName(el.dataset.character);if(el.dataset.character==='client')markClientOccupation(el);el.setAttribute('aria-label','Speak to '+name);const label=el.querySelector('.character-label');if(label)label.textContent=name;});
+    refreshRecipients();
     document.querySelectorAll('button[data-room]').forEach(el => el.classList.toggle('has-update', unread.has(el.dataset.room)));
     byId('scene-activity').textContent = unread.size ? 'New conversation updates available' : '';
     // Open documents are snapshots. Never replace an active editor on request completion.
@@ -246,11 +297,16 @@ window.RYCScene = (() => {
   }
   function fillDocument(kind) {
     const body = byId('document-body'); body.replaceChildren();
-    const labels={brief:'Case brief', evidence:'Evidence docket', board:current==='diaz'?'Clues board':'Defense board', reports:'Investigation reports', advice:'Partner’s advice notes', offers:'Offers & disclosure', statement:'Client statement'};
+    const labels={brief:'Case brief', evidence:'Evidence docket', board:current==='diaz'?'Clues board':'Defense board', reports:'Investigation reports', advice:'Partner’s advice notes', offers:'Offers & disclosure', statement:'Client statement','da-overview':'DA overview'};
     byId('scene-document-title').textContent = labels[kind] || 'Case document';
     byId('scene-document').dataset.paper = ({board:'board', evidence:'exhibit', reports:'report',advice:'advice',offers:'offer',statement:'statement'})[kind] || 'report';
     if (!state().hasActiveCase) { body.append(node('p','Open a case from the archive to begin.')); return; }
-    if (kind==='brief') {
+    if(kind==='da-overview') {
+      const da=state().activeCaseSeed?.seed?.roster?.da || GAME_DATA.district_attorneys.find(d=>d.name===profile().da);
+      documentText(body,'Prosecutor',profile().da||'Not yet assigned');
+      if(da)for(const [key,label]of [['style','Style'],['temperament','Temperament'],['profile','Overview'],['tactic','Typical tactics'],['courtroom_behavior','Courtroom behavior'],['tactical_guidance','Preparation guidance']])if(da[key])documentText(body,label,da[key]);
+      else body.append(node('p','Traits are unavailable for this prosecutor.'));
+    } else if (kind==='brief') {
       documentText(body,'Case',profile().title || 'Active case');
       for (const [key,label] of [['client','Client'],['judge','Judge'],['da','Prosecutor']]) documentText(body,label,profile()[key]||'Not yet assigned');
       documentText(body,'Client occupation',RYCState.occupationLabel(RYCState.clientOccupation(state())));
@@ -300,17 +356,24 @@ window.RYCScene = (() => {
     document.querySelectorAll('button[data-room]').forEach(b=>b.addEventListener('click',()=>selectRoom(b.dataset.room)));
     byId('room-menu-toggle').addEventListener('click',()=>{const menu=byId('room-menu');menu.hidden=!menu.hidden;byId('room-menu-toggle').setAttribute('aria-expanded',String(!menu.hidden));});
     byId('scene-recipient').addEventListener('change',e=>selectRecipient(e.target.value));
+    byId('witness-select').addEventListener('change',e=>{if(e.target.value)selectRecipient('witness:'+e.target.value);});
+    byId('witness-add').addEventListener('click',addWitness);
+    byId('witness-name').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addWitness();}});
+    byId('witness-close').addEventListener('click',()=>{byId('witness-picker').hidden=true;byId('scene-recipient').focus();});
     byId('history-toggle').addEventListener('click',()=>{const on=byId('dialogue-panel').classList.toggle('show-history');byId('history-toggle').setAttribute('aria-pressed',String(on));byId('history-toggle').textContent=on?'Current dialogue':'History';});
     byId('document-close').addEventListener('click',()=>byId('scene-document').close());
     byId('scene-document').addEventListener('close',()=>{if(byId('scene-document').open)return;openKind='';if(lastTrigger?.isConnected!==false)lastTrigger?.focus();});
     byId('scene-document').addEventListener('click',e=>{if(e.target===byId('scene-document')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'){byId('objection-menu').classList.add('hidden');byId('autocomplete-menu').classList.add('hidden');if(!byId('tab-notebook').classList.contains('hidden'))switchTab('terminal');byId('room-menu').hidden=true;byId('room-menu-toggle').setAttribute('aria-expanded','false');}});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){byId('witness-picker').hidden=true;byId('objection-menu').classList.add('hidden');byId('autocomplete-menu').classList.add('hidden');if(!byId('tab-notebook').classList.contains('hidden'))switchTab('terminal');byId('room-menu').hidden=true;byId('room-menu-toggle').setAttribute('aria-expanded','false');}});
     document.addEventListener('click',e=>{if(!e.target.closest('.room-menu-wrap')){byId('room-menu').hidden=true;byId('room-menu-toggle').setAttribute('aria-expanded','false');}});
     byId('scene-background').addEventListener('error',()=>byId('scene-image-notice').hidden=false);
     byId('scene-background').addEventListener('load',()=>{byId('scene-image-notice').hidden=true;fitScene();});
     window.addEventListener('resize',fitScene);
-    const portraitQuery=matchMedia('(max-width:899px) and (orientation:portrait)');portraitQuery.addEventListener?.('change',fitScene);
-    if(typeof ResizeObserver!=='undefined')new ResizeObserver(fitScene).observe(byId('scene-camera'));
+    const portraitQuery=matchMedia('(max-width:899px), (hover:none) and (pointer:coarse)');portraitQuery.addEventListener?.('change',fitScene);
+    if(typeof ResizeObserver!=='undefined') {
+      new ResizeObserver(fitScene).observe(byId('scene-camera'));
+      new ResizeObserver(()=>document.documentElement.style.setProperty('--composer-height',byId('composer-controls').getBoundingClientRect().height+'px')).observe(byId('composer-controls'));
+    }
     let initial=/intake/i.test(state().phase||'')?'intake':'court';
     try{const saved=localStorage.getItem('ryc_visual_room');if(rooms[saved] && !(state().hasActiveCase && state().turn===1 && !(state().transcript||[]).length))initial=saved;}catch(_){}
     selectRoom(initial);renderCourtFeed();renderAssistantFeeds();
@@ -322,9 +385,10 @@ window.RYCScene = (() => {
       const full=Math.max(document.documentElement.clientHeight||0,window.innerHeight);
       document.body.classList.toggle('keyboard-open',editing&&full-viewport.height>120);
       document.documentElement.style.setProperty('--visible-height',viewport.height+'px');
+      document.documentElement.style.setProperty('--keyboard-offset',Math.max(0,window.innerHeight-viewport.height-(viewport.offsetTop||0))+'px');
     };
     viewport?.addEventListener('resize',fit);document.addEventListener('focusin',fit);document.addEventListener('focusout',()=>setTimeout(fit,0));
     window.addEventListener('resize',fit);fit();fitScene();
   }
-  return {get ready(){return ready;},init,refresh,selectRoom,selectRecipient,submitCourt,submitAssistant,renderCourtFeed,renderAssistantFeeds,openDocument,errorAlert};
+  return {get ready(){return ready;},init,refresh,selectRoom,selectRecipient,submitCourt,submitAssistant,renderCourtFeed,renderAssistantFeeds,openDocument,errorAlert,knownWitnesses,controls};
 })();

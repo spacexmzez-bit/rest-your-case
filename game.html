@@ -1,3 +1,4 @@
+<!-- File name: game.html -->
 <!DOCTYPE html>
 <!-- game.html -->
 <html lang="en">
@@ -46,7 +47,7 @@
     }
   </script>
   <link rel="stylesheet" href="visual-theme.css?v=5" />
-  <link rel="stylesheet" href="game-scene.css?v=5" />
+  <link rel="stylesheet" href="game-scene.css?v=buttons-5" />
 </head>
 <body data-visual="game" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -62,20 +63,20 @@
         <!-- Shelf indicator pill -->
         <a href="shelf.html" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold text-brand-gold text-xs font-mono shadow-sm transition" title="Case Files Shelf">
           <span>🗄️</span>
-          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Shelf</span>
+          <span class="uppercase tracking-wider text-[11px] font-bold">Shelf</span>
           <span id="nav-shelf-badge" class="px-1.5 py-0.2 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold">0</span>
         </a>
 
         <!-- BYOK Indicator & Settings Button -->
         <button onclick="openKeyModal()" class="flex items-center gap-1.5 px-2 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold transition shadow-sm" title="API Key Settings">
           <span id="nav-key-indicator" class="w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300"></span>
-          <span class="text-[11px] font-mono text-brand-muted uppercase hidden sm:inline tracking-widest">Key</span>
+          <span class="text-[11px] font-mono text-brand-muted uppercase tracking-widest">Key</span>
           <span class="text-brand-gold text-xs">⚙</span>
         </button>
 
         <button onclick="toggleNavDrawer()" class="px-2.5 py-1.5 rounded bg-brand-surface border border-brand-border text-brand-gold hover:text-white transition flex items-center gap-2 font-mono text-xs shadow-sm hover:border-brand-gold/50">
           <span class="text-base leading-none">☰</span>
-          <span class="hidden sm:inline uppercase tracking-wider text-[11px] font-bold">Menu</span>
+          <span class="uppercase tracking-wider text-[11px] font-bold">Menu</span>
         </button>
       </nav>
     </div>
@@ -86,7 +87,7 @@
       <div><p class="eyebrow">REST YOUR CASE / <span id="scene-phase">Client intake</span></p><h1 id="room-title">Client interview</h1></div>
       <div class="case-stats" aria-label="Trial resources"><span>Turn <b id="term-turn">1</b></span><span>AP <b id="term-ap">4</b></span><span>Strikes <b id="term-strikes">0/3</b></span></div>
       <button id="purge-case-btn" class="purge-case" type="button" onclick="openWipeModal()">Purge case</button>
-      <div class="room-menu-wrap"><button id="room-menu-toggle" aria-label="Choose a room" aria-expanded="false" aria-controls="room-menu" type="button">•••</button>
+      <div class="room-menu-wrap"><button id="room-menu-toggle" aria-label="Choose a room" aria-expanded="false" aria-controls="room-menu" type="button">Rooms</button>
         <nav id="room-menu" aria-label="Rooms" hidden>
           <button type="button" data-room="court">Courtroom</button><button type="button" data-room="office">Your office</button><button type="button" data-room="diaz">Investigator Diaz</button><button type="button" data-room="partner">Senior partner</button><button type="button" data-room="da">DA’s office</button><button type="button" data-room="intake">Client interview</button>
           <a href="library.html">Legal library</a><a href="shelf.html">Case archive</a><button type="button" onclick="openWipeModal()">Purge current case</button>
@@ -96,21 +97,29 @@
     <nav class="room-bar" aria-label="Room navigation"><button type="button" data-room="court">Courtroom</button><button type="button" data-room="office">Your office</button><button type="button" data-room="diaz">Diaz</button><button type="button" data-room="partner">Partner</button><button type="button" data-room="da">DA’s office</button><button type="button" data-room="intake">Client</button></nav>
     <div class="scene-layout">
       <section class="room-scene" id="room-scene" aria-label="Illustrated room">
-        <div class="scene-camera" id="scene-camera"><div id="scene-plane"><picture id="scene-picture"><source id="scene-portrait" media="(max-width:899px) and (orientation:portrait)" srcset="bg_props/game/bg/Intake_PT.jpg"><img id="scene-background" src="bg_props/game/bg/Intake_LS.jpg" alt="Client interview room" fetchpriority="high"></picture><div id="scene-objects"></div></div><div id="scene-image-notice" hidden>Room artwork unavailable. All room actions are available below.</div></div>
+        <div class="scene-camera" id="scene-camera"><div id="scene-plane"><picture id="scene-picture"><source id="scene-portrait" media="(max-width:899px), (hover:none) and (pointer:coarse)" srcset="bg_props/game/bg/Intake_PT.jpg"><img id="scene-background" src="bg_props/game/bg/Intake_LS.jpg" alt="Client interview room" fetchpriority="high"></picture><div id="scene-objects"></div></div><div id="scene-image-notice" hidden>Room artwork unavailable. All room actions are available below.</div></div>
         <div class="scene-caption"><span id="scene-case-title">No active case</span><span id="scene-channel">Client conversation</span></div>
       </section>
       <section class="dialogue-panel" id="dialogue-panel" aria-label="Conversation">
         <header class="dialogue-heading"><div><p class="eyebrow">CURRENT CONVERSATION</p><h2 id="dialogue-title">Your client</h2></div><button id="history-toggle" aria-pressed="false" type="button">History</button></header>
         <p class="channel-hint" id="channel-hint">Prepare your questions before entering court.</p>
         <div class="conversation-stack"><div id="transcript-feed" class="conversation-feed" role="log" aria-label="Court and case conversation"></div><div id="partner-feed" class="conversation-feed hidden" role="log" aria-label="Senior partner conversation"></div><div id="diaz-feed" class="conversation-feed hidden" role="log" aria-label="Investigator conversation"></div></div>
-        <div class="compose-area">
-          <div class="recipient-line"><label for="scene-recipient">Speak to</label><select id="scene-recipient"><option value="court">The court</option><option value="judge">Judge</option><option value="witness">Witness</option><option value="client">Client</option><option value="da">Prosecutor</option><option value="partner">Senior partner</option><option value="diaz">Investigator Diaz</option></select><span id="engine-status" role="status">Active</span></div>
+        <div class="compose-area"><div id="composer-controls" class="composer-controls">
+          <div class="recipient-line"><label for="scene-recipient">Speak to:</label><select id="scene-recipient"><option value="court">The court</option><option value="judge">Judge</option><option value="witness">Witness</option><option value="client">Client</option><option value="da">Prosecutor</option><option value="partner">Senior partner</option><option value="diaz">Investigator Diaz</option></select><span id="engine-status" role="status">Active</span></div>
+          <section id="witness-picker" class="witness-picker" aria-label="Witness selection" hidden>
+            <div class="witness-heading"><strong>Speak to a witness</strong><button id="witness-close" type="button">Close</button></div>
+            <label for="witness-select">Known witnesses</label><select id="witness-select"><option value="">Select a known witness</option></select>
+            <label for="witness-name">Another known witness’s name</label>
+            <div class="witness-name-row"><input id="witness-name" type="text" maxlength="100" autocomplete="off" placeholder="Robert Barth"><button id="witness-add" type="button">Address witness</button></div>
+            <p id="witness-status" role="status"></p>
+          </section>
           <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="message-form">
-            <div class="objection-wrap"><button type="button" onclick="toggleObjectionMenu(event)" title="Courtroom objections" aria-label="Courtroom objections" class="objection-button">!</button><div id="objection-menu" class="hidden action-popover">
+            <div class="objection-wrap"><button type="button" onclick="toggleObjectionMenu(event)" title="Courtroom objections" aria-label="Courtroom objections" class="objection-button">Object</button><div id="objection-menu" class="hidden action-popover">
               <button type="button" onclick="selectObjection('FRE 404(b): Propensity / Character')">FRE 404(b): Propensity</button><button type="button" onclick="selectObjection('FRE 611(a): Compound / Assumes Facts')">FRE 611: Compound / Assumes Facts</button><button type="button" onclick="selectObjection('FRE 701: Speculative Lay Opinion')">FRE 701: Lay Opinion</button><button type="button" onclick="selectObjection('FRE 802: Hearsay')">FRE 802: Hearsay</button><button type="button" onclick="selectObjection('FRE 611(c): Leading Question on Direct')">FRE 611(c): Leading on Direct</button><button type="button" onclick="selectObjection('Brady Violation: Concealed Witness Deal')">Concealed witness deal</button></div></div>
             <div class="input-wrap"><div id="autocomplete-menu" class="hidden action-popover"></div><input id="court-user-input" aria-label="Message to selected recipient" type="text" placeholder="Ask a question or make your next move…" oninput="handleInputDraft()" autocomplete="off"></div><button type="submit" id="court-submit-btn" class="primary-button">Send</button>
           </form>
           <form id="assistant-form" onsubmit="handleAssistantSubmit(event)" class="message-form hidden"><input id="assistant-input" type="text" aria-label="Private assistant message" placeholder="Ask for tactical advice…" autocomplete="off"><button type="submit" id="assistant-submit-btn" class="primary-button">Consult Partner</button></form>
+          </div>
           <div id="scene-actions" class="scene-actions" aria-label="Room actions"></div>
           <div id="intake-recovery" hidden><p>This intake has not started yet.</p><button type="button" onclick="completeCaseIntake()">Finish case setup</button></div><div id="no-case-notice" hidden><a href="shelf.html">Choose a case from the archive</a> or <a href="index.html">start a new intake</a> to begin.</div>
         </div>
@@ -184,7 +193,7 @@
         <span class="text-brand-gold text-base">⚖</span>
         <span class="font-serif text-white uppercase text-xs font-bold tracking-wider">Rest Your Case</span>
       </div>
-      <button onclick="toggleNavDrawer()" class="text-brand-muted hover:text-white text-2xl leading-none">&times;</button>
+      <button onclick="toggleNavDrawer()" class="text-brand-muted hover:text-white text-sm leading-none">Close menu</button>
     </div>
   
     <nav class="p-4 flex flex-col space-y-2 font-mono text-xs overflow-y-auto flex-grow">
@@ -285,8 +294,8 @@
           <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-brand-muted hover:text-white underline font-mono">Get a Free Key ↗</a>
         </div>
         <div class="relative">
-          <input id="key-input" type="password" placeholder="AIza..." class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold font-mono text-xs pr-10" autocomplete="off" />
-          <button type="button" onclick="toggleKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted hover:text-white text-xs">👁</button>
+          <input id="key-input" type="password" placeholder="AIza..." class="w-full bg-brand-dark border border-brand-border p-2.5 rounded text-white outline-none focus:border-brand-gold font-mono text-xs pr-24" autocomplete="off" />
+          <button type="button" id="key-visibility-btn" onclick="toggleKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted hover:text-white text-xs">Show key</button>
         </div>
         <p class="text-[9px] font-mono text-emerald-500/70 leading-relaxed border-l-2 border-emerald-900 pl-2">
           🔒 Your key is stored strictly in your browser's local storage. It is never saved to an external database.
@@ -310,10 +319,10 @@
 
   <!-- Scripts loaded in execution order -->
   <script src="data.js?v=7"></script>
-  <script src="game-state.js?v=8"></script>
+  <script src="game-state.js?v=buttons-8"></script>
   <script src="case-store.js?v=5"></script>
   <script src="cases.js?v=8"></script>
-  <script src="game-scene.js?v=8"></script>
-  <script src="game.js?v=8"></script>
+  <script src="game-scene.js?v=buttons-8"></script>
+  <script src="game.js?v=buttons-8"></script>
 </body>
 </html>
