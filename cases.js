@@ -116,7 +116,7 @@ async function generateCase(diff, comp, cat, signal, onProgress) {
   const headers={'Content-Type':'application/json'};
   if(customKey)headers['X-Custom-Gemini-Key']=customKey;
   try {
-    const {response,data}=await RYCRequest.fetchJSON(WORKER_URL,{method:'POST',headers,body:JSON.stringify({message:pendingRequest.prompt,history:[],targetPersona:'scout'})},{signal,onProgress});
+    const {response,data}=await RYCRequest.fetchJSON(WORKER_URL,{method:'POST',headers,body:JSON.stringify({message:pendingRequest.prompt,history:[],targetPersona:'scout',engineMode:RYCModels.get()})},{signal,onProgress});
     if(!response.ok)throw RYCRequest.error('HTTP_'+response.status,typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message||'Server returned HTTP '+response.status+'.');
     let scout;try{scout=parseScoutResponse(data?.reply,pendingRequest.seed);}catch(e){throw RYCRequest.error('INVALID_RESPONSE',e.message);}
     const finalCase={id:'case_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),timestamp:Date.now(),difficulty:diff,seed:pendingRequest.seed,scout};

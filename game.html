@@ -68,7 +68,7 @@
         </a>
 
         <!-- BYOK Indicator & Settings Button -->
-        <button onclick="openKeyModal()" class="flex items-center gap-1.5 px-2 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold transition shadow-sm" title="API Key Settings">
+        <button onclick="openKeyModal()" class="flex items-center gap-1.5 px-2 py-1.5 rounded bg-brand-surface border border-brand-border hover:border-brand-gold transition shadow-sm" title="Settings" aria-label="Settings">
           <span id="nav-key-indicator" class="w-2 h-2 rounded-full bg-slate-600 transition-colors duration-300"></span>
           <span class="text-[11px] font-mono text-brand-muted uppercase tracking-widest">Key</span>
           <span class="text-brand-gold text-xs">⚙</span>
@@ -179,7 +179,7 @@
 
       <div class="mt-8 border-t border-brand-border pt-4 flex justify-between items-center text-[10px] font-mono text-brand-muted">
         <span>Trial Difficulty: <strong class="text-brand-gold" id="nb-diff">Normal</strong></span>
-        <span>Active Model: <strong class="text-brand-gold" id="nb-model">3.8 Flash</strong></span>
+        <span>Engine: <strong class="text-brand-gold" id="nb-model">Smart</strong></span>
         <span>Case Complexity: <strong class="text-brand-gold" id="nb-comp">Level 3</strong></span>
       </div>
     </div>
@@ -283,11 +283,24 @@
   </div>
 
   <!-- ================= BYOK CONFIGURATION MODAL ================= -->
-  <div id="key-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+  <div id="key-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-brand-surface border border-brand-border rounded max-w-md w-full p-6 space-y-5 shadow-2xl relative max-h-[90dvh] overflow-y-auto">
       <div class="border-b border-brand-border pb-2">
-        <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide">API Configuration</h3>
-        <p class="text-brand-muted text-[11px] font-mono">Run the engine on your own Gemini credentials.</p>
+        <h3 class="text-white font-serif font-medium text-lg uppercase tracking-wide" id="settings-title">Settings</h3>
+        <p class="text-brand-muted text-[11px] font-mono">Choose your engine and optional API key.</p>
+      </div>
+
+      <div class="space-y-2">
+        <label for="engine-mode" class="text-brand-gold text-xs font-mono uppercase tracking-wider block">Engine</label>
+        <select id="engine-mode" aria-describedby="engine-mode-help" class="w-full bg-brand-dark border border-brand-border p-3 rounded text-white outline-none focus:border-brand-gold font-mono text-sm">
+          <option value="smart">Smart</option>
+          <option value="light">Light</option>
+        </select>
+        <div id="engine-mode-help" class="text-brand-muted text-xs leading-relaxed space-y-1">
+          <p><strong class="text-white">Smart:</strong> Smarter responses, but more expensive.</p>
+          <p><strong class="text-white">Light:</strong> Less smart, but faster and cheaper.</p>
+        </div>
+        <p id="settings-error" role="alert" class="text-rose-400 text-xs" hidden></p>
       </div>
       
       <div class="space-y-3">
@@ -305,10 +318,10 @@
       </div>
       
       <div class="flex justify-between items-center pt-3 border-t border-brand-border">
-        <button onclick="clearCustomKey()" class="text-[10px] font-mono text-brand-muted hover:text-rose-400 transition">Use System Default</button>
+        <button onclick="clearCustomKey()" class="text-[10px] font-mono text-brand-muted hover:text-rose-400 transition">Use System Key</button>
         <div class="flex gap-2">
           <button onclick="closeKeyModal()" class="px-3 py-1.5 text-brand-muted hover:text-white font-mono text-xs transition">Cancel</button>
-          <button onclick="saveCustomKey()" class="px-3 py-1.5 bg-brand-gold text-brand-dark font-bold font-mono text-xs rounded hover:bg-white transition shadow">Save Key</button>
+          <button onclick="saveCustomKey()" class="px-3 py-1.5 bg-brand-gold text-brand-dark font-bold font-mono text-xs rounded hover:bg-white transition shadow">Save Settings</button>
         </div>
       </div>
     </div>
@@ -323,9 +336,10 @@
   <script src="data.js?v=7"></script>
   <script src="game-state.js?v=dialogue-buttons-8"></script>
   <script src="case-store.js?v=5"></script>
-  <script src="cases.js?v=dialogue-8"></script>
+  <script src="ryc-models.js?v=1"></script>
+  <script src="cases.js?v=models-1"></script>
   <script src="ryc-dialogue.js?v=1"></script>
   <script src="game-scene.js?v=dialogue-buttons-8"></script>
-  <script src="game.js?v=dialogue-buttons-8"></script>
+  <script src="game.js?v=models-1"></script>
 </body>
 </html>

@@ -102,26 +102,11 @@ function updateShelfBadge() {
 }
 
 function updateActiveModelDisplay() {
+  const label = RYCModels.label();
   const statusBadge = document.getElementById('engine-status');
-  if (statusBadge && !engineLocked) {
-    if (appState.selectedModel) {
-      let text = appState.selectedModel.replace('gemini-', '').replace('-', ' ');
-      text = text.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      statusBadge.innerText = `Active (${text})`;
-    } else {
-      statusBadge.innerText = "Active";
-    }
-  }
-
+  if (statusBadge && !engineLocked) statusBadge.innerText = `Active (${label})`;
   const modelSpan = document.getElementById('nb-model');
-  if (modelSpan) {
-    if (appState.selectedModel) {
-      let clean = appState.selectedModel.replace('gemini-', '').replace('-flash', ' Flash').replace('-pro', ' Pro');
-      modelSpan.innerText = clean;
-    } else {
-      modelSpan.innerText = "3.8 Flash";
-    }
-  }
+  if (modelSpan) modelSpan.innerText = label;
 }
 
 // =====================================
@@ -139,7 +124,9 @@ function updateKeyIndicator() {
 function openKeyModal() {
   document.getElementById('key-input').value = customGeminiKey || '';
   document.getElementById('key-input').type = 'password';
-  document.getElementById('key-modal').classList.remove('hidden');
+  document.getElementById('engine-mode').value = RYCModels.get();
+      document.getElementById('settings-error').hidden = true;
+      document.getElementById('key-modal').classList.remove('hidden');
 }
 
 function closeKeyModal() {
@@ -155,15 +142,19 @@ function toggleKeyVisibility() {
 
 function saveCustomKey() {
   const val = document.getElementById('key-input').value.trim();
-  if (val) {
-    localStorage.setItem('rest_your_case_custom_gemini_key', val);
-    customGeminiKey = val;
-  } else {
-    localStorage.removeItem('rest_your_case_custom_gemini_key');
-    customGeminiKey = null;
+  try {
+    RYCModels.set(document.getElementById('engine-mode').value);
+    if (val) localStorage.setItem('rest_your_case_custom_gemini_key', val);
+    else localStorage.removeItem('rest_your_case_custom_gemini_key');
+    customGeminiKey = val || null;
+    updateKeyIndicator();
+    if (typeof updateActiveModelDisplay === 'function') updateActiveModelDisplay();
+    closeKeyModal();
+  } catch (error) {
+    const notice = document.getElementById('settings-error');
+    notice.textContent = 'Could not save settings: ' + error.message;
+    notice.hidden = false;
   }
-  updateKeyIndicator();
-  closeKeyModal();
 }
 
 function clearCustomKey() {
@@ -911,7 +902,7 @@ async function requestReply(payload) {
     : 'Client occupation is not yet classified. Preserve the existing story. Court only: resolve civilian, police, or expert from established client information and include clientOccupation in the next STATE_CHECKPOINT; use civilian only if no occupation was established. Consultations must not invent or classify the occupation.';
   const legacyContext=!role && payload.targetPersona==='court'
     ? '\nEstablished client information: '+JSON.stringify({client:appState.profile.client,summary:appState.activeCaseSeed?.scout?.crimeSummary ?? '',facts:appState.facts,transcript:appState.transcript}) : '';
-  payload={...payload,message:payload.message+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Players may address any known witness from either side, on or off stand. Respond as the explicitly addressed person; addressing a witness alone does not call them to the stand, switch the trial phase, or make an informal conversation sworn testimony. Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'; trialEnded='+(appState.trialEnded===true)+'.]'};
+  payload={...payload,engineMode:RYCModels.get(),message:payload.message+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Players may address any known witness from either side, on or off stand. Respond as the explicitly addressed person; addressing a witness alone does not call them to the stand, switch the trial phase, or make an informal conversation sworn testimony. Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'; trialEnded='+(appState.trialEnded===true)+'.]'};
   if(role)payload.clientOccupation=role;
   const headers={'Content-Type':'application/json'};
   if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;
