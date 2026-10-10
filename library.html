@@ -1,7 +1,7 @@
 <!-- File name: library.html -->
 <!-- library.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
@@ -13,6 +13,10 @@
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8" />
+  <script src="ryc-ar.js?v=ar-1"></script>
+  <script src="library-ar.js?v=ar-1"></script>
+  <script src="ryc-i18n.js?v=ar-1"></script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rest Your Case | Legal Library</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -116,6 +120,7 @@
   </style>
 
 <link rel="stylesheet" href="visual-theme.css?v=5"><link rel="stylesheet" href="library-shelf.css?v=5">
+  <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
 </head>
 <body data-visual="library" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -820,6 +825,7 @@ function saveCustomKey() {
   </script>
 
   <script>
+    RYCI18n.prepareLibrary();
     // Stable article IDs and scoped CSS keep content independent of the site-wide visual theme.
     (() => {
       const root = document.getElementById('library-main');
@@ -831,7 +837,7 @@ function saveCustomKey() {
       const entries = [...root.querySelectorAll('.library-entry')];
       const examples = [...root.querySelectorAll('.library-example')];
       const preferenceKey = 'ruc_library_show_examples';
-      const normalize = value => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const normalize = value => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
       const searchable = new Map(entries.map(entry => [entry, normalize(entry.textContent)]));
       let showExamples = false;
       try { showExamples = localStorage.getItem(preferenceKey) === 'true'; } catch (_) {}
@@ -883,6 +889,6 @@ function saveCustomKey() {
     })();
   </script>
 
-  <script src="library-shelf.js?v=5"></script>
+  <script src="library-shelf.js?v=ar-1"></script>
 </body>
 </html>

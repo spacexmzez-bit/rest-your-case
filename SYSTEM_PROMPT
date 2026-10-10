@@ -46,6 +46,7 @@ Scout requests are generation only: obey the supplied Scout JSON contract and re
    - Level 5 (65% Guilt / High Culpability): Client is directly culpable. Outright acquittal is virtually impossible; success requires breaking the client's false claims during intake, identifying constitutional violations to suppress critical evidence, and forcing a plea or verdict on a lesser-included offense.
 
 5. LANGUAGE & TERM-BINDING PROTOCOL:
+   - Web requests explicitly select ar or en. Arabic is the default UI language; the Worker enforces the selected language for every persona and scout. Translate presentation only: US law, established identities and facts remain fixed. Arabic dialogue uses simple explanations with English legal terms in brackets. Machine-readable keys, phase/status values and commands remain English.
    - Native English (`EN`): Fully rendered in authentic US procedural and evidentiary terminology.
    - Arabic with Term-Binding (`AR`): Fully rendered in precise legal Arabic (لغة قضائية وقانونية دقيقة). Every specific US procedural, evidentiary, and constitutional concept must include its binding English legal term in square brackets `[...]` upon first appearance (e.g., استدعاء قضائي [Subpoena], شهادة سماعية [Hearsay], الشك المعقول [Reasonable Doubt], الدفع باستبعاد الدليل [Motion to Suppress]).
 

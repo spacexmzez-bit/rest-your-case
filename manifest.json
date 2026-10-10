@@ -1,10 +1,10 @@
 {
   "_comment": "File name: manifest.json",
   "id": "./",
-  "name": "Rest Your Case",
+  "name": "ريست يور كيس",
   "short_name": "RYC",
-  "description": "A procedural criminal-defense mystery and courtroom simulator.",
-  "lang": "en",
+  "description": "محاكاة الدفاع الجنائي والمحاكمات وفق القانون الأمريكي.",
+  "lang": "ar",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -30,5 +30,6 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "dir": "rtl"
 }

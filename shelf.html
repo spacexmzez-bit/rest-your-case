@@ -1,6 +1,6 @@
 <!-- File name: shelf.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
@@ -168,6 +168,7 @@
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .case-folder:hover { transform: none; } }
   </style>
 <link rel="stylesheet" href="archive-interface.css?v=5">
+  <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
 </head>
 <body>
   <a class="skip-link" href="#catalog">Skip to case files</a>
@@ -210,7 +211,7 @@
       <form class="catalog" id="catalog" role="search" aria-label="Find a case">
         <div class="search-field"><label for="search">Search the files</label><input id="search" type="search" placeholder="Case title, client, or charge" autocomplete="off"></div>
         <div class="genre-field"><label for="genre">Case type</label><select id="genre"><option value="all">All case types</option></select></div>
-        <div><label for="difficulty">Difficulty</label><select id="difficulty"><option value="all">All difficulties</option><option>Sandbox</option><option>Easy</option><option>Normal</option><option>Hard</option></select></div>
+        <div><label for="difficulty">Difficulty</label><select id="difficulty"><option value="all">All difficulties</option><option value="Sandbox">Sandbox</option><option value="Easy">Easy</option><option value="Normal">Normal</option><option value="Hard">Hard</option></select></div>
         <div><label for="sort">File order</label><select id="sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></div>
       </form>
       <div class="results-bar"><p id="results-count" role="status" aria-live="polite">Opening the archive…</p><button class="clear-filters" id="clear-filters" type="button" hidden>Clear filters</button></div>
@@ -253,19 +254,19 @@
   <script src="archive-trial.js?v=5"></script>
   <!-- Use the existing case broker; archive browsing makes no AI requests. -->
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=ap-v2"></script>
+  <script src="cases.js?v=ar-1"></script>
   <script>
   (() => {
     'use strict';
     const $ = id => document.getElementById(id);
     const keys = { shelf: 'ryc_shelf_cases', pending: 'ryc_pending_cases', active: 'rest_your_case_state' };
     const state = { activeRaw:null, purgeRaw:null, purging:false, records: [], visible: [], selected: null, collection: 'all', problems: [], active: null, opener: null, starting: false };
-    const normalize = value => String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const normalize = value => String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
     const text = (value, fallback = 'Not provided') => typeof value === 'string' && value.trim() ? value.trim() : fallback;
     const formatDate = value => {
       const number = typeof value === 'number' ? value : Number(value);
       if (!Number.isFinite(number) || number <= 0) return 'Date unavailable';
-      try { return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(number)); } catch (_) { return 'Date unavailable'; }
+      try { return new Intl.DateTimeFormat(RYCI18n.locale(), { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(number)); } catch (_) { return 'Date unavailable'; }
     };
     function readArray(key) {
       const raw = localStorage.getItem(key);
@@ -343,7 +344,7 @@
     function render() {
       const terms = normalize($('search').value).split(' ').filter(Boolean);
       const genre = $('genre').value, difficulty = $('difficulty').value;
-      state.visible = state.records.filter(r => (state.collection === 'all' || r.source === state.collection) && (genre === 'all' || r.genre === genre) && (difficulty === 'all' || r.difficulty === difficulty) && terms.every(term => normalize(`${r.title} ${r.client} ${r.charge} ${r.genre}`).includes(term)));
+      state.visible = state.records.filter(r => (state.collection === 'all' || r.source === state.collection) && (genre === 'all' || r.genre === genre) && (difficulty === 'all' || r.difficulty === difficulty) && terms.every(term => normalize(`${r.title} ${r.client} ${r.charge} ${r.genre} ${RYCI18n.t(r.charge)} ${RYCI18n.t(r.genre)}`).includes(term)));
       const order = $('sort').value;
       state.visible.sort((a,b) => order === 'title' ? a.title.localeCompare(b.title) : order === 'oldest' ? a.timestamp - b.timestamp : b.timestamp - a.timestamp);
       const fragment = document.createDocumentFragment(); state.visible.forEach(r => fragment.append(makeFolder(r))); $('case-grid').replaceChildren(fragment);

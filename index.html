@@ -1,6 +1,6 @@
 <!-- File name: index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
@@ -12,6 +12,9 @@
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8" />
+  <script src="ryc-ar.js?v=ar-1"></script>
+  <script src="ryc-i18n.js?v=ar-1"></script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Rest Your Case | Procedural Defense Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -53,6 +56,7 @@
     }
   </script>
 <link rel="stylesheet" href="visual-theme.css?v=5"><link rel="stylesheet" href="overview-guide.css?v=5">
+  <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
 </head>
 <body data-visual="overview" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -379,11 +383,11 @@
 
   <!-- Scripts loaded in execution order with cache busting -->
   <script src="data.js?v=7"></script>
-  <script src="scout_prompt.js?v=ap-v2"></script>
+  <script src="scout_prompt.js?v=ar-1"></script>
   <script src="game-state.js?v=ap-v2"></script>
   <script src="case-store.js?v=5"></script>
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=ap-v2"></script>
+  <script src="cases.js?v=ar-1"></script>
   <script>
     let customGeminiKey=null;try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
     function showStorageError(error){let el=document.getElementById('overview-storage-error');if(!el){el=document.createElement('p');el.id='overview-storage-error';el.setAttribute('role','alert');document.body.prepend(el);}el.textContent='Could not access saved cases: '+error.message;}

@@ -1,0 +1,25 @@
+/* File name: ryc-i18n.css — Arabic typography and logical layout adjustments. */
+.language-control{display:inline-flex;align-items:center;flex-shrink:0;direction:ltr}
+.language-control select{min-height:36px;max-width:105px;padding:5px 8px;border:1px solid #9c8262;border-radius:6px;background:#f8efdf;color:#493325;font:14px system-ui,sans-serif;cursor:pointer}
+.language-floating{position:fixed;inset-inline-end:12px;top:12px;z-index:45}
+.legal-term-en{display:inline;direction:ltr;unicode-bidi:isolate;font:500 .72em/1.8 system-ui,sans-serif;color:inherit}
+html[lang=ar] body,html[lang=ar] button,html[lang=ar] input,html[lang=ar] textarea,html[lang=ar] select,html[lang=ar] h1,html[lang=ar] h2,html[lang=ar] h3,html[lang=ar] h4,html[lang=ar] .font-mono,html[lang=ar] .font-serif,html[lang=ar] .chapter-button span,html[lang=ar] .document-body{font-family:Tahoma,"Noto Sans Arabic",Arial,sans-serif!important;letter-spacing:normal!important}
+html[lang=ar] p,html[lang=ar] li,html[lang=ar] .message-text{line-height:1.9}
+html[lang=ar] .text-left,html[lang=ar] .action-popover button{text-align:right}
+html[lang=ar] .text-right{text-align:left}
+html[lang=ar] .space-x-2>:not([hidden])~:not([hidden]){--tw-space-x-reverse:1}
+html[lang=ar] #nav-drawer{left:auto;right:0;border-left:1px solid #9c8262;border-right:0}
+html[lang=ar] #nav-drawer.-translate-x-full{transform:translateX(100%)}
+html[lang=ar] .player-message{padding-left:0;padding-right:12px;border-left:0;border-right:2px solid #c5a978}
+html[lang=ar] .case-stats,html[lang=ar] .room-menu-wrap,html[lang=ar] .case-strip .purge-case{margin-left:0;margin-right:auto}
+html[lang=ar] .recipient-line>span{margin-left:0;text-align:right}
+html[lang=ar] .document-body ul,html[lang=ar] #library-main .library-points,html[lang=ar] #library-main .library-sources ul{padding-left:0;padding-right:1.3rem}
+html[lang=ar] .action-popover{left:auto;right:0}
+html[lang=ar] .site-menu nav{right:auto;left:0}
+.topbar{flex-wrap:wrap}
+html[lang=ar] .library-reference,html[lang=ar] #active-model-display,html[lang=ar] #key-input,html[lang=ar] #wipe-confirm-input,html[lang=ar] #purge-current-input,html[lang=ar] #exhibit-tag{direction:ltr;unicode-bidi:isolate;text-align:left}
+html[lang=ar] .message-text,html[lang=ar] #case-summary,html[lang=ar] .document-body p{unicode-bidi:plaintext}
+html[lang=ar] .chapter-button span{line-height:1.45;font-size:clamp(10px,.9vw,14px)}
+html[lang=ar] .shelf-chapters{direction:ltr}
+html[lang=ar] .chapter-button{direction:rtl}
+@media(max-width:500px){html[lang=ar] .case-stats{margin-right:0}html[lang=ar] .case-strip .purge-case{margin-right:0}.language-control select{max-width:94px;font-size:12px}html[lang=ar] .chapter-button span{font-size:11px}}

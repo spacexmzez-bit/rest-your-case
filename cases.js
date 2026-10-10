@@ -106,7 +106,8 @@ function archivePending() {
  * @returns {Promise<object>} The fully assembled Case Object
  */
 async function generateCase(diff, comp, cat, signal, onProgress) {
-  const signature=JSON.stringify([diff,comp,cat]);
+  const language=RYCI18n.get();
+  const signature=JSON.stringify([diff,comp,cat,language]);
   if(!failedScout || failedScout.signature!==signature) {
     const seed=sampleCaseDocket(comp,cat);
     failedScout={signature,seed,prompt:buildScoutPrompt(seed)};
@@ -116,10 +117,10 @@ async function generateCase(diff, comp, cat, signal, onProgress) {
   const headers={'Content-Type':'application/json'};
   if(customKey)headers['X-Custom-Gemini-Key']=customKey;
   try {
-    const {response,data}=await RYCRequest.fetchJSON(WORKER_URL,{method:'POST',headers,body:JSON.stringify({message:pendingRequest.prompt,history:[],targetPersona:'scout',engineMode:RYCModels.get()})},{signal,onProgress});
+    const {response,data}=await RYCRequest.fetchJSON(WORKER_URL,{method:'POST',headers,body:JSON.stringify({message:pendingRequest.prompt,history:[],targetPersona:'scout',engineMode:RYCModels.get(),language})},{signal,onProgress});
     if(!response.ok)throw RYCRequest.error('HTTP_'+response.status,typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message||'Server returned HTTP '+response.status+'.');
     let scout;try{scout=parseScoutResponse(data?.reply,pendingRequest.seed);}catch(e){throw RYCRequest.error('INVALID_RESPONSE',e.message);}
-    const finalCase={id:'case_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),timestamp:Date.now(),difficulty:diff,seed:pendingRequest.seed,scout};
+    const finalCase={id:'case_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),timestamp:Date.now(),difficulty:diff,language,seed:pendingRequest.seed,scout};
     const pending=getPendingCases();pending.push(finalCase);savePendingCases(pending);
     if(failedScout===pendingRequest)failedScout=null;return finalCase;
   } catch(e) {if(e.code==='CANCELLED'&&failedScout===pendingRequest)failedScout=null;throw e;}
