@@ -76,7 +76,7 @@ const RYCState = (() => {
   function normalize(saved, defaults) {
     const result = clone(defaults);
     if (!object(saved)) return result;
-    for (const key of ['hasActiveCase','hasSeenTrashWarning','intakeComplete']) if(typeof saved[key]==='boolean') result[key]=saved[key];
+    for (const key of ['hasActiveCase','hasSeenTrashWarning','intakeComplete','trialEnded']) if(typeof saved[key]==='boolean') result[key]=saved[key];
     if(typeof saved.caseId==='string') result.caseId=saved.caseId;
     if(Number.isSafeInteger(saved.revision)&&saved.revision>=0)result.revision=saved.revision;
     for (const key of ['phase','notes','difficulty','category','selectedModel']) if(typeof saved[key]==='string') result[key]=saved[key];
@@ -127,6 +127,7 @@ const RYCState = (() => {
   function next(current, raw, channel='court') {
     const parsed=parse(raw), next=clone(current), u=parsed.update;
     if(!u || !current.hasActiveCase) { if(channel==='court'&&current.hasActiveCase)next.turn++;return {state:next,text:parsed.text}; }
+    if(u.trialEnded!==undefined){if(typeof u.trialEnded!=='boolean')invalid('Invalid checkpoint trialEnded.');if(channel==='court')next.trialEnded=u.trialEnded;}
     const lockedRole = clientOccupation(current);
     const reportedRoles = [u.clientOccupation,u.case?.clientOccupation].filter(value=>value!==undefined);
     for (const value of reportedRoles) {

@@ -47,7 +47,7 @@
     }
   </script>
   <link rel="stylesheet" href="visual-theme.css?v=5" />
-  <link rel="stylesheet" href="game-scene.css?v=buttons-5" />
+  <link rel="stylesheet" href="game-scene.css?v=dialogue-buttons-5" />
 </head>
 <body data-visual="game" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -113,6 +113,7 @@
             <div class="witness-name-row"><input id="witness-name" type="text" maxlength="100" autocomplete="off" placeholder="Robert Barth"><button id="witness-add" type="button">Address witness</button></div>
             <p id="witness-status" role="status"></p>
           </section>
+          <p id="request-progress" role="status" hidden></p>
           <form id="court-action-form" onsubmit="handleCourtActionSubmit(event)" class="message-form">
             <div class="objection-wrap"><button type="button" onclick="toggleObjectionMenu(event)" title="Courtroom objections" aria-label="Courtroom objections" class="objection-button">Object</button><div id="objection-menu" class="hidden action-popover">
               <button type="button" onclick="selectObjection('FRE 404(b): Propensity / Character')">FRE 404(b): Propensity</button><button type="button" onclick="selectObjection('FRE 611(a): Compound / Assumes Facts')">FRE 611: Compound / Assumes Facts</button><button type="button" onclick="selectObjection('FRE 701: Speculative Lay Opinion')">FRE 701: Lay Opinion</button><button type="button" onclick="selectObjection('FRE 802: Hearsay')">FRE 802: Hearsay</button><button type="button" onclick="selectObjection('FRE 611(c): Leading Question on Direct')">FRE 611(c): Leading on Direct</button><button type="button" onclick="selectObjection('Brady Violation: Concealed Witness Deal')">Concealed witness deal</button></div></div>
@@ -125,7 +126,7 @@
         </div>
       </section>
     </div>
-    <div class="case-strip"><button type="button" onclick="RYCScene.openDocument('brief')">Case brief</button><button type="button" onclick="RYCScene.openDocument('evidence')">Evidence</button><button type="button" onclick="RYCScene.openDocument('notebook')">Notebook</button><a href="library.html">Legal library ↗</a><span id="scene-activity" aria-live="polite"></span></div>
+    <div class="case-strip"><button type="button" onclick="RYCScene.openDocument('brief')">Case brief</button><button type="button" onclick="RYCScene.openDocument('evidence')">Evidence</button><button type="button" onclick="RYCScene.openDocument('notebook')">Notebook</button><a href="library.html">Legal library ↗</a><button id="case-resolution-btn" type="button" onclick="RYCScene.openDocument('resolution')" hidden>Case resolution</button><span id="scene-activity" aria-live="polite"></span></div>
   </main>
 
   <!-- ================= VIEW 2: NOTEBOOK ================= -->
@@ -276,6 +277,7 @@
       <div class="w-2 h-2 bg-brand-gold rounded-full animate-typingBounce"></div>
     </div>
     <div class="max-w-md h-16 flex items-center justify-center">
+      <p id="loading-request-status" role="status" hidden></p>
       <p id="loading-tip-text" class="text-brand-muted text-sm font-mono leading-relaxed transition-opacity duration-500"></p>
     </div>
   </div>
@@ -319,10 +321,11 @@
 
   <!-- Scripts loaded in execution order -->
   <script src="data.js?v=7"></script>
-  <script src="game-state.js?v=buttons-8"></script>
+  <script src="game-state.js?v=dialogue-buttons-8"></script>
   <script src="case-store.js?v=5"></script>
-  <script src="cases.js?v=8"></script>
-  <script src="game-scene.js?v=buttons-8"></script>
-  <script src="game.js?v=buttons-8"></script>
+  <script src="cases.js?v=dialogue-8"></script>
+  <script src="ryc-dialogue.js?v=1"></script>
+  <script src="game-scene.js?v=dialogue-buttons-8"></script>
+  <script src="game.js?v=dialogue-buttons-8"></script>
 </body>
 </html>

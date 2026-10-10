@@ -741,24 +741,9 @@ function renderFactLedger() {
 }
 
 function parseTranscriptFormat(text) {
-  text = text.replace(/`?\[(?:STATE|ROSTER|DOCKET):.*?\]`?/gim, '');
-  text = text.replace(/(?:[A-Za-z0-9+/]{4}){10,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?/g, '<span class="text-[10px] text-brand-muted italic bg-brand-dark px-2 py-0.5 rounded border border-brand-border">[SEALED TRUTH HASH HIDDEN FROM RECORD]</span>');
-
-  let parsed = text.replace(/^###\s+/gm, ''); 
-  parsed = parsed.replace(/^(?:\*\*)?\[?([A-Za-z\s\-\.\']+(?:Client\vert{}Counsel\vert{}Judge\vert{}Witness\vert{}DA\vert{}Defendant\vert{}Prosecut[a-z]+\vert{}Defen[a-z]+\vert{}Sterling\vert{}Vance\vert{}Diaz\vert{}Bench\vert{}Court)?)\]?(?:\*\*)?\s*:\s*/gim, (match, name) => {
-     let color = 'text-brand-gold'; 
-     let lower = name.toLowerCase();
-     if (lower.includes('judge') || lower.includes('bench') || lower.includes('court')) color = 'text-slate-300';
-     else if (lower.includes('prosecut') || lower.includes('da ')) color = 'text-rose-400';
-     else if (lower.includes('witness') || lower.includes('diaz')) color = 'text-emerald-400';
-     name = name.replace(/\*/g, '').replace(/[\[\]]/g, '').trim();
-     return `<br><span class="block mt-4 mb-1 text-sm font-bold tracking-wide uppercase ${color}">${name}</span>`;
-  });
-  parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
-                 .replace(/\*(.*?)\*/g, '<em class="text-slate-300 italic">$1</em>')
-                 .replace(/^\> (.*$)/gim, '<blockquote class="border-l-2 border-brand-gold pl-3 ml-1 my-2 italic text-brand-muted">$1</blockquote>')
-                 .replace(/\n/g, '<br/>');
-  return parsed.replace(/^(<br>)+/, ''); 
+  const raw=String(text).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&');
+  try{return RYCDialogue.parse(raw).map(m=>'<p class="message-speaker">'+escapeGameText(m.name)+'</p><div class="message-text">'+escapeGameText(m.text).replace(/\n/g,'<br>')+'</div>').join('');}
+  catch(_){return '<p>A saved reply has an unreadable dialogue format.</p>';}
 }
 
 function retryAction(encodedPrompt, isAssistant) {
@@ -912,27 +897,10 @@ function handleAssistantSubmit(e) {
   sendAssistantAction(val); 
 }
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
-  const controller = new AbortController();activeEngineController=controller;
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    let data;
-    try{data=await response.json();}
-    catch(error){
-      if(controller.signal.aborted)throw error;
-      if(response.ok){const invalid=new Error('The server returned invalid JSON. No case update was applied.');invalid.name='ResponseValidationError';throw invalid;}
-    }
-    return {response,data};
-  } catch (err) {
-    if (controller.signal.aborted) {
-      throw new Error(`Request timed out after ${timeoutMs / 1000}s.`);
-    }
-    throw err;
-  } finally {
-    clearTimeout(timeoutId);
-    if(activeEngineController===controller)activeEngineController=null;
-  }
+async function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
+  const controller=new AbortController();activeEngineController=controller;
+  try{return await RYCRequest.fetchJSON(url,options,{timeoutMs,signal:controller.signal,onProgress:progress=>RYCScene.requestProgress?.(progress)});}
+  finally{if(activeEngineController===controller)activeEngineController=null;}
 }
 
 async function requestReply(payload) {
@@ -943,31 +911,27 @@ async function requestReply(payload) {
     : 'Client occupation is not yet classified. Preserve the existing story. Court only: resolve civilian, police, or expert from established client information and include clientOccupation in the next STATE_CHECKPOINT; use civilian only if no occupation was established. Consultations must not invent or classify the occupation.';
   const legacyContext=!role && payload.targetPersona==='court'
     ? '\nEstablished client information: '+JSON.stringify({client:appState.profile.client,summary:appState.activeCaseSeed?.scout?.crimeSummary ?? '',facts:appState.facts,transcript:appState.transcript}) : '';
-  payload={...payload,message:payload.message+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Players may address any known witness from either side, on or off stand. Respond as the explicitly addressed person; addressing a witness alone does not call them to the stand, switch the trial phase, or make an informal conversation sworn testimony. Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'.]'};
+  payload={...payload,message:payload.message+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Players may address any known witness from either side, on or off stand. Respond as the explicitly addressed person; addressing a witness alone does not call them to the stand, switch the trial phase, or make an informal conversation sworn testimony. Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'; trialEnded='+(appState.trialEnded===true)+'.]'};
   if(role)payload.clientOccupation=role;
   const headers={'Content-Type':'application/json'};
   if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;
-  for(let attempt=0;attempt<3;attempt++) {
-    ensureCaseCurrent();
-    let response,data;
-    try {({response,data}=await fetchWithTimeout(GAME_WORKER_URL,{method:'POST',headers,body:JSON.stringify(payload)},45000));}
-    catch(error){ensureCaseCurrent();if(error.name==='ResponseValidationError'||attempt===2)throw error;await new Promise(resolve=>setTimeout(resolve,1000));continue;}
-    ensureCaseCurrent();
-    if(!response.ok) {
-      const detail=typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message;
-      const error=new Error(detail||`Worker HTTP ${response.status}`);
-      if(response.status>=500 && attempt<2){await new Promise(resolve=>setTimeout(resolve,1000));continue;}
-      throw error;
-    }
-    if(!RYCState.object(data)||typeof data.reply!=='string'||!data.reply.trim())throw new Error('The server returned an empty or invalid reply. No case update was applied.');
-    if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw Object.assign(new Error('Invalid model metadata. No case update was applied.'),{name:'ResponseValidationError'});
-    return data;
+  payload.message+='\n[DIALOGUE FORMAT: '+RYCDialogue.instruction+']';
+  const {response,data}=await fetchWithTimeout(GAME_WORKER_URL,{method:'POST',headers,body:JSON.stringify(payload)},60000);
+  ensureCaseCurrent();
+  if(!response.ok) {
+    const detail=typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message;
+    throw RYCRequest.error('HTTP_'+response.status,detail||'Worker HTTP '+response.status);
   }
+  if(!RYCState.object(data)||typeof data.reply!=='string'||!data.reply.trim())throw RYCRequest.error('INVALID_RESPONSE','The server returned an empty or invalid reply. No case update was applied.');
+  RYCDialogue.parse(data.reply,{strict:true});
+  if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw RYCRequest.error('INVALID_RESPONSE','Invalid model metadata. No case update was applied.');
+  return data;
 }
+
 async function showRequestError(ch,error,request) {
   if(caseConflict||error.name==='CaseConflictError'){invalidateCase();return;}
   if(error.name==='ResponseValidationError')delete request.response;
-  request.error=String(error.message||error);
+  request.error=RYCRequest.format(error);
   // Keep the retry in memory even if storage is unavailable.
   try{await persist();}catch(_){if(caseConflict)return;}
   if(window.RYCScene?.ready)RYCScene.errorAlert(request.error,request.prompt,ch,request.isInit);
@@ -1017,7 +981,7 @@ async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
     else storageNotice('The action was saved, but the display could not refresh. Reload to continue.');
     return false;
   } finally {
-    engineLocked=false;hideLoadingScreen();toggleTypingIndicator('transcript-feed',false);
+    engineLocked=false;RYCScene.requestProgress?.(null);hideLoadingScreen();toggleTypingIndicator('transcript-feed',false);
     updateActiveModelDisplay();RYCScene.refresh();
   }
 }
@@ -1062,7 +1026,7 @@ async function sendAssistantAction(userPrompt,isRetry=false) {
     else storageNotice('The consultation was saved, but the display could not refresh. Reload to continue.');
     return false;
   } finally {
-    engineLocked=false;toggleTypingIndicator(ch+'-feed',false);updateActiveModelDisplay();RYCScene.refresh();
+    engineLocked=false;RYCScene.requestProgress?.(null);toggleTypingIndicator(ch+'-feed',false);updateActiveModelDisplay();RYCScene.refresh();
   }
 }
 async function processCourtResponse(rawText) {

@@ -1,3 +1,4 @@
+<!-- File name: index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -256,7 +257,7 @@
           <p class="text-xs font-mono text-brand-gold tracking-wider uppercase">
             Inv. Diaz is pulling docket filings & discovery...
           </p>
-          <p class="text-[11px] text-brand-muted font-sans">Synthesizing narrative seeds via Fast Scout engine.</p>
+          <p id="dossier-search-status" class="text-[11px] text-brand-muted font-sans" role="status">Waiting for a reply… 0s / 60s</p>
         </div>
 
         <!-- Inline Error Banner -->
@@ -360,7 +361,7 @@
   <script src="scout_prompt.js?v=7"></script>
   <script src="game-state.js?v=8"></script>
   <script src="case-store.js?v=5"></script>
-  <script src="cases.js?v=8"></script>
+  <script src="cases.js?v=dialogue-8"></script>
   <script>
     let customGeminiKey=null;try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
     function showStorageError(error){let el=document.getElementById('overview-storage-error');if(!el){el=document.createElement('p');el.id='overview-storage-error';el.setAttribute('role','alert');document.body.prepend(el);}el.textContent='Could not access saved cases: '+error.message;}
@@ -459,6 +460,8 @@
       if (activeSearchAbortController) {
         activeSearchAbortController.abort();
         activeSearchAbortController = null;
+        document.getElementById('dossier-searching').classList.add('hidden');
+        document.getElementById('btn-find-case').disabled=false;
       }
       // Archive pending cases so they are preserved on the shelf
       archiveSafely();
@@ -545,23 +548,28 @@
       btnFind.disabled = true;
 
       // Create new abort signal
-      activeSearchAbortController = new AbortController();
+      const searchController=new AbortController();
+      activeSearchAbortController = searchController;
 
       try {
-        await generateCase(diff, comp, cat, activeSearchAbortController.signal);
+        await generateCase(diff, comp, cat, searchController.signal, progress=>{if(activeSearchAbortController!==searchController)return;document.getElementById('dossier-search-status').textContent=`${progress.slow?'Taking longer than usual…':'Waiting for a reply…'} ${progress.elapsed}s / 60s`;});
+        if(activeSearchAbortController!==searchController)return;
         // Switch to the newly discovered case (last in array)
         const pending = getPendingCases();
         currentDossierIndex = pending.length - 1;
         renderDossierView();
       } catch (err) {
-        if (err.message !== "Search cancelled.") {
-          document.getElementById('dossier-error-text').innerText = err.message;
+        if(activeSearchAbortController!==searchController)return;
+        if (err.code!=="CANCELLED" && err.message !== "Search cancelled.") {
+          document.getElementById('dossier-error-text').innerText = RYCRequest.format(err);
           errEl.classList.remove('hidden');
         }
       } finally {
-        searchEl.classList.add('hidden');
-        btnFind.disabled = false;
-        activeSearchAbortController = null;
+        if(activeSearchAbortController===searchController){
+          searchEl.classList.add('hidden');
+          btnFind.disabled = false;
+          activeSearchAbortController = null;
+        }
       }
     }
 

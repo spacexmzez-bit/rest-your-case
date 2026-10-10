@@ -6,6 +6,37 @@
  */
 
 const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
+const RYCRequest = (()=>{
+  const error=(code,message)=>Object.assign(new Error(message),{code,name:code==='CANCELLED'?'AbortError':code==='INVALID_RESPONSE'?'ResponseValidationError':'RequestError'});
+  function format(e) {
+    const code=e?.code || (e?.name==='ResponseValidationError'?'INVALID_RESPONSE':e?.name==='AbortError'?'CANCELLED':e instanceof TypeError?'NETWORK_ERROR':/storage|quota|save/i.test(e?.message||'')?'STORAGE_ERROR':/checkpoint|reply|response/i.test(e?.message||'')?'INVALID_RESPONSE':'ACTION_ERROR');
+    return `[${code}] ${e?.message||String(e)}`;
+  }
+  async function fetchJSON(url,options={},config={}) {
+    const timeoutMs=config.timeoutMs??60000,signal=config.signal||options.signal,controller=new AbortController();
+    if(signal?.aborted)throw error('CANCELLED','Search cancelled.');
+    let timeout,interval,onAbort,closed=false;
+    const start=Date.now();
+    const update=()=>{try{config.onProgress?.({elapsed:Math.floor((Date.now()-start)/1000),slow:Date.now()-start>=(config.warnAfterMs??15000)});}catch(_) {}};
+    const stopped=new Promise((_,reject)=>{
+      timeout=setTimeout(()=>{closed=true;controller.abort();reject(error('TIMEOUT',`No complete response within ${timeoutMs/1000} seconds. Retry when ready.`));},timeoutMs);
+      onAbort=()=>{closed=true;controller.abort();reject(error('CANCELLED','Search cancelled.'));};
+      signal?.addEventListener('abort',onAbort,{once:true});
+    });
+    update();interval=setInterval(update,1000);
+    const request=(async()=>{
+      let response;try{response=await fetch(url,{...options,signal:controller.signal});}catch(e){if(closed)throw e;throw error('NETWORK_ERROR','Could not reach the server. '+(e.message||String(e)));}
+      if(closed)throw error('CANCELLED','Request already ended.');
+      let data;try{data=await response.json();}catch(e){if(closed)throw e;if(response.ok)throw error('INVALID_RESPONSE','The server returned invalid JSON.');}
+      if(closed)throw error('CANCELLED','Request already ended.');
+      return {response,data};
+    })();
+    try{return await Promise.race([stopped,request]);}
+    finally {closed=true;clearTimeout(timeout);clearInterval(interval);signal?.removeEventListener('abort',onAbort);config.onController?.(null);}
+  }
+  return {fetchJSON,format,error};
+})();
+let failedScout=null;
 
 // =========================================================================
 // STORAGE HELPERS (Pending & Shelf)
@@ -66,7 +97,7 @@ function archivePending() {
 
 /**
  * Generates a new case file using the fast scout model.
- * Retries exactly once on malformed JSON or transient upstream failure.
+ * A single bounded request. Manual retries reuse the same sampled case.
  * 
  * @param {string} diff - Trial Difficulty (Easy, Normal, Hard)
  * @param {number} comp - Case Complexity (1-5)
@@ -74,82 +105,24 @@ function archivePending() {
  * @param {AbortSignal} signal - Optional abort signal to cancel request
  * @returns {Promise<object>} The fully assembled Case Object
  */
-async function generateCase(diff, comp, cat, signal) {
-  let attempt = 0;
-  let lastErrorMsg = "Failed to generate case.";
-
-  // Retrieve BYOK custom key if present
-  const customKey = localStorage.getItem('rest_your_case_custom_gemini_key');
-  const reqHeaders = { "Content-Type": "application/json" };
-  if (customKey) reqHeaders["X-Custom-Gemini-Key"] = customKey;
-
-  const caseSeed = sampleCaseDocket(comp, cat);
-  const scoutPromptText = buildScoutPrompt(caseSeed);
-  while (attempt < 2) {
-    attempt++;
-    let retryable = false;
-    try {
-      // 1. Procedurally sample static variables
-
-      // 2. Fetch Scout Generation
-      const fetchOptions = {
-        method: "POST",
-        headers: reqHeaders,
-        body: JSON.stringify({
-          message: scoutPromptText,
-          history: [],
-          targetPersona: 'scout'
-        })
-      };
-      
-      if (signal) fetchOptions.signal = signal;
-
-      let response;
-      try { response = await fetch(WORKER_URL, fetchOptions); }
-      catch (error) { retryable = error.name !== 'AbortError'; throw error; }
-      const data = await response.json().catch(() => null);
-      if (signal?.aborted) { const error=new Error('Search cancelled.');error.name='AbortError';throw error; }
-
-      if (response.status === 429) {
-        throw new Error("API Quota Exhausted. Please plug in a personal API key in settings.");
-      }
-      
-      if (!response.ok || !data) {
-        retryable = response.status >= 500 || (response.ok && !data);
-        throw new Error(data?.error?.message || data?.details || data?.error || `Server Error (${response.status})`);
-      }
-
-      // 3. Parse and strictly validate the JSON
-      let parsedScout;
-      try { parsedScout = parseScoutResponse(data.reply, caseSeed); }
-      catch (error) { retryable = true; throw error; }
-
-      // 4. Assemble the final case entity
-      const finalCase = {
-        id: "case_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
-        timestamp: Date.now(),
-        difficulty: diff,
-        seed: caseSeed,
-        scout: parsedScout
-      };
-
-      // Add to pending array
-      const pending = getPendingCases();
-      pending.push(finalCase);
-      savePendingCases(pending);
-
-      return finalCase;
-
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        throw new Error("Search cancelled.");
-      }
-      lastErrorMsg = err.message;
-      if (!retryable || attempt >= 2) {
-        throw new Error(`Generation failed: ${lastErrorMsg}`);
-      }
-    }
+async function generateCase(diff, comp, cat, signal, onProgress) {
+  const signature=JSON.stringify([diff,comp,cat]);
+  if(!failedScout || failedScout.signature!==signature) {
+    const seed=sampleCaseDocket(comp,cat);
+    failedScout={signature,seed,prompt:buildScoutPrompt(seed)};
   }
+  const pendingRequest={...failedScout};failedScout=pendingRequest;
+  const customKey=localStorage.getItem('rest_your_case_custom_gemini_key');
+  const headers={'Content-Type':'application/json'};
+  if(customKey)headers['X-Custom-Gemini-Key']=customKey;
+  try {
+    const {response,data}=await RYCRequest.fetchJSON(WORKER_URL,{method:'POST',headers,body:JSON.stringify({message:pendingRequest.prompt,history:[],targetPersona:'scout'})},{signal,onProgress});
+    if(!response.ok)throw RYCRequest.error('HTTP_'+response.status,typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message||'Server returned HTTP '+response.status+'.');
+    let scout;try{scout=parseScoutResponse(data?.reply,pendingRequest.seed);}catch(e){throw RYCRequest.error('INVALID_RESPONSE',e.message);}
+    const finalCase={id:'case_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),timestamp:Date.now(),difficulty:diff,seed:pendingRequest.seed,scout};
+    const pending=getPendingCases();pending.push(finalCase);savePendingCases(pending);
+    if(failedScout===pendingRequest)failedScout=null;return finalCase;
+  } catch(e) {if(e.code==='CANCELLED'&&failedScout===pendingRequest)failedScout=null;throw e;}
 }
 
 // =========================================================================

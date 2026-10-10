@@ -128,3 +128,5 @@ button[data-room].has-update::after{content:' •';color:#8b6034}
  .composer-controls .recipient-line{margin-bottom:8px}
  .compose-area{padding-top:0}
 }
+
+#request-progress,#loading-request-status{font:13px/1.5 system-ui,sans-serif;margin:8px 0;color:#745633;overflow-wrap:anywhere}#loading-request-status{color:#e7d5b9}

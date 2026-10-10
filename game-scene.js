@@ -36,6 +36,7 @@ window.RYCScene = (() => {
     const publicEntries=[...(state().transcript||[]),...diazHistory.filter(e=>e.role==='model').map(e=>({text:e.parts?.[0]?.text||''}))];
     for (const entry of publicEntries) {
       if (entry.isUser) continue;
+      try{for(const message of RYCDialogue.parse(entry.text))if(message.role==='witness')add(message.name);}catch(_) {}
       for (const line of plain(entry.text).split('\n')) {
         const clean = line.replace(/[*#\[\]]/g, '').trim();
         const match = clean.match(/^(.{1,100}?)\s*\(witness\)\s*:/i)
@@ -219,8 +220,16 @@ window.RYCScene = (() => {
     return String(text ?? '').replace(/<!--[\s\S]*?-->/g,'').replace(/\*\*(.*?)\*\*/gs,'$1').replace(/^#{1,3}\s+/gm,'').replace(/={5,}\s*SEALED CASE GROUND TRUTH\s*={5,}[\s\S]*?(?:={5,}|$)/gi, '[Sealed case record withheld]').replace(/(?:[A-Za-z0-9+/]{4}){10,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?/g,'[Sealed record withheld]');
   }
   function appendMessage(feed, sender, text, user, last) {
+    if(!user) {
+      let messages;try{messages=RYCDialogue.parse(text,{fallback:sender});}catch(error){messages=[{name:'Formatting error',text:'This saved reply could not be read as dialogue.'}];}
+      for(const message of messages)appendDialogue(feed,message.name,message.text,false,last);
+      return;
+    }
+    appendDialogue(feed,sender,text,true,last);
+  }
+  function appendDialogue(feed,sender,text,user,last) {
     const el = node('article', null, 'dialogue-entry' + (user ? ' player-message' : '') + (last ? ' current-message' : ''));
-    el.append(node('p', sender, 'message-speaker'), node('div', plain(text), 'message-text'));
+    el.append(node('p', sender, 'message-speaker'), node('div', String(text), 'message-text'));
     feed.append(el);
   }
   function updated(ch, count) {
@@ -256,6 +265,7 @@ window.RYCScene = (() => {
     const request=pendingRequests.court;
     byId('intake-recovery').querySelector('button').textContent=request&&(request.isInit||/^\/start(?:\s|$)/i.test(request.prompt.trim()))?'Retry case setup':'Finish case setup';
     byId('purge-case-btn').hidden=!active;
+    byId('case-resolution-btn').hidden=!RYCDialogue.ended(state());
     byId('scene-phase').textContent = state().phase || 'Case preparation';
     byId('no-case-notice').hidden = active;
     byId('court-submit-btn').disabled = !active || locked || incomplete;
@@ -271,7 +281,7 @@ window.RYCScene = (() => {
     const feed=byId(ch==='court'?'transcript-feed':ch+'-feed');
     feed.querySelectorAll('.request-error').forEach(el=>el.remove());
     const card=node('article',null,'request-error');card.setAttribute('role','alert');
-    card.append(node('h3','Action not completed'),node('p','Review the error below and retry when ready.'));
+    card.append(node('h3','Action not completed'),node('p',request.error));
     const details=node('details');details.append(node('summary','Show error'),node('pre',request.error));
     card.append(details,button('Retry',()=>{
       if(engineLocked||caseConflict)return;
@@ -286,6 +296,10 @@ window.RYCScene = (() => {
     if(channel()!==ch)unread.add(ch);
     refresh();
   }
+  function requestProgress(progress) {
+    const text=progress?`${progress.slow?'Taking longer than usual…':'Waiting for a reply…'} ${progress.elapsed}s / 60s`:'';
+    for(const id of ['request-progress','loading-request-status']) {const el=byId(id);if(el){el.textContent=text;el.hidden=!progress;}}
+  }
   function closeDocument(nextFocus) {
     // Choose the destination before close: native close events run asynchronously.
     lastTrigger=nextFocus||lastTrigger;
@@ -297,11 +311,21 @@ window.RYCScene = (() => {
   }
   function fillDocument(kind) {
     const body = byId('document-body'); body.replaceChildren();
-    const labels={brief:'Case brief', evidence:'Evidence docket', board:current==='diaz'?'Clues board':'Defense board', reports:'Investigation reports', advice:'Partner’s advice notes', offers:'Offers & disclosure', statement:'Client statement','da-overview':'DA overview'};
+    const labels={brief:'Case brief', evidence:'Evidence docket', board:current==='diaz'?'Clues board':'Defense board', reports:'Investigation reports', advice:'Partner’s advice notes', offers:'Offers & disclosure', statement:'Client statement','da-overview':'DA overview',resolution:'Case resolution'};
     byId('scene-document-title').textContent = labels[kind] || 'Case document';
     byId('scene-document').dataset.paper = ({board:'board', evidence:'exhibit', reports:'report',advice:'advice',offers:'offer',statement:'statement'})[kind] || 'report';
     if (!state().hasActiveCase) { body.append(node('p','Open a case from the archive to begin.')); return; }
-    if(kind==='da-overview') {
+    if(kind==='resolution') {
+      if(!RYCDialogue.ended(state())) {body.append(node('p','The sealed record is available after the trial ends.'));return;}
+      let truth=state().activeCaseSeed?.scout?.unencryptedTruth;
+      if(!truth&&typeof atob==='function')for(const entry of state().transcript||[]) {
+        const block=entry.text?.match(/={3,}\s*SEALED CASE GROUND TRUTH\s*={3,}([\s\S]*?)={3,}/i)?.[1];
+        if(!block)continue;
+        const encoded=block.split('\n').map(s=>s.trim()).filter(s=>/^[A-Za-z0-9+/]{8,}={0,2}$/.test(s)).join('');
+        if(encoded)try{truth=decodeURIComponent(Array.from(atob(encoded),c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0')).join(''));break;}catch(_) {}
+      }
+      body.append(node('h3','Case resolution'),node('p',truth||'No original sealed record is available in this legacy save.'));return;
+    } else if(kind==='da-overview') {
       const da=state().activeCaseSeed?.seed?.roster?.da || GAME_DATA.district_attorneys.find(d=>d.name===profile().da);
       documentText(body,'Prosecutor',profile().da||'Not yet assigned');
       if(da)for(const [key,label]of [['style','Style'],['temperament','Temperament'],['profile','Overview'],['tactic','Typical tactics'],['courtroom_behavior','Courtroom behavior'],['tactical_guidance','Preparation guidance']])if(da[key])documentText(body,label,da[key]);
@@ -343,7 +367,7 @@ window.RYCScene = (() => {
       if (!entries.length) body.append(node('p',kind==='reports'?'No investigation reports received yet.':kind==='advice'?'No advice recorded yet.':'No case conversation recorded yet.'));
       if (kind==='offers') body.append(node('p','The recorded case conversation appears below. Only terms explicitly offered by the prosecutor are an offer; this view creates no new agreement.'));
       if (kind==='statement') body.append(node('p','Review the recorded conversation for your client’s statements. This view does not introduce new testimony.'));
-      entries.forEach(t=>body.append(node('div',plain(t),'document-record')));
+      entries.forEach(t=>{try{const messages=RYCDialogue.parse(t,{fallback:kind==='reports'?'Investigator Diaz':kind==='advice'?'Senior partner':'Case conversation'});messages.forEach(m=>body.append(node('h3',m.name),node('div',m.text,'document-record')));}catch(_){body.append(node('p','A saved reply has an unreadable dialogue format.'));}});
     }
   }
   function openDocument(kind) {
@@ -390,5 +414,5 @@ window.RYCScene = (() => {
     viewport?.addEventListener('resize',fit);document.addEventListener('focusin',fit);document.addEventListener('focusout',()=>setTimeout(fit,0));
     window.addEventListener('resize',fit);fit();fitScene();
   }
-  return {get ready(){return ready;},init,refresh,selectRoom,selectRecipient,submitCourt,submitAssistant,renderCourtFeed,renderAssistantFeeds,openDocument,errorAlert,knownWitnesses,controls};
+  return {get ready(){return ready;},init,refresh,selectRoom,selectRecipient,submitCourt,submitAssistant,renderCourtFeed,renderAssistantFeeds,openDocument,errorAlert,knownWitnesses,controls,requestProgress};
 })();
