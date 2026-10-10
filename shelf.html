@@ -204,7 +204,7 @@
       <form class="catalog" id="catalog" role="search" aria-label="Find a case">
         <div class="search-field"><label for="search">Search the files</label><input id="search" type="search" placeholder="Case title, client, or charge" autocomplete="off"></div>
         <div class="genre-field"><label for="genre">Case type</label><select id="genre"><option value="all">All case types</option></select></div>
-        <div><label for="difficulty">Difficulty</label><select id="difficulty"><option value="all">All difficulties</option><option>Easy</option><option>Normal</option><option>Hard</option></select></div>
+        <div><label for="difficulty">Difficulty</label><select id="difficulty"><option value="all">All difficulties</option><option>Sandbox</option><option>Easy</option><option>Normal</option><option>Hard</option></select></div>
         <div><label for="sort">File order</label><select id="sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></div>
       </form>
       <div class="results-bar"><p id="results-count" role="status" aria-live="polite">Opening the archive…</p><button class="clear-filters" id="clear-filters" type="button" hidden>Clear filters</button></div>
@@ -242,12 +242,12 @@
     <div class="confirm-actions"><button class="secondary" id="cancel-accept" type="button" autofocus>Keep reviewing</button><button class="primary" id="confirm-accept" type="button">Begin trial →</button></div>
   </dialog>
   <dialog id="purge-current-dialog" class="confirm-dialog" aria-labelledby="purge-current-title"><h2 id="purge-current-title">Purge current case?</h2><p>This removes the active trial, its notes and conversations. Your archived files and API key stay available.</p><label for="purge-current-input">Type CONFIRM to purge</label><input id="purge-current-input" autocomplete="off" spellcheck="false"><p id="purge-current-error" class="error-message" role="alert" hidden></p><div class="confirm-actions"><button id="purge-current-cancel" class="secondary" type="button">Cancel</button><button id="purge-current-confirm" class="primary" type="button">Purge case</button></div></dialog>
-  <script src="game-state.js?v=8"></script>
+  <script src="game-state.js?v=ap-v2"></script>
   <script src="case-store.js?v=5"></script>
   <script src="archive-trial.js?v=5"></script>
   <!-- Use the existing case broker; archive browsing makes no AI requests. -->
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=models-1"></script>
+  <script src="cases.js?v=ap-v2"></script>
   <script>
   (() => {
     'use strict';

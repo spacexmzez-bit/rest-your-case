@@ -139,7 +139,7 @@
             <span class="w-5 h-5 rounded bg-brand-gold text-brand-dark font-mono font-bold flex items-center justify-center text-xs">2</span>
             <h3 class="text-white font-bold text-sm">Manage Action Points (AP)</h3>
           </div>
-          <p class="text-brand-muted leading-relaxed">In Phase 2, spend AP strategically with Investigator Diaz to subpoena records, run background checks, or file motions to suppress.</p>
+          <p class="text-brand-muted leading-relaxed">During investigation and trial, spend AP strategically with Investigator Diaz to subpoena records, run background checks, or file motions to suppress.</p>
         </div>
         <div class="bg-brand-surface border border-brand-border rounded p-4 space-y-2">
           <div class="flex items-center space-x-2">
@@ -209,9 +209,10 @@
         <div>
           <label class="text-brand-gold text-[10px] uppercase block mb-1">Trial Rules</label>
           <select id="intake-diff" class="w-full bg-brand-surface border border-brand-border p-1.5 rounded text-white outline-none focus:border-brand-gold">
-            <option value="Easy">Easy (6 AP)</option>
-            <option value="Normal" selected>Normal (4 AP)</option>
-            <option value="Hard">Hard (3 AP)</option>
+            <option value="Sandbox">Sandbox (Unlimited AP)</option>
+            <option value="Easy">Easy (150% case AP)</option>
+            <option value="Normal" selected>Normal (100% case AP)</option>
+            <option value="Hard">Hard (75% case AP)</option>
           </select>
         </div>
 
@@ -371,11 +372,11 @@
 
   <!-- Scripts loaded in execution order with cache busting -->
   <script src="data.js?v=7"></script>
-  <script src="scout_prompt.js?v=7"></script>
-  <script src="game-state.js?v=8"></script>
+  <script src="scout_prompt.js?v=ap-v2"></script>
+  <script src="game-state.js?v=ap-v2"></script>
   <script src="case-store.js?v=5"></script>
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=models-1"></script>
+  <script src="cases.js?v=ap-v2"></script>
   <script>
     let customGeminiKey=null;try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
     function showStorageError(error){let el=document.getElementById('overview-storage-error');if(!el){el=document.createElement('p');el.id='overview-storage-error';el.setAttribute('role','alert');document.body.prepend(el);}el.textContent='Could not access saved cases: '+error.message;}
@@ -451,8 +452,17 @@ function saveCustomKey() {
       if (ovCount) ovCount.innerText = count;
     }
 
+    function updateAPOptions() {
+      const level = Number(document.getElementById('intake-comp').value);
+      for(const option of document.getElementById('intake-diff').options) {
+        option.textContent = option.value === 'Sandbox' ? 'Sandbox (Unlimited AP)' : `${option.value} (${RYCState.apBudget(option.value,level)} AP)`;
+      }
+    }
+    updateAPOptions();
+
     function handleComplexitySlider(val) {
       document.getElementById('comp-label').innerText = 'Lvl ' + val;
+      updateAPOptions();
     }
 
     function startOrResumeTrial() {

@@ -53,8 +53,20 @@ const RYCState = (() => {
     } catch (error) { return error.message; }
     return '';
   }
+  // Versioned budgets are fixed at intake. Existing saves retain their AP.
+  const AP_VERSION = 2;
+  function apBudget(difficulty='Normal', complexity=3) {
+    const level = Math.max(1, Math.min(5, Number(complexity) || 3));
+    const base = 4 + 2 * Math.round(level);
+    return difficulty === 'Sandbox' ? 1000000 : Math.ceil(base * (difficulty === 'Easy' ? 1.5 : difficulty === 'Hard' ? 0.75 : 1));
+  }
+  const apLabel = state => state.difficulty === 'Sandbox' ? 'Unlimited' : String(state.ap);
+  const apGrantLimit = state => apBudget('Normal', state.complexity);
+  function apContext(state) {
+    return `AP policy v2: difficulty=${state.difficulty}; complexity=${state.complexity}; currentAP=${state.ap}; initialAP=${state.initialAP ?? apBudget(state.difficulty,state.complexity)}; phase=${state.phase}; trialEnded=${state.trialEnded===true}; grantedAP=${state.apGrantsTotal || 0}; grantLimit=${apGrantLimit(state)}; awardedDevelopments=${JSON.stringify(state.apGrants || [])}. Keep numeric AP in checkpoints, including Sandbox. Never reset AP at phase changes. Only court can grant 2 AP for a genuinely new trial lead using apGrant:{id,reason,fact} or apGrant:{id,reason,exhibitId}. Reference a NEW exact fact or NEW exhibit ID included in the same checkpoint. Reuse stable IDs for the same development; previously awarded references cannot receive another grant. Checkpoint ap must equal currentAP + eligible grant - completed costs (0 to 2). Sandbox uses numeric deductions but all player-facing AP labels say Unlimited.`;
+  }
   function emptyState(previous = {}) {
-    return {hasActiveCase:false,caseId:null,intakeComplete:false,profile:{title:'',client:'',judge:'',da:'',clientOccupation:'civilian'},phase:'Phase 1: Intake',turn:1,ap:4,strikes:0,maxStrikes:3,notes:'',transcript:[],docket:[],facts:[],difficulty:'Normal',complexity:3,category:'Random Case File',selectedModel:typeof previous.selectedModel==='string'?previous.selectedModel:'gemini-3.8-flash',activeCaseSeed:null,trashedFacts:[],hiddenFacts:[],exhibitNotes:{},hasSeenTrashWarning:previous.hasSeenTrashWarning===true};
+    return {hasActiveCase:false,caseId:null,intakeComplete:false,profile:{title:'',client:'',judge:'',da:'',clientOccupation:'civilian'},phase:'Phase 1: Intake',turn:1,ap:10,strikes:0,maxStrikes:3,notes:'',transcript:[],docket:[],facts:[],difficulty:'Normal',complexity:3,category:'Random Case File',selectedModel:typeof previous.selectedModel==='string'?previous.selectedModel:'gemini-3.8-flash',activeCaseSeed:null,trashedFacts:[],hiddenFacts:[],exhibitNotes:{},hasSeenTrashWarning:previous.hasSeenTrashWarning===true};
   }
   function invalid(message) { const error = new Error(message); error.name = 'ResponseValidationError'; throw error; }
   function history(value) {
@@ -81,6 +93,10 @@ const RYCState = (() => {
     if(Number.isSafeInteger(saved.revision)&&saved.revision>=0)result.revision=saved.revision;
     for (const key of ['phase','notes','difficulty','category','selectedModel']) if(typeof saved[key]==='string') result[key]=saved[key];
     for (const key of ['turn','ap','strikes','maxStrikes','complexity']) if(Number.isSafeInteger(saved[key]) && saved[key]>=0) result[key]=saved[key];
+    result.apVersion = saved.apVersion === AP_VERSION ? AP_VERSION : 1;
+    result.initialAP = Number.isSafeInteger(saved.initialAP) && saved.initialAP >= 0 ? saved.initialAP : null;
+    result.apGrants = Array.isArray(saved.apGrants) ? saved.apGrants.filter(g => object(g) && typeof g.id==='string' && typeof g.reference==='string' && typeof g.reason==='string' && g.amount===2).map(g=>({id:g.id,reference:g.reference,reason:g.reason,amount:2})) : [];
+    result.apGrantsTotal = result.apGrants.length * 2;
     if (object(saved.profile)) for(const key of ['title','client','judge','da']) if(typeof saved.profile[key]==='string') result.profile[key]=saved.profile[key];
     for (const key of ['facts','trashedFacts','hiddenFacts']) result[key]=Array.isArray(saved[key])?saved[key].filter(v=>typeof v==='string'):[];
     result.knownWitnesses=Array.isArray(saved.knownWitnesses)?[...new Set(saved.knownWitnesses.filter(v=>typeof v==='string'&&v.trim()&&v.length<=100&&!/[<>\r\n]/.test(v)).map(v=>v.trim()))]:[];
@@ -124,9 +140,32 @@ const RYCState = (() => {
     if (['title','client','judge','da'].some(key=>placeholder(state.profile[key])) || state.docket.length < 2)
       invalid('Setup response did not initialize the roster and two starter exhibits. Retry setup.');
   }
-  function next(current, raw, channel='court') {
+  function next(current, raw, channel='court', options={}) {
     const parsed=parse(raw), next=clone(current), u=parsed.update;
     if(!u || !current.hasActiveCase) { if(channel==='court'&&current.hasActiveCase)next.turn++;return {state:next,text:parsed.text}; }
+    if(channel==='partner') invalid('Consultations cannot update case resources.');
+    let grant = 0;
+    if(u.apGrant !== undefined) {
+      const g=u.apGrant, phase=u.phase ?? current.phase;
+      if(channel!=='court' || !/^Phase 3(?:\.5)?(?:\b|:)/i.test(String(phase)) || current.trialEnded || u.trialEnded===true)
+        invalid('AP grants require a new court development during trial.');
+      if(!object(g) || typeof g.id!=='string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(g.id) || typeof g.reason!=='string' || !g.reason.trim() || g.reason.length>500)
+        invalid('Invalid AP development identifier or reason.');
+      if((typeof g.fact==='string') === (typeof g.exhibitId==='string')) invalid('An AP development must reference one new fact or exhibit.');
+      const reference = typeof g.fact==='string' ? 'fact:'+g.fact.trim().toLowerCase() : 'exhibit:'+g.exhibitId.trim().toLowerCase();
+      const awarded=current.apGrants || [];
+      const duplicate=awarded.some(a=>a.id===g.id || a.reference===reference);
+      if(!duplicate) {
+        const newFact=typeof g.fact==='string' && g.fact.trim() && Array.isArray(u.facts) && u.facts.includes(g.fact) && !(current.facts || []).some(f=>f.trim().toLowerCase()===g.fact.trim().toLowerCase());
+        const newExhibit=typeof g.exhibitId==='string' && Array.isArray(u.docket) && u.docket.some(e=>object(e) && (e.id||e.tag)===g.exhibitId) && !(current.docket || []).some(e=>String(e.id||e.tag).trim().toLowerCase()===g.exhibitId.trim().toLowerCase());
+        if(!newFact && !newExhibit) invalid('AP grants must reference newly disclosed evidence or a fact.');
+        if(awarded.length*2 + 2 > apGrantLimit(current)) invalid('The case has reached its trial development AP allowance.');
+        grant=2;
+        next.apGrants=[...awarded,{id:g.id,reference,reason:g.reason.trim(),amount:2}];
+        next.apGrantsTotal=next.apGrants.length*2;
+      }
+    }
+    if(u.ap===undefined && grant) next.ap=current.ap+grant;
     if(u.trialEnded!==undefined){if(typeof u.trialEnded!=='boolean')invalid('Invalid checkpoint trialEnded.');if(channel==='court')next.trialEnded=u.trialEnded;}
     const lockedRole = clientOccupation(current);
     const reportedRoles = [u.clientOccupation,u.case?.clientOccupation].filter(value=>value!==undefined);
@@ -155,6 +194,11 @@ const RYCState = (() => {
         next.docket=[...merged.values()];
       } else next.docket=[...incoming,...next.docket.filter(e=>e.isManual&&!ids.includes(e.id||e.tag))];
     }
+    // No model-driven refills; an explicit undo may refund a single action.
+    const undoRefund = channel==='court' && options.undo===true && current.difficulty!=='Hard' && !grant ? 2 : 0;
+    if(channel==='court' && next.ap > current.ap + grant + undoRefund) invalid('AP cannot increase without an eligible trial development.');
+    if(channel==='court' && current.ap + grant - next.ap > 2) invalid('A reply cannot spend more than 2 AP.');
+    if(grant && (next.ap > current.ap+grant || next.ap < current.ap+grant-2)) invalid('Incorrect AP total for the trial development.');
     if(channel==='diaz') {
       if(next.ap>current.ap||current.ap-next.ap>2)invalid('An investigation cannot increase AP or spend more than 2 AP.');
       next.turn=current.turn+1;
@@ -166,5 +210,5 @@ const RYCState = (() => {
     }
     return {state:next,text:parsed.text};
   }
-  return {occupations,validOccupation,occupation,recordOccupation,clientOccupation,occupationLabel,repairOccupationRecord,object,clone,history,normalize,needsRecovery,next,parse,exhibit,placeholder,intakeStatus,seedError,emptyState,validateInitialization};
+  return {AP_VERSION,apBudget,apLabel,apContext,apGrantLimit,occupations,validOccupation,occupation,recordOccupation,clientOccupation,occupationLabel,repairOccupationRecord,object,clone,history,normalize,needsRecovery,next,parse,exhibit,placeholder,intakeStatus,seedError,emptyState,validateInitialization};
 })();

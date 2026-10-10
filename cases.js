@@ -147,8 +147,8 @@ async function startTrialWithCase(caseObj) {
 
   // Calculate mechanical variables
   const diff = caseObj.difficulty || 'Normal';
-  const startingAP = (diff === 'Easy') ? 6 : (diff === 'Hard') ? 3 : 4;
-  const strikesMax = (diff === 'Easy') ? 4 : (diff === 'Hard') ? 2 : 3;
+  const startingAP = RYCState.apBudget(diff, caseObj.seed.meta.complexity);
+  const strikesMax = (diff === 'Easy' || diff === 'Sandbox') ? 4 : (diff === 'Hard') ? 2 : 3;
   
   // Format initial docket format with AI generation locks
   const startingDocket = (caseObj.scout.starterExhibits || []).map(ex => ({ ...ex, isApi: true }));
@@ -173,7 +173,11 @@ async function startTrialWithCase(caseObj) {
     },
     phase: "Phase 1: Intake", 
     turn: 1, 
-    ap: startingAP, 
+    ap: startingAP,
+    apVersion: RYCState.AP_VERSION,
+    initialAP: startingAP,
+    apGrants: [],
+    apGrantsTotal: 0, 
     strikes: 0, 
     maxStrikes: strikesMax, 
     notes: '',

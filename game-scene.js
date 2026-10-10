@@ -335,7 +335,7 @@ window.RYCScene = (() => {
       for (const [key,label] of [['client','Client'],['judge','Judge'],['da','Prosecutor']]) documentText(body,label,profile()[key]||'Not yet assigned');
       documentText(body,'Client occupation',RYCState.occupationLabel(RYCState.clientOccupation(state())));
       documentText(body,'Current phase',state().phase);
-      documentText(body,'Resources',`${state().ap} AP · ${state().strikes}/${state().maxStrikes} judicial strikes · Turn ${state().turn}`);
+      documentText(body,'Resources',`${RYCState.apLabel(state())} AP · ${state().strikes}/${state().maxStrikes} judicial strikes · Turn ${state().turn}`);
       const facts=knownFacts(); body.append(node('h3','Established facts'));
       if (!facts.length) body.append(node('p','No facts entered yet.'));
       const list=node('ul'); facts.forEach(f=>list.append(node('li',f)));body.append(list);

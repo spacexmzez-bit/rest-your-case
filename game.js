@@ -5,7 +5,7 @@ let appState = {
   profile: { title: '', client: '', judge: '', da: '', clientOccupation: 'civilian' },
   phase: 'Phase 1: Intake', 
   turn: 1, 
-  ap: 4, 
+  ap: 10, 
   strikes: 0, 
   maxStrikes: 3, 
   notes: '',
@@ -436,7 +436,7 @@ function renderUI() {
   
   if (appState.hasActiveCase) {
     document.getElementById('term-turn').innerText = appState.turn;
-    document.getElementById('term-ap').innerText = appState.ap;
+    document.getElementById('term-ap').innerText = RYCState.apLabel(appState);
     document.getElementById('term-strikes').innerText = `${appState.strikes}/${appState.maxStrikes}`;
     document.getElementById('nb-casetitle').innerText = appState.profile.title || 'State v. Unknown';
     document.getElementById('nb-phase').innerText = appState.phase;
@@ -902,7 +902,7 @@ async function requestReply(payload) {
     : 'Client occupation is not yet classified. Preserve the existing story. Court only: resolve civilian, police, or expert from established client information and include clientOccupation in the next STATE_CHECKPOINT; use civilian only if no occupation was established. Consultations must not invent or classify the occupation.';
   const legacyContext=!role && payload.targetPersona==='court'
     ? '\nEstablished client information: '+JSON.stringify({client:appState.profile.client,summary:appState.activeCaseSeed?.scout?.crimeSummary ?? '',facts:appState.facts,transcript:appState.transcript}) : '';
-  payload={...payload,engineMode:RYCModels.get(),message:payload.message+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Players may address any known witness from either side, on or off stand. Respond as the explicitly addressed person; addressing a witness alone does not call them to the stand, switch the trial phase, or make an informal conversation sworn testimony. Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'; trialEnded='+(appState.trialEnded===true)+'.]'};
+  payload={...payload,engineMode:RYCModels.get(),message:payload.message+'\n'+RYCState.apContext(appState)+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Players may address any known witness from either side, on or off stand. Respond as the explicitly addressed person; addressing a witness alone does not call them to the stand, switch the trial phase, or make an informal conversation sworn testimony. Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'; trialEnded='+(appState.trialEnded===true)+'.]'};
   if(role)payload.clientOccupation=role;
   const headers={'Content-Type':'application/json'};
   if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;
@@ -950,7 +950,7 @@ async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
     if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw Object.assign(new Error('Invalid model metadata. No case update was applied.'),{name:'ResponseValidationError'});
     ensureCaseCurrent();
     const apply=state=>{
-      const result=RYCState.next(state,data.reply,'court');
+      const result=RYCState.next(state,data.reply,'court',{undo:/^\/undo(?:\s|$)/i.test(userPrompt.trim())});
       if(isInit){
         RYCState.validateInitialization(result.state,data.reply);
         result.state.intakeComplete=true;
@@ -978,7 +978,7 @@ async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
 }
 function buildContextCapsule() {
   if(!appState.hasActiveCase)return 'No active case.';
-  return `Case: ${appState.profile.title} | Client: ${appState.profile.client} | Client occupation: ${RYCState.clientOccupation(appState) ?? "Unclassified; preserve established story"} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}\nMarked Docket: ${JSON.stringify(appState.docket)}\nEstablished Court Facts: ${JSON.stringify(appState.facts)}`;
+  return `Case: ${appState.profile.title} | Client: ${appState.profile.client} | Client occupation: ${RYCState.clientOccupation(appState) ?? "Unclassified; preserve established story"} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}\nAP Policy: ${RYCState.apContext(appState)}\nMarked Docket: ${JSON.stringify(appState.docket)}\nEstablished Court Facts: ${JSON.stringify(appState.facts)}`;
 }
 async function sendAssistantAction(userPrompt,isRetry=false) {
   if(engineLocked||caseConflict||!appState.hasActiveCase)return false;
