@@ -1,0 +1,7 @@
+# File name: wrangler.toml
+# This name must match your existing Cloudflare Worker exactly.
+name = "rest-your-case"
+main = "worker.js"
+compatibility_date = "2026-10-10"
+workers_dev = true
+keep_vars = true
