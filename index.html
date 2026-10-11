@@ -12,8 +12,8 @@
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8" />
-  <script src="ryc-ar.js?v=ar-1"></script>
-  <script src="ryc-i18n.js?v=ar-1"></script>
+  <script src="ryc-ar.js?v=foundation-2"></script>
+  <script src="ryc-i18n.js?v=foundation-2"></script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Rest Your Case | Procedural Defense Simulator</title>
@@ -57,6 +57,7 @@
   </script>
 <link rel="stylesheet" href="visual-theme.css?v=5"><link rel="stylesheet" href="overview-guide.css?v=5">
   <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
+<link rel="stylesheet" href="extreme.css?v=foundation-2">
 </head>
 <body data-visual="overview" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -230,7 +231,7 @@
         <div>
           <div class="flex justify-between items-center mb-1">
             <label class="text-brand-gold text-[10px] uppercase">Complexity</label>
-            <span id="comp-label" class="text-white text-[10px] font-bold">Lvl 3</span>
+            <div class="flex items-center gap-2"><span id="comp-label" class="text-white text-[10px] font-bold">Lvl 3</span></div>
           </div>
           <input id="intake-comp" type="range" min="1" max="5" value="3" step="1" oninput="handleComplexitySlider(this.value)" class="w-full accent-brand-gold cursor-pointer" />
         </div>
@@ -247,6 +248,7 @@
           </select>
         </div>
       </div>
+
 
       <!-- Case Dossier Viewport -->
       <div id="dossier-container" class="space-y-3 flex-grow">
@@ -381,13 +383,21 @@
     Rest Your Case &copy; 2026. Local-First Client Storage.
   </footer>
 
+<section id="extreme-entry" class="p-4 max-w-7xl mx-auto" data-no-i18n></section>
   <!-- Scripts loaded in execution order with cache busting -->
   <script src="data.js?v=7"></script>
   <script src="scout_prompt.js?v=ar-1"></script>
-  <script src="game-state.js?v=ap-v2"></script>
+  <script src="game-state.js?v=extreme-1"></script>
   <script src="case-store.js?v=5"></script>
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=ar-1"></script>
+  <script src="ryc-request.js?v=foundation-2"></script>
+<script src="extreme-store.js?v=foundation-2"></script>
+<script src="extreme-client.js?v=foundation-2"></script>
+<script src="extreme-browser-migration.js?v=foundation-2"></script>
+<script src="extreme-archive.js?v=foundation-2"></script>
+<script src="extreme-intake.js?v=foundation-2"></script>
+<script src="cases.js?v=foundation-2"></script>
+  <script src="extreme-catalog.js?v=1"></script>
   <script>
     let customGeminiKey=null;try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
     function showStorageError(error){let el=document.getElementById('overview-storage-error');if(!el){el=document.createElement('p');el.id='overview-storage-error';el.setAttribute('role','alert');document.body.prepend(el);}el.textContent='Could not access saved cases: '+error.message;}
@@ -476,7 +486,8 @@ function saveCustomKey() {
       updateAPOptions();
     }
 
-    function startOrResumeTrial() {
+    async function startOrResumeTrial() {
+      try{await RYCExtremeMigration.run();}catch(e){showStorageError(e);return;}
       let saved=null;try{saved=localStorage.getItem('rest_your_case_state');}catch(error){showStorageError(error);}
       if (saved) {
         try {
@@ -543,7 +554,7 @@ function saveCustomKey() {
       const scout = currentCase.scout;
       const seed = currentCase.seed;
 
-      document.getElementById('card-genre').innerText = `${seed.meta.genre_name} (Complexity ${seed.meta.complexity}/5)`;
+      document.getElementById('card-genre').innerText = currentCase.extreme ? `${seed.meta.genre_name} · ${RYCI18n.t('Extreme')}` : `${seed.meta.genre_name} (Complexity ${seed.meta.complexity}/5)`;
       document.getElementById('card-title').innerText = scout.caseTitle;
       document.getElementById('card-charge').innerText = seed.charge.charge;
       document.getElementById('card-client').innerText = seed.roster.client.name;
@@ -593,7 +604,7 @@ function saveCustomKey() {
       activeSearchAbortController = searchController;
 
       try {
-        await generateCase(diff, comp, cat, searchController.signal, progress=>{if(activeSearchAbortController!==searchController)return;document.getElementById('dossier-search-status').textContent=`${progress.slow?'Taking longer than usual…':'Waiting for a reply…'} ${progress.elapsed}s / 60s`;});
+        await generateCase(diff, comp, cat, searchController.signal, progress=>{if(activeSearchAbortController!==searchController)return;document.getElementById('dossier-search-status').textContent=`${progress.slow?'Taking longer than usual…':'Waiting for a reply…'} ${progress.elapsed}s / ${comp===6?90:60}s`;});
         if(activeSearchAbortController!==searchController)return;
         // Switch to the newly discovered case (last in array)
         const pending = getPendingCases();
@@ -635,7 +646,8 @@ function saveCustomKey() {
     });
 
     // Page initialization
-    (function initLauncher() {
+    (async function initLauncher() {
+      try{await RYCExtremeMigration.run();}catch(e){showStorageError(e);return;}
       updateKeyIndicator();
       archiveSafely(); // Ensure any previous dangling intakes are saved to shelf
       try{updateShelfBadges();}catch(error){showStorageError(error);}
@@ -663,5 +675,6 @@ function saveCustomKey() {
       }
     })();
   </script>
+<script src="extreme-shell.js?v=foundation-2"></script>
 </body>
 </html>

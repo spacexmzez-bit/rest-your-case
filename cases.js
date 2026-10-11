@@ -6,36 +6,6 @@
  */
 
 const WORKER_URL = "https://rest-your-case.spacexmzez.workers.dev/";
-const RYCRequest = (()=>{
-  const error=(code,message)=>Object.assign(new Error(message),{code,name:code==='CANCELLED'?'AbortError':code==='INVALID_RESPONSE'?'ResponseValidationError':'RequestError'});
-  function format(e) {
-    const code=e?.code || (e?.name==='ResponseValidationError'?'INVALID_RESPONSE':e?.name==='AbortError'?'CANCELLED':e instanceof TypeError?'NETWORK_ERROR':/storage|quota|save/i.test(e?.message||'')?'STORAGE_ERROR':/checkpoint|reply|response/i.test(e?.message||'')?'INVALID_RESPONSE':'ACTION_ERROR');
-    return `[${code}] ${e?.message||String(e)}`;
-  }
-  async function fetchJSON(url,options={},config={}) {
-    const timeoutMs=config.timeoutMs??60000,signal=config.signal||options.signal,controller=new AbortController();
-    if(signal?.aborted)throw error('CANCELLED','Search cancelled.');
-    let timeout,interval,onAbort,closed=false;
-    const start=Date.now();
-    const update=()=>{try{config.onProgress?.({elapsed:Math.floor((Date.now()-start)/1000),slow:Date.now()-start>=(config.warnAfterMs??15000)});}catch(_) {}};
-    const stopped=new Promise((_,reject)=>{
-      timeout=setTimeout(()=>{closed=true;controller.abort();reject(error('TIMEOUT',`No complete response within ${timeoutMs/1000} seconds. Retry when ready.`));},timeoutMs);
-      onAbort=()=>{closed=true;controller.abort();reject(error('CANCELLED','Search cancelled.'));};
-      signal?.addEventListener('abort',onAbort,{once:true});
-    });
-    update();interval=setInterval(update,1000);
-    const request=(async()=>{
-      let response;try{response=await fetch(url,{...options,signal:controller.signal});}catch(e){if(closed)throw e;throw error('NETWORK_ERROR','Could not reach the server. '+(e.message||String(e)));}
-      if(closed)throw error('CANCELLED','Request already ended.');
-      let data;try{data=await response.json();}catch(e){if(closed)throw e;if(response.ok)throw error('INVALID_RESPONSE','The server returned invalid JSON.');}
-      if(closed)throw error('CANCELLED','Request already ended.');
-      return {response,data};
-    })();
-    try{return await Promise.race([stopped,request]);}
-    finally {closed=true;clearTimeout(timeout);clearInterval(interval);signal?.removeEventListener('abort',onAbort);config.onController?.(null);}
-  }
-  return {fetchJSON,format,error};
-})();
 let failedScout=null;
 
 // =========================================================================
@@ -106,6 +76,7 @@ function archivePending() {
  * @returns {Promise<object>} The fully assembled Case Object
  */
 async function generateCase(diff, comp, cat, signal, onProgress) {
+  if(!Number.isInteger(Number(comp))||Number(comp)<1||Number(comp)>5)throw new Error('Standard complexity must be 1–5.');
   const language=RYCI18n.get();
   const signature=JSON.stringify([diff,comp,cat,language]);
   if(!failedScout || failedScout.signature!==signature) {
@@ -137,13 +108,18 @@ async function generateCase(diff, comp, cat, signal, onProgress) {
  * @param {object} caseObj - The fully assembled case object from pending or shelf
  */
 async function startTrialWithCase(caseObj) {
+  if(caseObj.extreme)throw new Error('Open this case in the Extreme archive.');
+  await window.RYCExtremeMigration?.run();
   caseObj=RYCState.repairOccupationRecord(caseObj);
   const seedError=RYCState.seedError(caseObj);if(seedError)throw new Error(seedError);
   // Check for active trial collision
   const existingStateStr = localStorage.getItem('rest_your_case_state');
   let existingState=null;
   if(existingStateStr){try{existingState=JSON.parse(existingStateStr);}catch(_){throw new Error('The current trial cannot be read. Recover or purge it before starting another case.');}}
-  if(existingState?.hasActiveCase&&!confirm("You currently have an active trial. Accepting this case will permanently discard your active progress. Proceed?"))return false;
+  if(existingState?.hasActiveCase){
+    const typed=prompt(RYCI18n.t('Accepting this case permanently purges your current Standard trial, notes and conversations. Type CONFIRM to continue.'));
+    if(typed!=='CONFIRM')return false;
+  }
 
 
   // Calculate mechanical variables

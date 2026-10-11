@@ -1,0 +1,36 @@
+/* File name: extreme.css — Foundation terminal and archive, mobile and RTL. */
+.extreme-terminal,.extreme-panel,.extreme-dialog{--bg:#111820;--panel:#1b2630;--gold:#e1c28b;--ink:#f3efe7;--muted:#b7c2ca;box-sizing:border-box;color:var(--ink);font:16px/1.6 system-ui,sans-serif;color-scheme:dark}
+body.extreme-terminal{margin:0;background:#111820}
+.extreme-terminal *, .extreme-panel *, .extreme-dialog *{box-sizing:border-box}
+.extreme-terminal [hidden],.extreme-panel [hidden]{display:none!important}
+.extreme-terminal header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px clamp(14px,4vw,40px);border-bottom:1px solid #52616c;background:#1b2630;flex-wrap:wrap}
+.extreme-terminal a,.extreme-panel a{color:#e1c28b;text-underline-offset:4px}
+.extreme-terminal main{max-width:1400px;margin:auto;padding:18px}
+.extreme-terminal h1{font:600 clamp(24px,4vw,34px)/1.3 Georgia,serif;margin:0}
+.extreme-terminal h2,.extreme-panel h2{color:#e1c28b;font-size:21px}
+.extreme-terminal button,.extreme-panel button,.extreme-dialog button{font:inherit;min-height:44px;padding:9px 14px;background:#344450;border:1px solid #758591;color:#f3efe7;border-radius:6px;cursor:pointer;margin:3px}
+.extreme-terminal button:disabled,.extreme-panel button:disabled,.extreme-dialog button:disabled{opacity:.5;cursor:not-allowed}
+.extreme-terminal button:focus-visible,.extreme-panel button:focus-visible,.extreme-dialog button:focus-visible{outline:3px solid #e1c28b;outline-offset:3px}
+.extreme-terminal input,.extreme-terminal select,.extreme-terminal textarea,.extreme-panel select,.extreme-dialog input{font:inherit;min-height:44px;padding:10px;background:#111820;border:1px solid #758591;border-radius:5px;color:#f3efe7;max-width:100%}
+.extreme-terminal textarea{width:100%;min-height:110px;resize:vertical}
+.extreme-status{display:flex;gap:16px;flex-wrap:wrap;color:#e1c28b;margin:14px 0}
+.extreme-columns{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(270px,1fr);gap:18px}
+.extreme-terminal section,.extreme-panel{background:#1b2630;border:1px solid #52616c;border-radius:10px;padding:18px;margin-bottom:16px;overflow-wrap:anywhere}
+.extreme-terminal nav{display:flex;flex-wrap:wrap;gap:4px}
+.extreme-terminal small{display:block;color:#b7c2ca}
+.extreme-feed{max-height:65vh;overflow:auto;overscroll-behavior:contain}
+.extreme-event{padding:14px 0;border-bottom:1px solid #52616c;white-space:pre-wrap}
+.extreme-event p{margin:8px 0}
+.extreme-terminal details{border-bottom:1px solid #52616c;padding:12px 0}
+.extreme-terminal summary{cursor:pointer;font-weight:600;color:#e1c28b;min-height:44px}
+.extreme-warning{background:#583725;border:1px solid #e1c28b;padding:12px;border-radius:5px;white-space:pre-wrap;margin:12px 0}
+.extreme-dialog{background:#1b2630;border:1px solid #e1c28b;border-radius:10px;padding:24px;width:min(520px,calc(100vw - 24px));max-height:90dvh;overflow:auto}
+.extreme-dialog::backdrop{background:#000b}
+.extreme-dialog p{white-space:pre-wrap;overflow-wrap:anywhere}
+.extreme-dialog label,.extreme-dialog input{display:block;width:100%;margin:10px 0}
+.extreme-case-card{padding:16px;margin:12px 0;border:1px solid #758591;border-radius:6px}
+.extreme-case-card p{white-space:pre-wrap}
+.extreme-panel{max-width:1160px;margin:0 auto 40px}
+@media(max-width:780px){.extreme-columns{grid-template-columns:minmax(0,1fr)}.extreme-terminal main{padding:10px}.extreme-terminal section{padding:14px}.extreme-feed{max-height:50vh}.extreme-panel{margin-inline:10px}}
+
+#standard-generation{display:flex;flex-wrap:wrap;gap:10px}#standard-generation h2,#standard-generation p{flex-basis:100%}#standard-generation select{max-width:100%;min-height:44px;padding:8px}

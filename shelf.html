@@ -169,6 +169,7 @@
   </style>
 <link rel="stylesheet" href="archive-interface.css?v=5">
   <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
+<link rel="stylesheet" href="extreme.css?v=foundation-2">
 </head>
 <body>
   <a class="skip-link" href="#catalog">Skip to case files</a>
@@ -197,7 +198,9 @@
       <div class="title-plaque"><h1>Case Archive</h1></div>
       <p class="room-caption">A case begins with a closer look. Open a folder, review the brief, then decide which case to take.</p>
     </div>
-    <section class="workbench" aria-label="Case collection">
+    <nav class="collection-tabs" style="justify-content:center;padding:12px" aria-label="Case mode"><a id="mode-standard" class="secondary" href="shelf.html?mode=standard">Standard</a><a id="mode-extreme" class="secondary" href="shelf.html?mode=extreme">Extreme</a></nav>
+<section class="workbench" id="standard-archive" aria-label="Case collection">
+<div id="standard-generation" class="active-slip"></div>
       <div id="storage-warning" class="storage-warning" role="alert" hidden></div>
       <aside id="active-slip" class="active-slip" aria-label="Current trial" hidden>
         <div><strong id="active-title"></strong><p id="active-phase"></p></div>
@@ -219,6 +222,7 @@
       <div class="empty-card" id="empty-card" hidden><h2 id="empty-title"></h2><p id="empty-description"></p><a class="primary" id="find-case" href="index.html">Find a case</a><button class="secondary" id="empty-clear" type="button" hidden>Clear filters</button></div>
       <noscript><div class="empty-card"><h2>Open the archive</h2><p>Enable JavaScript to read the saved case files in this browser.</p><a class="primary" href="index.html">Return to overview</a></div></noscript>
     </section>
+<section id="extreme-archive" class="extreme-panel" data-no-i18n hidden></section>
   </main>
   <footer>Rest Your Case · Files saved in this browser</footer>
   <dialog class="dossier-dialog" id="dossier" aria-labelledby="case-title">
@@ -249,14 +253,23 @@
     <div class="confirm-actions"><button class="secondary" id="cancel-accept" type="button" autofocus>Keep reviewing</button><button class="primary" id="confirm-accept" type="button">Begin trial →</button></div>
   </dialog>
   <dialog id="purge-current-dialog" class="confirm-dialog" aria-labelledby="purge-current-title"><h2 id="purge-current-title">Purge current case?</h2><p>This removes the active trial, its notes and conversations. Your archived files and API key stay available.</p><label for="purge-current-input">Type CONFIRM to purge</label><input id="purge-current-input" autocomplete="off" spellcheck="false"><p id="purge-current-error" class="error-message" role="alert" hidden></p><div class="confirm-actions"><button id="purge-current-cancel" class="secondary" type="button">Cancel</button><button id="purge-current-confirm" class="primary" type="button">Purge case</button></div></dialog>
-  <script src="game-state.js?v=ap-v2"></script>
+  <script src="game-state.js?v=extreme-1"></script>
   <script src="case-store.js?v=5"></script>
   <script src="archive-trial.js?v=5"></script>
   <!-- Use the existing case broker; archive browsing makes no AI requests. -->
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=ar-1"></script>
+  <script src="ryc-request.js?v=foundation-2"></script>
+<script src="extreme-store.js?v=foundation-2"></script>
+<script src="extreme-client.js?v=foundation-2"></script>
+<script src="extreme-browser-migration.js?v=foundation-2"></script>
+<script src="extreme-archive.js?v=foundation-2"></script>
+<script src="extreme-intake.js?v=foundation-2"></script>
+<script src="data.js?v=7"></script><script src="scout_prompt.js?v=ar-1"></script>
+<script src="cases.js?v=foundation-2"></script>
   <script>
-  (() => {
+  (async() => {
+    if(new URLSearchParams(location.search).get('mode')==='extreme')return;
+    try{await RYCExtremeMigration.run();}catch(e){document.getElementById('storage-warning').hidden=false;document.getElementById('storage-warning').textContent=e.message;return;}
     'use strict';
     const $ = id => document.getElementById(id);
     const keys = { shelf: 'ryc_shelf_cases', pending: 'ryc_pending_cases', active: 'rest_your_case_state' };
@@ -282,9 +295,9 @@
       if (!active || typeof active !== 'object' || Array.isArray(active)) throw new Error('The current trial has an unexpected format.');
       return active;
     }
-    function canStart(c) { return !!c&&typeof c.id==='string'&&!!c.id&&!RYCState.seedError(RYCState.repairOccupationRecord(c)); }
+    function canStart(c) { return !!c&&!c.extreme&&typeof c.id==='string'&&!!c.id&&!RYCState.seedError(RYCState.repairOccupationRecord(c)); }
     function recordView(c, source, index) {
-      return { raw: c, source, key: `${source}:${index}`, title: text(c.scout?.caseTitle, 'Untitled case'), client: text(c.seed?.roster?.client?.name), charge: text(c.seed?.charge?.charge), genre: text(c.seed?.meta?.genre_name, 'Unclassified'), difficulty: text(c.difficulty, 'Normal'), date: formatDate(c.timestamp), timestamp: Number(c.timestamp) || 0, complexity: c.seed?.meta?.complexity };
+      return { raw: c, source, key: `${source}:${index}`, title: text(c.scout?.caseTitle, 'Untitled case'), client: text(c.seed?.roster?.client?.name), charge: text(c.seed?.charge?.charge), genre: text(c.seed?.meta?.genre_name, 'Unclassified'), difficulty: c.extreme&&c.difficulty==='Normal'?'Medium':text(c.difficulty, 'Normal'), date: formatDate(c.timestamp), timestamp: Number(c.timestamp) || 0, complexity: c.seed?.meta?.complexity };
     }
     function showProblems() {
       const warning = $('storage-warning');
@@ -305,7 +318,7 @@
           records.forEach((c, index) => {
             if (!c || typeof c !== 'object' || Array.isArray(c)) { state.problems.push('A saved case entry is not readable.'); return; }
             if (typeof c.id === 'string' && c.id) { if (seen.has(c.id)) return; seen.add(c.id); }
-            state.records.push(recordView(c, source, index));
+            if(!c.extreme)state.records.push(recordView(c, source, index));
           });
         } catch (_) { state.problems.push(`${source === 'shelf' ? 'Filed cases' : 'Pending intake'} could not be read from this browser.`); }
       }
@@ -371,7 +384,8 @@
       $('case-facts').replaceChildren();
       appendFact('Client', r.client); appendFact('Occupation', RYCState.occupationLabel(RYCState.recordOccupation(r.raw))); appendFact('Difficulty', r.difficulty);
       appendFact('Charge', r.charge, true); appendFact('Judge',text(c.seed?.roster?.judge?.name)); appendFact('Prosecutor',text(c.seed?.roster?.da?.name));
-      if (Number.isFinite(Number(r.complexity)) && Number(r.complexity) > 0) appendFact('Complexity', `${r.complexity} / 5`);
+      if(c.extreme)appendFact('Complexity','Extreme');
+      else if (Number.isFinite(Number(r.complexity)) && Number(r.complexity) > 0) appendFact('Complexity', `${r.complexity} / 5`);
       appendFact('Created',r.date);
       $('case-summary').textContent = text(c.scout?.crimeSummary,'No allegation summary has been saved for this file.');
       $('exhibit-list').replaceChildren();
@@ -473,9 +487,11 @@
       } else if ($('dossier').open) $('dossier').close();
     }
     window.addEventListener('popstate', followCaseLink);
+    window.addEventListener('ryc-standard-brief',loadRecords);
     loadRecords();
     followCaseLink();
   })();
   </script>
+<script src="extreme-shell.js?v=foundation-2"></script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+/* File name: archive-trial.js — Standard-only purge and save rules. */
 /* The archive and game share the same initialization and save rules. */
 window.RYCArchiveTrial = (() => {
   function describe(state) {
@@ -11,6 +12,7 @@ window.RYCArchiveTrial = (() => {
     return {title,phase:incomplete?'Intake has not initialized':state.phase||'In progress',action:incomplete?(setupRetry?'Retry setup':'Finish setup'):failed?'Retry action':'Resume trial',incomplete,failed};
   }
   async function purge(expectedRaw) {
+    const guard=JSON.parse(expectedRaw||'null');if(guard?.extreme)throw new Error('Use the Extreme terminal for this case.');
     let previous;
     try{previous=JSON.parse(expectedRaw||'null');}catch(_){previous=null;}
     const empty={...RYCState.emptyState(previous||{}),_histories:{court:[],partner:[],diaz:[]},_requests:{}};

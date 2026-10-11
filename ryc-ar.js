@@ -829,3 +829,46 @@ window.RYC_AR = {
   "[Sealed case record withheld]": "[الحقيقة الأصلية للقضية محجوبة]",
   "[Sealed record withheld]": "[السجل السري محجوب]"
 };
+
+// Extreme UI additions; existing translations remain compatible.
+Object.assign(window.RYC_AR, {
+  "Extreme": "قصوى",
+  "Medium": "متوسط",
+  "Extreme case desk": "مكتب القضية القصوى",
+  "Closing arguments": "المرافعة الختامية",
+  "Completed": "مكتملة",
+  "Extreme uses Smart only, with US federal cases and a separate AP budget. Free during this initial release. Case search may take up to 90 seconds.": "القضايا القصوى تستخدم Smart فقط، ضمن القضاء الاتحادي الأمريكي وبرصيد نقاط مستقل. مجانية في هذا الإصدار الأولي. قد يستغرق البحث 90 ثانية.",
+  "Extreme cases require Smart. Light cannot run this case.": "القضايا القصوى تتطلب Smart. لا يمكن تشغيل هذه القضية باستخدام Light.",
+  "Extreme evidence is controlled by the court. Use the case desk for investigations and rulings; keep personal annotations in notes.": "تخضع أدلة القضية القصوى لقرارات المحكمة. استخدم مكتب القضية للتحقيقات والطلبات، واحفظ تعليقاتك الشخصية في الملاحظات.",
+  "The server has newer case progress. Press Sync case, then send your next action.": "لدى الخادم تقدم أحدث للقضية. اضغط مزامنة القضية ثم أرسل الإجراء التالي.",
+  "Not enough AP for this investigation. Advice and trial discussion remain free.": "لا توجد نقاط كافية لهذا التحقيق. الاستشارة والنقاش في المحكمة مجانيان.",
+  "Proceed to the next stage? Finish any questions or arguments you want on the record first.": "هل تنتقل للمرحلة التالية؟ أكمل الأسئلة أو المرافعات التي تريد تسجيلها أولاً.",
+  "Case search failed.": "تعذر إنشاء القضية.",
+  "Discovery": "الكشف عن الأدلة",
+  "The saved case access token is missing.": "وسيلة الوصول المحفوظة للقضية مفقودة.",
+  "This case expired after 90 days without server activity. Begin a new case.": "انتهت صلاحية القضية بعد 90 يوماً دون نشاط على الخادم. ابدأ قضية جديدة.",
+  "Deploy the updated Worker and wrangler.toml to enable Extreme case storage.": "انشر ملفي Worker وwrangler.toml المحدثين لتفعيل حفظ القضايا القصوى.",
+  "Smart took too long. Retry manually; no AP was spent.": "استغرق Smart وقتاً طويلاً. أعد المحاولة يدوياً؛ لم تُخصم نقاط.",
+  "Use the ID shown on the Extreme case board, for example /investigate A01.": "استخدم المعرّف الموضح في مكتب القضية القصوى، مثل /investigate A01.",
+  "Begin the trial before calling a witness.": "ابدأ المحاكمة قبل استدعاء شاهد للشهادة.",
+  "Evidence motions are available in preparation or trial.": "طلبات الأدلة متاحة أثناء التحضير أو المحاكمة.",
+  "Finish the preceding stage before using this command.": "أكمل المرحلة السابقة قبل استخدام هذا الأمر."
+});
+
+Object.assign(window.RYC_AR, {"US federal law — Extreme":"القانون الاتحادي الأمريكي — قصوى", "Complete three court turns so the planned mid-trial lead can appear before closing arguments.":"أكمل ثلاث جولات في المحكمة حتى يظهر التحقيق المقرر أثناء المحاكمة قبل المرافعة الختامية."});
+
+Object.assign(window.RYC_AR, {"Hear the prosecution witnesses and evidence first. Use Continue prosecution case.":"استمع إلى شهود وأدلة الادعاء أولاً. استخدم زر متابعة قضية الادعاء.", "Hear the prosecution during the trial.":"استمع إلى قضية الادعاء أثناء المحاكمة.", "The disclosed prosecution evidence has already been presented.":"عُرضت أدلة الادعاء المكشوفة بالفعل."});
+
+Object.assign(window.RYC_AR, {"Use the court or Investigator Diaz for case actions. Partner advice is free.":"استخدم المحكمة أو المحقق دياز لإجراءات القضية. استشارة الشريك مجانية.", "Use the court for witness calls and evidence motions.":"استخدم المحكمة لاستدعاء الشهود وطلبات الأدلة."});
+
+// Foundation navigation; authored Extreme records retain their original language.
+Object.assign(window.RYC_AR,{
+ 'Extreme | Rest Your Case':'القضايا القصوى | ريست يور كيس',
+ 'Standard':'عادي',
+ 'Extreme archive':'أرشيف القضايا القصوى',
+ 'Standard trial':'المحاكمة العادية',
+ 'Generate brief':'أنشئ ملخصاً',
+ 'Generate a Standard brief':'أنشئ ملخص قضية عادية',
+ 'Accepting this case permanently purges your current Standard trial, notes and conversations. Type CONFIRM to continue.':'قبول هذه القضية يحذف المحاكمة العادية الحالية وملاحظاتها ومحادثاتها نهائياً. اكتب CONFIRM للمتابعة.',
+ 'Could not open the saved trial: ':'تعذر فتح المحاكمة المحفوظة: '
+});

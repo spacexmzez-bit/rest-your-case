@@ -414,5 +414,5 @@ window.RYCScene = (() => {
     viewport?.addEventListener('resize',fit);document.addEventListener('focusin',fit);document.addEventListener('focusout',()=>setTimeout(fit,0));
     window.addEventListener('resize',fit);fit();fitScene();
   }
-  return {get ready(){return ready;},init,refresh,selectRoom,selectRecipient,submitCourt,submitAssistant,renderCourtFeed,renderAssistantFeeds,openDocument,errorAlert,knownWitnesses,controls,requestProgress};
+  return {get ready(){return ready;},get recipient(){return recipient;},init,refresh,selectRoom,selectRecipient,submitCourt,submitAssistant,renderCourtFeed,renderAssistantFeeds,openDocument,errorAlert,knownWitnesses,controls,requestProgress};
 })();
