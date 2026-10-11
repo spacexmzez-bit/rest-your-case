@@ -7,6 +7,6 @@ window.RYCExtreme=(()=>{
   const {response,data}=await RYCRequest.fetchJSON(endpoint(),{method:'POST',headers,body:JSON.stringify({apiVersion:2,caseId:rec.caseId,language:RYCI18n.get(),...fields})},{timeoutMs:fields.op==='create'?90000:fields.op==='snapshot'||fields.op==='archive'||fields.op==='search'?20000:60000,...config});
   if(!response.ok)throw Object.assign(RYCRequest.error(data?.error||'HTTP_'+response.status,data?.details||'Extreme request failed.'),{status:response.status,retryable:data?.retryable});if(data?.caseId!==rec.caseId)throw new Error('Case response identity mismatch.');if(data.snapshot)validateSnapshot(data.snapshot);return data;
  }
- const mutation=(rec,op,fields={})=>({op,operationId:crypto.randomUUID(),expectedRevision:rec.snapshot.revision,expectedGeneration:rec.snapshot.generation,...fields});
+ const mutation=(rec,op,fields={})=>({op,language:RYCI18n.get(),operationId:crypto.randomUUID(),expectedRevision:rec.snapshot.revision,expectedGeneration:rec.snapshot.generation,...fields});
  return {call,mutation,validateSnapshot};
 })();

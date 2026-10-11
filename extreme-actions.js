@@ -60,7 +60,7 @@ export class CaseActions {
         const e=b.evidence.find(e=>e.id===id);if(!e||!s.discovered.includes(id))fail('UNKNOWN_EXHIBIT','Use an exhibit already discovered.');
         if(!['preparation','trial'].includes(s.stage))fail('WRONG_PHASE','Evidence motions are available in preparation or trial.');
         if(kind==='admit'&&s.evidenceStatus[id]==='Excluded')fail('EXHIBIT_EXCLUDED',lang==='ar'?'استُبعد هذا الدليل ولا يمكن إعادته بطلب قبول عادي.':'This exhibit was excluded and cannot be restored by an ordinary admission request.');
-        role='judge';actor={id:'judge',name:s.judge.name,style:s.judge.style};rulingRequest={id:e.id,kind,foundationReady:!!s.foundations?.[e.id],exclusionReady:!!e.legalIssue&&e.excludeWithEvidenceIds.length>0&&e.excludeWithEvidenceIds.every(id=>s.discovered.includes(id)),knownIssue:e.excludeWithEvidenceIds.every(id=>s.discovered.includes(id))?e.legalIssue:''};
+        role='judge';actor={id:'judge',name:s.judge.name,style:s.judge.style};rulingRequest={id:e.id,kind,foundationReady:!!s.foundations?.[e.id],exclusionReady:!!e.legalIssue&&e.excludeWithEvidenceIds.length>0&&e.excludeWithEvidenceIds.every(id=>s.discovered.includes(id)),knownIssue:e.excludeWithEvidenceIds.every(id=>s.discovered.includes(id))?e.legalIssue:'',supportingExhibitIds:e.excludeWithEvidenceIds.filter(id=>s.discovered.includes(id))};
       }
     }else if(/^\/(investigate|subpoena|inspect|admit|suppress|call|safety)\b/i.test(message))fail('COMMAND_ID_REQUIRED','Use the ID shown on the Extreme case board, for example /investigate A01.');
     if(/^\/(prepare|trial|close|verdict)\s*$/i.test(message)){

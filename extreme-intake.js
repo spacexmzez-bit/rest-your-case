@@ -2,9 +2,9 @@
 window.RYCExtremeIntake=(()=>{
  const tr=(en,ar)=>RYCI18n.get()==='ar'?ar:en;
  async function generate(difficulty,onProgress){
-  const signature=JSON.stringify([difficulty,'bank',RYCI18n.get()]),name='search:'+signature;let saved=await RYCExtremeStore.get('meta',name);
+  const language=RYCI18n.get(),signature=JSON.stringify([difficulty,'bank',language]),name='search:'+signature;let saved=await RYCExtremeStore.get('meta',name);
   if(!saved){saved={name,value:{caseId:crypto.randomUUID(),capability:crypto.randomUUID()+crypto.randomUUID().replaceAll('-',''),operationId:crypto.randomUUID()}};await RYCExtremeStore.put('meta',saved);}
-  const current=structuredClone(saved.value),fields={op:'create',operationId:current.operationId,genre:'bank',difficulty,engineMode:'smart'};
+  const current=structuredClone(saved.value),fields={op:'create',language,operationId:current.operationId,genre:'bank',difficulty,engineMode:'smart'};
   let data=await RYCExtreme.call(current,fields,{onProgress});if(data.creationStatus==='blueprintReady')data=await RYCExtreme.call(current,fields,{onProgress});
   if(!data.snapshot)throw new Error('Case generation is incomplete. Retry the same search.');
   const rec={caseId:current.caseId,capability:current.capability,snapshot:data.snapshot,localRevision:1,lastSyncedSeq:0,lifecycle:'brief',createdAt:Date.now()};

@@ -2,7 +2,7 @@
 import {validateBlueprint,copy,fail} from './extreme-state.js';
 import {canonical} from './extreme-access.js';
 export async function migrateLegacy(db,storage){
- if(db.get('schemaVersion')===2)return;
+ if(db.get('tombstone')||db.get('schemaVersion')===2)return;
  const old=await storage.get('case');if(!old)return;
  if(!old.blueprint||!old.brief){db.tx(()=>{db.save({...old,generation:1,lastSeq:0,schemaVersion:2,revision:old.revision||0});db.set('schemaVersion',2);});return;}
  validateBlueprint(old.blueprint,old.pattern,[old.judge.name,old.prosecutor.name]);
@@ -11,8 +11,8 @@ export async function migrateLegacy(db,storage){
  const ops=await storage.list({prefix:'op:'});
  db.tx(()=>{
   for(const h of [...dedup.values()].sort((a,b)=>a.turn-b.turn)){
-   const actor=canonical(h.actorId),pub=h.sworn===true,visibility=pub?'PUBLIC_COURT':'DEFENSE_PRIVATE',audience=pub?[]:['DEFENSE',actor];
-   for(const [speaker,kind,text] of [['DEFENSE','question',h.message],[actor,'speech',h.speech]])if(typeof text==='string'&&text.trim())db.append({schemaVersion:1,id:crypto.randomUUID(),seq:++s.lastSeq,turn:h.turn,operationId:h.operationId,actorId:speaker,recipientId:actor,kind,text,language:s.language,visibility,audienceActorIds:audience,sworn:kind==='speech'&&pub,exhibitRefs:[],sourceEventIds:[],payload:{legacy:true},generation:1,createdAt:s.lastActive});
+   const actor=canonical(h.actorId),pub=h.sworn===true||h.channel==='court'&&['JUDGE','PROSECUTOR'].includes(actor),visibility=pub?'PUBLIC_COURT':actor==='CLIENT'||/^W\d/.test(actor)?'INTERVIEW':'DEFENSE_PRIVATE',audience=pub?[]:['DEFENSE',actor];let questionId;
+   for(const [speaker,kind,text] of [['DEFENSE','question',h.message],[actor,'speech',h.speech]])if(typeof text==='string'&&text.trim()){const eid=crypto.randomUUID();db.append({schemaVersion:1,id:eid,seq:++s.lastSeq,turn:h.turn,operationId:h.operationId,actorId:speaker,recipientId:actor,kind,text,language:s.language,visibility,audienceActorIds:audience,sworn:kind==='speech'&&h.sworn===true,exhibitRefs:[],sourceEventIds:kind==='speech'&&questionId?[questionId]:[],payload:{legacy:true,...(kind==='question'&&h.stage==='closing'&&actor==='JUDGE'?{closingArgument:true}:{})},generation:1,createdAt:s.lastActive});if(kind==='question')questionId=eid;}
   }
   db.save(s);db.set('schemaVersion',2);db.set('migrationStatus',{completed:true,warning:s.migrationWarning});
   for(const [key,op] of ops)db.op(key.slice(3),op.signature,'legacy',old.revision,null,op.response);
