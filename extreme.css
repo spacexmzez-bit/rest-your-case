@@ -1,0 +1,61 @@
+/* File name: extreme.css — scoped Foundation terminal and archive controls. */
+.extreme-app { margin: 0; color: #e8e6df; background: #141923; font: 16px/1.6 system-ui, sans-serif; color-scheme: dark; }
+.extreme-app *, .ex-archive-shell *, .ex-dialog * { box-sizing: border-box; }
+.extreme-app [hidden], .ex-archive-shell [hidden], .ex-dialog [hidden] { display: none !important; }
+.extreme-app a, .ex-archive-shell a { color: #dec496; }
+.extreme-app button, .ex-archive-shell button, .ex-dialog button { cursor: pointer; padding: .55rem .9rem; border: 1px solid #665941; border-radius: 6px; background: #252d3b; color: #f3e9d6; font: inherit; }
+.extreme-app button:hover, .ex-archive-shell button:hover, .ex-dialog button:hover { border-color: #ddc08d; background: #303b4a; }
+.extreme-app button:disabled, .ex-archive-shell button:disabled, .ex-dialog button:disabled { opacity: .5; cursor: wait; }
+.extreme-app :focus-visible, .ex-archive-shell :focus-visible, .ex-dialog :focus-visible { outline: 3px solid #e2c58c; outline-offset: 3px; }
+.extreme-app input, .extreme-app select, .extreme-app textarea, .ex-dialog input, .ex-dialog select, .ex-archive-shell input { display: block; width: 100%; padding: .6rem; border: 1px solid #4b5360; border-radius: 6px; background: #111720; color: #f4f1ea; font: inherit; }
+.extreme-app textarea { resize: vertical; }
+.extreme-app h1 { font: 600 clamp(1.6rem, 4vw, 2.7rem)/1.3 Georgia, serif; margin: .3rem 0 .7rem; }
+.extreme-app h2, .extreme-app h3 { color: #e4cca3; }
+.ex-topbar { display: flex; align-items: center; gap: 1rem; padding: .8rem 1.2rem; border-bottom: 1px solid #414858; flex-wrap: wrap; }
+.ex-topbar a { margin-inline-end: auto; font-family: Georgia, serif; text-decoration: none; }
+.ex-badge, .ex-eyebrow { color: #dfc394; font: 12px/1.4 ui-monospace, monospace; letter-spacing: .12em; }
+.ex-shell { max-width: 1160px; margin: auto; padding: 1.5rem; }
+.ex-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+.ex-actions { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.ex-actions label { flex: 1 1 160px; }
+.ex-card { background: #1d2531; border: 1px solid #414858; border-radius: 10px; padding: 1.2rem; margin-bottom: 1rem; }
+.ex-card p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1rem; }
+.ex-tabs { display: flex; gap: .5rem; overflow-x: auto; padding: .6rem 0 1rem; }
+.ex-tabs button { white-space: nowrap; }
+.ex-tabs button[aria-pressed=true], .ex-mode-tabs button[aria-pressed=true] { background: #5b4a30; border-color: #dec496; }
+.ex-exchanges { max-width: 960px; margin: auto; }
+.ex-event { border-inline-start: 3px solid #626a77; padding: .8rem 1rem; margin: .8rem 0; background: #1b222d; border-radius: 4px; }
+.ex-event[data-speaker=DEFENSE] { border-color: #9aaabe; }
+.ex-event[data-speaker=JUDGE] { border-color: #dec496; }
+.ex-event p { margin: .5rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ex-event small { color: #a9b4c4; }
+.ex-event a { font-size: .75rem; overflow-wrap: anywhere; }
+.ex-compose { margin-top: 1.5rem; display: grid; gap: .6rem; }
+.ex-compose select { max-width: 400px; }
+.ex-court-controls { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.ex-warning { padding: 1rem; border: 1px solid #dfb772; color: #ffe2ad; background: #352a1d; border-radius: 6px; margin-bottom: 1rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ex-status { color: #bacbdd; min-height: 1.5rem; margin-bottom: .5rem; }
+.ex-muted, .ex-footnote { color: #a4afbd; font-size: .85rem; }
+.ex-footnote { margin-top: 2rem; }
+.ex-danger { color: #f7b5b1 !important; border-color: #ae706c !important; }
+.ex-sidebar { position: fixed; inset-block: 0; inset-inline-start: 0; width: min(85vw, 310px); background: #1c2430; border-inline-end: 1px solid #79715e; z-index: 101; padding: 1.3rem; overflow-y: auto; }
+.ex-sidebar nav { display: grid; gap: .6rem; margin-top: 2rem; }
+.ex-sidebar a { padding: .75rem; text-decoration: none; border-radius: 6px; }
+.ex-sidebar a:hover { background: #303b4a; }
+.ex-backdrop { position: fixed; inset: 0; background: #000a; z-index: 100; }
+.ex-dialog { color: #eee8dd; background: #1d2531; border: 1px solid #8d7857; border-radius: 12px; width: min(94vw, 680px); max-height: 90vh; padding: 1.5rem; font: 16px/1.6 system-ui, sans-serif; }
+.ex-dialog::backdrop { background: #000b; }
+.ex-dialog h2 { color: #e4cca3; }
+.ex-dialog label { display: block; margin: .8rem 0; }
+.ex-dialog .ex-actions { margin-top: 1.5rem; }
+.ex-dialog p { white-space: pre-wrap; }
+.ex-archive-shell { padding: 1rem 0; color: #e8e6df; }
+.ex-mode-tabs { display: flex; gap: .7rem; margin-bottom: 1rem; }
+.ex-archive-shell .ex-grid { margin-top: 1rem; }
+.ex-archive-shell h2 { font-family: Georgia, serif; color: #e4cca3; }
+.ex-id { direction: ltr; unicode-bidi: isolate; font-family: ui-monospace, monospace; }
+@media (max-width: 600px) { .ex-shell { padding: .8rem; } .ex-topbar { gap: .5rem; padding: .6rem; } .ex-badge { display: none; } .ex-card { padding: .9rem; } .ex-actions button { flex-grow: 1; } }
+@media (prefers-reduced-motion: reduce) { .extreme-app * { scroll-behavior: auto; } }
+.extreme-app h1, .ex-card h2, .ex-card h3 { overflow-wrap: anywhere; }
+.ex-event button { max-width: 100%; overflow-wrap: anywhere; text-align: start; }

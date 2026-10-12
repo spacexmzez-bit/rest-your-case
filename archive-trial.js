@@ -1,4 +1,4 @@
-/* The archive and game share the same initialization and save rules. */
+/* File name: archive-trial.js — shared Standard purge and atomic replacement. */
 window.RYCArchiveTrial = (() => {
   function describe(state) {
     if (!state?.hasActiveCase) return null;
@@ -10,10 +10,10 @@ window.RYCArchiveTrial = (() => {
     const setupRetry=request&&(request.isInit||/^\/start(?:\s|$)/i.test(String(request.prompt||'').trim()));
     return {title,phase:incomplete?'Intake has not initialized':state.phase||'In progress',action:incomplete?(setupRetry?'Retry setup':'Finish setup'):failed?'Retry action':'Resume trial',incomplete,failed};
   }
-  async function purge(expectedRaw) {
+  async function purge(expectedRaw, replacement = null) {
     let previous;
     try{previous=JSON.parse(expectedRaw||'null');}catch(_){previous=null;}
-    const empty={...RYCState.emptyState(previous||{}),_histories:{court:[],partner:[],diaz:[]},_requests:{}};
+    const empty=replacement || {...RYCState.emptyState(previous||{}),_histories:{court:[],partner:[],diaz:[]},_requests:{}};
     await RYCCaseStore.write(expectedRaw,empty,{clearTrialExtras:true});
     return true;
   }

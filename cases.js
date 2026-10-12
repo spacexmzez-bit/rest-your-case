@@ -137,12 +137,14 @@ async function generateCase(diff, comp, cat, signal, onProgress) {
  * @param {object} caseObj - The fully assembled case object from pending or shelf
  */
 async function startTrialWithCase(caseObj) {
+  if (caseObj?.extreme?.version || caseObj?.mode === 'extreme') throw new Error('Open this case in the Extreme archive.');
   caseObj=RYCState.repairOccupationRecord(caseObj);
   const seedError=RYCState.seedError(caseObj);if(seedError)throw new Error(seedError);
   // Check for active trial collision
   const existingStateStr = localStorage.getItem('rest_your_case_state');
   let existingState=null;
   if(existingStateStr){try{existingState=JSON.parse(existingStateStr);}catch(_){throw new Error('The current trial cannot be read. Recover or purge it before starting another case.');}}
+  if (existingState?.extreme?.version || existingState?.mode === 'extreme' || existingState?.activeCaseSeed?.extreme?.version) throw new Error('Open the Extreme terminal to migrate the old save before accepting a Standard case.');
   if(existingState?.hasActiveCase&&!confirm("You currently have an active trial. Accepting this case will permanently discard your active progress. Proceed?"))return false;
 
 
@@ -200,7 +202,9 @@ async function startTrialWithCase(caseObj) {
   const diazGreeting = `Diaz here. Subpoenas cost 1 AP; field canvassing and forensic audits cost 2 AP. Advice costs 0 AP.`;
   freshState._histories={court:[],partner:[{role:'model',parts:[{text:partnerGreeting}]}],diaz:[{role:'model',parts:[{text:diazGreeting}]}]};
   freshState._requests={};
-  await RYCCaseStore.write(existingStateStr,freshState,{clearTrialExtras:true});
+  if (existingState?.hasActiveCase && typeof RYCArchiveTrial !== 'undefined') {
+    await RYCArchiveTrial.purge(existingStateStr, freshState);
+  } else await RYCCaseStore.write(existingStateStr,freshState,{clearTrialExtras:true});
   // If session storage is unavailable the game still offers Finish case setup.
   try{sessionStorage.setItem('trigger_engine_handshake',freshState.caseId);}catch(_){}
 

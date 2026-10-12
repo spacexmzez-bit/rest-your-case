@@ -1,0 +1,89 @@
+<!-- File name: extreme.html -->
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#141923">
+  <title>Extreme · Rest Your Case</title>
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="extreme.css?v=foundation-2">
+  <script defer src="extreme.js?v=foundation-2"></script>
+</head>
+<body class="extreme-app" data-extreme="terminal">
+  <header class="ex-topbar">
+    <button type="button" id="ex-menu" aria-expanded="false" aria-controls="ex-sidebar" data-ex-label="Menu">Menu</button>
+    <a href="index.html">⚖ Rest Your Case</a>
+    <span class="ex-badge">EXTREME · SMART</span>
+    <button type="button" id="ex-language" aria-label="Change language">العربية</button>
+    <button type="button" id="ex-settings" data-ex-label="Settings">Settings</button>
+  </header>
+  <div id="ex-backdrop" class="ex-backdrop" hidden></div>
+  <aside id="ex-sidebar" class="ex-sidebar" hidden aria-label="Navigation">
+    <button type="button" id="ex-menu-close" data-ex-label="Close menu">Close menu</button>
+    <nav>
+      <a href="index.html" data-ex-label="Overview">Overview</a>
+      <a href="game.html#terminal" data-ex-label="Standard terminal">Standard terminal</a>
+      <a href="extreme.html" aria-current="page" data-ex-label="Extreme terminal">Extreme terminal</a>
+      <a href="shelf.html?mode=standard" data-ex-label="Standard archive">Standard archive</a>
+      <a href="shelf.html?mode=extreme" data-ex-label="Extreme archive">Extreme archive</a>
+      <a href="library.html" data-ex-label="Legal library">Legal library</a>
+      <button type="button" id="ex-sidebar-generate" data-ex-label="Generate Extreme brief">Generate Extreme brief</button>
+    </nav>
+  </aside>
+  <main class="ex-shell">
+    <div id="ex-warning" class="ex-warning" role="alert" hidden></div>
+    <div id="ex-status" class="ex-status" role="status" aria-live="polite"></div>
+    <section id="ex-empty" class="ex-card" hidden>
+      <h1 data-ex-label="Extreme terminal">Extreme terminal</h1>
+      <p data-ex-label="Choose an Extreme case or generate a new brief. Your Standard case stays independent.">Choose an Extreme case or generate a new brief. Your Standard case stays independent.</p>
+      <button type="button" id="ex-empty-generate" data-ex-label="Generate Extreme brief">Generate Extreme brief</button>
+      <a href="shelf.html?mode=extreme" data-ex-label="Extreme archive">Extreme archive</a>
+    </section>
+    <section id="ex-terminal" hidden>
+      <div class="ex-heading"><div><p class="ex-eyebrow">EXTREME / FOUNDATION</p><h1 id="ex-title"></h1><p id="ex-hud"></p></div>
+        <div class="ex-actions"><button type="button" id="ex-sync" data-ex-label="Sync">Sync</button><button type="button" id="ex-generate" data-ex-label="Generate brief">Generate brief</button><button type="button" id="ex-purge" class="ex-danger" data-ex-label="Purge case">Purge case</button></div>
+      </div>
+      <div id="ex-return" class="ex-card" hidden></div>
+      <nav class="ex-tabs" aria-label="Case panels">
+        <button type="button" data-ex-tab="court" aria-pressed="true" data-ex-label="Court">Court</button>
+        <button type="button" data-ex-tab="case" aria-pressed="false" data-ex-label="Case">Case</button>
+        <button type="button" data-ex-tab="evidence" aria-pressed="false" data-ex-label="Evidence">Evidence</button>
+        <button type="button" data-ex-tab="witnesses" aria-pressed="false" data-ex-label="Witnesses">Witnesses</button>
+        <button type="button" data-ex-tab="archive" aria-pressed="false" data-ex-label="Archive">Archive</button>
+        <button type="button" data-ex-tab="notes" aria-pressed="false" data-ex-label="Notes">Notes</button>
+        <button type="button" data-ex-tab="consultation" aria-pressed="false" data-ex-label="Consultation">Consultation</button>
+      </nav>
+      <section data-ex-panel="court">
+        <div class="ex-card ex-court-controls"><span id="ex-stand"></span><div id="ex-phase-buttons" class="ex-actions"></div></div>
+        <div id="ex-pending" class="ex-warning" hidden></div>
+        <div id="ex-exchanges" class="ex-exchanges" aria-live="polite"></div>
+      </section>
+      <section data-ex-panel="case" hidden><div id="ex-case" class="ex-card"></div><div id="ex-leads" class="ex-grid"></div><div id="ex-verdict" class="ex-card" hidden></div></section>
+      <section data-ex-panel="evidence" hidden><div id="ex-evidence" class="ex-grid"></div></section>
+      <section data-ex-panel="witnesses" hidden><div id="ex-witnesses" class="ex-grid"></div></section>
+      <section data-ex-panel="archive" hidden>
+        <form id="ex-search" class="ex-actions"><label><span data-ex-label="Search original records">Search original records</span><input id="ex-query" type="search" maxlength="2400"></label>
+          <label><span data-ex-label="Actor">Actor</span><select id="ex-search-actor"><option value="">All</option></select></label>
+          <label><span data-ex-label="Exhibit ID">Exhibit ID</span><input id="ex-search-exhibit" placeholder="E01" maxlength="3" dir="ltr"></label>
+          <button type="submit" data-ex-label="Search">Search</button></form>
+        <div id="ex-archive" class="ex-exchanges"></div><button type="button" id="ex-more" data-ex-label="Load more">Load more</button>
+      </section>
+      <section data-ex-panel="notes" hidden><div class="ex-card"><label for="ex-notes" data-ex-label="Private defense notes">Private defense notes</label>
+        <textarea id="ex-notes" rows="14"></textarea><p id="ex-note-status" role="status"></p>
+        <button type="button" id="ex-clear-cache" data-ex-label="Discard synced event cache">Discard synced event cache</button></div></section>
+      <section data-ex-panel="consultation" hidden><div class="ex-card"><p data-ex-label="Partner consultation and Diaz advice cost 0 AP. Investigations use the listed lead cost.">Partner consultation and Diaz advice cost 0 AP. Investigations use the listed lead cost.</p>
+        <button type="button" data-ex-recipient="PARTNER" data-ex-label="Senior Partner">Senior Partner</button><button type="button" data-ex-recipient="DIAZ" data-ex-label="Diaz">Diaz</button>
+        <button type="button" id="ex-refresh-memory" data-ex-label="Refresh Clerk memory">Refresh Clerk memory</button><div id="ex-memory"></div></div></section>
+      <form id="ex-compose" class="ex-card ex-compose">
+        <label for="ex-recipient" data-ex-label="Recipient">Recipient</label><select id="ex-recipient"></select><p id="ex-channel"></p>
+        <label for="ex-message" data-ex-label="Your message">Your message</label><textarea id="ex-message" maxlength="2400" rows="3"></textarea>
+        <div class="ex-actions"><button type="submit" id="ex-send" data-ex-label="Send">Send</button><span id="ex-engine" class="ex-muted">Smart · four-model cascade</span></div>
+      </form>
+    </section>
+    <p class="ex-footnote" data-ex-label="Case access belongs to this browser. Clearing browser data can lose access. Cases expire after 90 inactive days.">Case access belongs to this browser. Clearing browser data can lose access. Cases expire after 90 inactive days.</p>
+  </main>
+  <dialog id="ex-dialog" class="ex-dialog"><div id="ex-dialog-content"></div></dialog>
+  <noscript>Enable JavaScript to use the Extreme terminal.</noscript>
+</body>
+</html>

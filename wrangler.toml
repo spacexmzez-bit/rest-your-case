@@ -5,3 +5,19 @@ main = "worker.js"
 compatibility_date = "2026-10-10"
 workers_dev = true
 keep_vars = true
+
+# Foundation keeps the existing Worker; Extreme owns a separate SQLite case namespace.
+[vars]
+EXTREME_ENABLED = "true"
+SMART_MODEL = "gemini-3.8-flash"
+CLERK_MODEL = "gemini-3.5-flash-lite"
+
+[[durable_objects.bindings]]
+name = "EXTREME_CASES"
+class_name = "ExtremeCase"
+
+# Preserve this tag once deployed. If extreme-v1 is already in your deployed
+# migration history, retain it rather than renaming or adding a duplicate class.
+[[migrations]]
+tag = "extreme-v1"
+new_sqlite_classes = ["ExtremeCase"]

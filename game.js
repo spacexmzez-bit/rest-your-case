@@ -172,6 +172,9 @@ function initApp() {
   let parsed = null;
   if (saved) {
     try { parsed = JSON.parse(saved); } catch (_) { storageNotice('The saved case could not be read. A backup will be kept before saving.'); }
+    if (parsed?.extreme?.version || parsed?.mode === 'extreme' || parsed?.activeCaseSeed?.extreme?.version) {
+      window.location.replace('extreme.html'); return;
+    }
     appState = RYCState.normalize(parsed, appState);
     if (RYCState.needsRecovery(parsed)) {
       recoveryOriginal = saved;
