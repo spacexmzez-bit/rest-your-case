@@ -69,7 +69,7 @@ await page.getByRole('button', { name: 'Send', exact: true }).click();
 await page.waitForSelector('#ex-pending:not([hidden])');
 const afterLost = initial.server.meta('caseState');
 await page.getByRole('button', { name: 'Check status', exact: true }).click();
-await page.waitForSelector('#ex-pending[hidden]');
+await page.waitForFunction(() => document.getElementById('ex-pending')?.hidden === true);
 assert.equal(initial.server.meta('caseState').revision, afterLost.revision);
 assert.equal(await page.evaluate(() => localStorage.getItem('rest_your_case_state')), standard);
 await page.getByRole('button', { name: 'Notes', exact: true }).click();
