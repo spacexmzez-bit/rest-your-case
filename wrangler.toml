@@ -5,17 +5,3 @@ main = "worker.js"
 compatibility_date = "2026-10-10"
 workers_dev = true
 keep_vars = true
-
-# Extreme case truth and progress remain in private per-case SQLite Durable Objects.
-[[durable_objects.bindings]]
-name = "EXTREME_CASES"
-class_name = "ExtremeCase"
-
-[[migrations]]
-tag = "extreme-v1"
-new_sqlite_classes = ["ExtremeCase"]
-
-# Explicit roles: gameplay never silently falls back to Clerk.
-[vars]
-SMART_MODEL = "gemini-3.8-flash"
-CLERK_MODEL = "gemini-3.5-flash-lite"

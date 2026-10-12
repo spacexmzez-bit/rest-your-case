@@ -188,7 +188,7 @@ function initApp() {
   diazHistory = loadHistory('diaz','rest_your_case_diaz_history');
   if(RYCState.object(parsed?._requests)) for(const ch of ['court','partner','diaz']) {
     const request=parsed._requests[ch];
-    if(RYCState.object(request)&&typeof request.prompt==='string') pendingRequests[ch]={prompt:request.prompt,isInit:request.isInit===true,started:request.started===true,response:RYCState.object(request.response)?request.response:undefined,...(typeof request.extremeOperationId==='string'?{extremeOperationId:request.extremeOperationId,extremeRevision:request.extremeRevision,extremeRecipient:request.extremeRecipient}:{}),error:typeof request.error==='string'&&request.error?request.error:'This action was interrupted. Retry when ready.'};
+    if(RYCState.object(request)&&typeof request.prompt==='string') pendingRequests[ch]={prompt:request.prompt,isInit:request.isInit===true,started:request.started===true,response:RYCState.object(request.response)?request.response:undefined,error:typeof request.error==='string'&&request.error?request.error:'This action was interrupted. Retry when ready.'};
   }
 
   if(appState.hasActiveCase&&!appState.caseId)appState.caseId=RYCCaseStore.id();
@@ -339,7 +339,6 @@ function handleInputDraft() {
   const val = input.value.trim().toLowerCase();
   const menu = document.getElementById('autocomplete-menu');
   
-
   if (val.startsWith('/inspect')) {
     const exhibits = (appState.docket || []).map(e => e.id || e.tag).filter(Boolean);
     if (exhibits.length > 0) {
@@ -564,8 +563,7 @@ async function completeCaseIntake() {
 }
 
 function openAddExhibitModal() { 
-  
-document.getElementById('exhibit-modal').classList.remove('hidden'); 
+  document.getElementById('exhibit-modal').classList.remove('hidden'); 
 }
 
 function closeAddExhibitModal() { 
@@ -576,8 +574,7 @@ function closeAddExhibitModal() {
 }
 
 async function saveNewExhibit() {
-  
-const entered=document.getElementById('modal-tag').value.trim();
+  const entered=document.getElementById('modal-tag').value.trim();
   const item={id:entered,name:document.getElementById('modal-title').value.trim()||'Untitled',type:document.getElementById('modal-type')?.value||'Documentary',facts:document.getElementById('modal-details').value.trim(),status:'Admitted',isManual:true};
   try {
     await commitCase(next=>{
@@ -590,13 +587,11 @@ const entered=document.getElementById('modal-tag').value.trim();
   } catch(error){alert(error.message);return false;}
 }
 async function setExhibitStatus(index, newStatus) {
-  
-const id=appState.docket[index]?.id||appState.docket[index]?.tag;
+  const id=appState.docket[index]?.id||appState.docket[index]?.tag;
   try{await commitCase(next=>{const item=next.docket.find(e=>(e.id||e.tag)===id);if(item)item.status=newStatus;return next;});renderDocket();}catch(_){}
 }
 async function deleteExhibit(index) {
-  
-const id=appState.docket[index]?.id||appState.docket[index]?.tag;
+  const id=appState.docket[index]?.id||appState.docket[index]?.tag;
   try{await commitCase(next=>{next.docket=next.docket.filter(e=>(e.id||e.tag)!==id);return next;});renderDocket();}catch(_){}
 }
 
@@ -969,8 +964,7 @@ async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
     const requests={...pendingRequests};delete requests.court;
     await commitCase(apply,{court:[...baseHistory,{role:'user',parts:[{text:userPrompt}]},{role:'model',parts:[{text:data.reply}]}]},requests);
     if(document.getElementById('court-user-input').value)saveDraft();else{try{localStorage.removeItem('terminal_draft');}catch(_){}}
-    renderUI();
-    return true;
+    renderUI();return true;
   } catch(error) {
     // A rendering failure after a successful commit must not replay the action.
     if(caseConflict||error.name==='CaseConflictError')invalidateCase();

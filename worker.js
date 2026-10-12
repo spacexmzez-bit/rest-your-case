@@ -3,9 +3,6 @@
  * Rest Your Case — Cloudflare Worker; dialogue contract and bounded AI requests.
  * Configure GEMINI_API_KEY as a Worker secret, or use the existing BYOK header.
  */
-import {routeExtreme} from './extreme-server.js';
-export {ExtremeCase} from './extreme-server.js';
-
 const ALLOWED_ORIGINS = [
   'https://rest-your-case.mazendev.com',
   'https://spacexmzez-bit.github.io',
@@ -152,10 +149,6 @@ export default {
     const cors = getCorsHeaders(request);
     if (request.method === 'OPTIONS') return new Response(null, {status: 204, headers: cors});
     if (request.method !== 'POST') return jsonResponse({error: 'NOT_FOUND', details: 'Endpoint not found.'}, 404, cors);
-    if (new URL(request.url).pathname.replace(/\/$/, '') === '/extreme') {
-      try { return await routeExtreme(request, env, cors); }
-      catch (error) { return errorResponse(error, cors); }
-    }
     const deadline = Date.now() + TOTAL_BUDGET_MS;
     try {
       return await bounded(signal => handleAIRoute(request, env, cors, signal, deadline), TOTAL_BUDGET_MS,
