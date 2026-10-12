@@ -547,12 +547,17 @@ export class ExtremeCase {
     for (const model of models) {
       let usage, started = Date.now(), inputTokens = 0;
       try {
-        const counted = await this.google(model, 'countTokens', { contents, systemInstruction }, key);
+        const generationRequest = { contents, systemInstruction,
+          generationConfig: { temperature: purpose === 'clerk' ? 0 : 0.3, maxOutputTokens: output,
+            responseMimeType: 'application/json', responseJsonSchema: schema } };
+        // REST CountTokensRequest accepts contents OR generateContentRequest.
+        // System instructions/config belong inside the latter, not at the top level.
+        const counted = await this.google(model, 'countTokens', {
+          generateContentRequest: { model: `models/${model}`, ...generationRequest }
+        }, key);
         inputTokens = counted.totalTokens;
         requireThat(Number.isInteger(inputTokens) && inputTokens <= ceiling, 'SOURCE_OVERFLOW', 'Required source tokens exceed the configured ceiling.', 409);
-        const data = await this.google(model, 'generateContent', { contents, systemInstruction,
-          generationConfig: { temperature: purpose === 'clerk' ? 0 : 0.3, maxOutputTokens: output,
-            responseMimeType: 'application/json', responseJsonSchema: schema } }, key);
+        const data = await this.google(model, 'generateContent', generationRequest, key);
         usage = data.usageMetadata;
         const c = data.candidates?.[0];
         requireThat(c?.finishReason === 'STOP', 'MODEL_INCOMPLETE', 'Model output was blocked, truncated or incomplete.', 502);
@@ -574,7 +579,23 @@ export class ExtremeCase {
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:${method}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal: controller.signal });
-      if (!r.ok) fail([401, 403].includes(r.status) ? 'MODEL_ACCESS_DENIED' : r.status === 429 ? 'MODEL_QUOTA' : 'MODEL_HTTP_ERROR', `Model request returned HTTP ${r.status}.`, r.status);
+      if (!r.ok) {
+        let providerMessage = '';
+        try {
+          const data = await r.json();
+          if (typeof data?.error?.message === 'string') providerMessage = data.error.message;
+        } catch { /* A non-JSON gateway reply is not safe to expose wholesale. */ }
+        // Expose only the provider's error message, never its full response/request.
+        // Redact the credential and complete prompt strings if they are echoed.
+        for (const secret of [key, ...(body.contents || body.generateContentRequest?.contents || []).flatMap(c => c.parts || []).map(p => p.text),
+          ...(body.systemInstruction || body.generateContentRequest?.systemInstruction)?.parts?.map(p => p.text) || []]) {
+          if (typeof secret === 'string' && secret) providerMessage = providerMessage.split(secret).join('[redacted]');
+        }
+        providerMessage = providerMessage.replace(/AIza[\w-]+/g, '[redacted API key]').slice(0, 1500);
+        const context = `${model} ${method}: HTTP ${r.status}`;
+        fail([401, 403].includes(r.status) ? 'MODEL_ACCESS_DENIED' : r.status === 429 ? 'MODEL_QUOTA' : 'MODEL_HTTP_ERROR',
+          providerMessage ? `${context}. ${providerMessage}` : `${context}. Provider supplied no readable error message.`, r.status);
+      }
       return await r.json();
     } catch (e) {
       if (controller.signal.aborted) fail('MODEL_TIMEOUT', 'Model step timed out. The same operation can be retried.', 504);

@@ -39,7 +39,7 @@
     'Generate': 'إنشاء', 'Bank scenario': 'نوع القضية البنكية', 'Bank robbery': 'سطو على بنك', 'Bank entries': 'قيود بنك', Random: 'عشوائي',
     Difficulty: 'الصعوبة', 'Gemini API key (optional)': 'مفتاح Gemini API (اختياري)', Save: 'حفظ',
     'Leave blank to use the Worker key. Extreme Scout and engine always use Smart.': 'اتركه فارغاً لاستخدام مفتاح الخادم. يستخدم منشئ موجز Extreme ومحركه Smart دائماً.',
-    'Working…': 'جارٍ التنفيذ…', 'Synced': 'تمت المزامنة', 'Offline: showing saved records. Official actions require the server.': 'غير متصل: تُعرض السجلات المحفوظة. تتطلب الإجراءات الرسمية اتصالاً بالخادم.',
+    'Request failed. Your saved request can be retried.': 'فشل الطلب. يمكنك إعادة محاولة الطلب المحفوظ.', 'Working…': 'جارٍ التنفيذ…', 'Synced': 'تمت المزامنة', 'Offline: showing saved records. Official actions require the server.': 'غير متصل: تُعرض السجلات المحفوظة. تتطلب الإجراءات الرسمية اتصالاً بالخادم.',
     'Public allegation': 'الادعاء العام', 'Count': 'التهمة', 'Source witness': 'شاهد المصدر', 'Completed': 'مكتمل', 'Prerequisites': 'المتطلبات السابقة',
     'View history': 'عرض السجل', 'Page': 'الصفحة', 'Previous': 'السابق', 'Next': 'التالي', 'No records found.': 'لم يُعثر على سجلات.',
     'Generate Standard brief': 'إنشاء موجز عادي', 'Brief ready': 'الموجز جاهز', 'Preparing brief': 'تحضير الموجز',
@@ -371,7 +371,9 @@
   }
   async function withBusy(run) {
     if (busy) return; busy = true; status(t('Working…')); updateDisabled();
-    try { await run(); } finally { busy = false; updateDisabled(); if (terminalCase) { await renderTerminal(); await renderPending(); } }
+    try { await run(); }
+    catch (e) { status(t('Request failed. Your saved request can be retried.')); throw e; }
+    finally { busy = false; updateDisabled(); if (terminalCase) { await renderTerminal(); await renderPending(); } }
   }
   function updateDisabled() {
     const offline = !navigator.onLine;
