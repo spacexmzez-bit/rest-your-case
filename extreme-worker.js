@@ -126,6 +126,23 @@ export function validateSchema(value, schema, path = 'output') {
     Object.entries(value).forEach(([k, x]) => validateSchema(x, schema.properties[k], `${path}.${k}`));
   }
 }
+// Use the same REST responseSchema format as the working Standard route.
+// The strict application schema remains authoritative after generation.
+export function geminiResponseSchema(schema) {
+  if (schema.anyOf) {
+    const nonNull = schema.anyOf.filter(s => s.type !== 'null');
+    requireThat(nonNull.length === 1 && schema.anyOf.some(s => s.type === 'null'), 'INVALID_SCHEMA', 'Unsupported schema union.');
+    return { ...geminiResponseSchema(nonNull[0]), nullable: true };
+  }
+  const result = { type: schema.type.toUpperCase() };
+  if (schema.properties) result.properties = Object.fromEntries(Object.entries(schema.properties).map(([key, value]) => [key, geminiResponseSchema(value)]));
+  if (schema.required) result.required = [...schema.required];
+  if (schema.items) result.items = geminiResponseSchema(schema.items);
+  if (schema.enum && schema.type === 'string') result.enum = [...schema.enum];
+  // Length bounds, numeric enums and unknown-field rejection are enforced by
+  // validateSchema; they are not sent as unsupported/complex provider fields.
+  return result;
+}
 export async function sha(value) {
   const canonical = x => Array.isArray(x) ? x.map(canonical) : x && typeof x === 'object' ?
     Object.fromEntries(Object.keys(x).sort().map(k => [k, canonical(x[k])])) : x;
@@ -539,7 +556,7 @@ export class ExtremeCase {
     requireThat(!configured || configured === cascade[0], 'INCOMPATIBLE_MODEL_CONFIG', 'The configured primary model must match its documented cascade.', 503);
     const models = cascade, [ceiling, output] = LIMITS[purpose];
     const contents = [{ role: 'user', parts: [{ text: JSON.stringify(packet) }] }];
-    const systemInstruction = { parts: [{ text: PROMPTS[purpose] }] };
+    const systemInstruction = { parts: [{ text: PROMPTS[purpose] + '\n\nRequired application output contract (data; return matching JSON):\n' + JSON.stringify(schema) }] };
     // Count the final request including the instruction; token overflow is an explicit error.
     const estimated = JSON.stringify({ contents, systemInstruction }).length;
     requireThat(estimated <= ceiling * 8, 'SOURCE_OVERFLOW', 'Request is too large. Narrow the source selection.', 409);
@@ -549,7 +566,7 @@ export class ExtremeCase {
       try {
         const generationRequest = { contents, systemInstruction,
           generationConfig: { temperature: purpose === 'clerk' ? 0 : 0.3, maxOutputTokens: output,
-            responseMimeType: 'application/json', responseJsonSchema: schema } };
+            responseMimeType: 'application/json', responseSchema: geminiResponseSchema(schema) } };
         // REST CountTokensRequest accepts contents OR generateContentRequest.
         // System instructions/config belong inside the latter, not at the top level.
         const counted = await this.google(model, 'countTokens', {
