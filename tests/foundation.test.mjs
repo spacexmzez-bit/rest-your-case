@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { ExtremeCase, CATALOG, SMART_MODELS, LIGHT_MODELS, BLUEPRINT_SCHEMA, validateBlueprint, validateSchema,
-  initialState, reduceAction, permitted, selectOriginals, sha, validateRequest } from '../extreme-worker.js';
+  initialState, reduceAction, permitted, selectOriginals, sha, validateRequest, geminiResponseSchema } from '../extreme-worker.js';
 const uid = () => crypto.randomUUID();
 const ids = (p, n) => Array.from({ length: n }, (_, i) => p + String(i + 1).padStart(2, '0'));
 export function fixture() {
@@ -366,6 +366,24 @@ test('HTTP errors report provider reason and request method while redacting keys
       assert.equal(e.message.includes('DO NOT DISPLAY FULL RESPONSE'), false); return true;
     });
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test('Provider schema uses Standard-compatible types while application validation stays strict', () => {
+  const converted = geminiResponseSchema(BLUEPRINT_SCHEMA);
+  const check = s => {
+    assert.ok(['OBJECT', 'ARRAY', 'STRING', 'INTEGER', 'BOOLEAN'].includes(s.type));
+    assert.ok(Object.keys(s).every(k => ['type', 'properties', 'required', 'items', 'enum', 'nullable'].includes(k)));
+    for (const child of Object.values(s.properties || {})) check(child);
+    if (s.items) check(s.items);
+  };
+  check(converted);
+  assert.equal(converted.properties.client.properties.assignedLie.nullable, true);
+  assert.equal(converted.properties.version.type, 'INTEGER');
+  assert.equal(converted.properties.version.enum, undefined);
+  const invalid = fixture(); invalid.version = 99;
+  assert.throws(() => validateSchema(invalid, BLUEPRINT_SCHEMA));
+  const tooLong = fixture(); tooLong.title = 'X'.repeat(161);
+  assert.throws(() => validateSchema(tooLong, BLUEPRINT_SCHEMA));
 });
 
 }
