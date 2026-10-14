@@ -1,11 +1,5 @@
 /* File name: ryc-ar.js — shared Arabic UI dictionary. */
 window.RYC_AR = {
-  "Extreme terminal": "طرفية Extreme",
-  "Generate Extreme brief": "إنشاء موجز Extreme",
-  "Generate Standard brief": "إنشاء موجز عادي",
-  "Open / resume Extreme terminal": "فتح أو استئناف طرفية Extreme",
-  "Standard archive": "أرشيف القضايا العادية",
-  "Extreme archive": "أرشيف Extreme",
   "Rest Your Case": "ريست يور كيس",
   "REST YOUR CASE /": "ريست يور كيس /",
   "Tactical Trial Simulator": "محاكاة المحاكمات",

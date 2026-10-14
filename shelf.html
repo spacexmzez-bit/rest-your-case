@@ -169,8 +169,6 @@
   </style>
 <link rel="stylesheet" href="archive-interface.css?v=5">
   <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
-  <link rel="stylesheet" href="extreme.css?v=foundation-2">
-  <script defer src="extreme.js?v=foundation-2"></script>
 </head>
 <body>
   <a class="skip-link" href="#catalog">Skip to case files</a>
@@ -184,7 +182,6 @@
         <nav aria-label="Site navigation">
           <a href="index.html">Overview</a>
           <a href="game.html#terminal" id="menu-resume" hidden>Resume trial</a>
-          <a href="extreme.html">Extreme terminal</a>
           <a href="game.html#notebook">Notebook</a>
           <a href="shelf.html" aria-current="page">Case Archive</a>
           <a href="library.html">Legal Library</a>
@@ -202,17 +199,6 @@
     </div>
     <section class="workbench" aria-label="Case collection">
       <div id="storage-warning" class="storage-warning" role="alert" hidden></div>
-      <div class="ex-mode-tabs" role="group" aria-label="Case mode">
-        <button type="button" data-ex-mode="standard" aria-pressed="true" data-ex-label="Standard">Standard</button>
-        <button type="button" data-ex-mode="extreme" aria-pressed="false" data-ex-label="Extreme">Extreme</button>
-      </div>
-      <section id="ex-extreme-panel" class="ex-archive-shell" hidden>
-        <div class="ex-actions"><button id="ex-shelf-generate" type="button" data-ex-label="Generate Extreme brief">Generate Extreme brief</button>
-        <a href="extreme.html" data-ex-label="Extreme terminal">Extreme terminal</a><button id="ex-shelf-settings" type="button" data-ex-label="Settings">Settings</button></div>
-        <div id="ex-status" role="status" aria-live="polite"></div><div id="ex-shelf" class="ex-grid"></div><div id="ex-shelf-pages" class="ex-actions"></div>
-      </section>
-      <section id="ex-standard-panel">
-        <a class="primary" href="index.html#generate" data-ex-label="Generate Standard brief">Generate Standard brief</a>
       <aside id="active-slip" class="active-slip" aria-label="Current trial" hidden>
         <div><strong id="active-title"></strong><p id="active-phase"></p></div>
         <div class="active-actions"><a id="active-resume" class="text-link" href="game.html#terminal">Resume trial</a><button id="purge-current-case" class="purge-current" type="button">Purge case</button></div>
@@ -232,7 +218,6 @@
       <div class="case-grid" id="case-grid" aria-label="Saved case folders"></div>
       <div class="empty-card" id="empty-card" hidden><h2 id="empty-title"></h2><p id="empty-description"></p><a class="primary" id="find-case" href="index.html">Find a case</a><button class="secondary" id="empty-clear" type="button" hidden>Clear filters</button></div>
       <noscript><div class="empty-card"><h2>Open the archive</h2><p>Enable JavaScript to read the saved case files in this browser.</p><a class="primary" href="index.html">Return to overview</a></div></noscript>
-      </section>
     </section>
   </main>
   <footer>Rest Your Case · Files saved in this browser</footer>
@@ -266,10 +251,10 @@
   <dialog id="purge-current-dialog" class="confirm-dialog" aria-labelledby="purge-current-title"><h2 id="purge-current-title">Purge current case?</h2><p>This removes the active trial, its notes and conversations. Your archived files and API key stay available.</p><label for="purge-current-input">Type CONFIRM to purge</label><input id="purge-current-input" autocomplete="off" spellcheck="false"><p id="purge-current-error" class="error-message" role="alert" hidden></p><div class="confirm-actions"><button id="purge-current-cancel" class="secondary" type="button">Cancel</button><button id="purge-current-confirm" class="primary" type="button">Purge case</button></div></dialog>
   <script src="game-state.js?v=ap-v2"></script>
   <script src="case-store.js?v=5"></script>
-  <script src="archive-trial.js?v=foundation-2"></script>
+  <script src="archive-trial.js?v=5"></script>
   <!-- Use the existing case broker; archive browsing makes no AI requests. -->
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=foundation-2"></script>
+  <script src="cases.js?v=ar-1"></script>
   <script>
   (() => {
     'use strict';
@@ -318,7 +303,6 @@
         try {
           const records = readArray(keys[source]);
           records.forEach((c, index) => {
-            if (c?.extreme?.version || c?.mode === 'extreme') return;
             if (!c || typeof c !== 'object' || Array.isArray(c)) { state.problems.push('A saved case entry is not readable.'); return; }
             if (typeof c.id === 'string' && c.id) { if (seen.has(c.id)) return; seen.add(c.id); }
             state.records.push(recordView(c, source, index));
@@ -326,7 +310,7 @@
         } catch (_) { state.problems.push(`${source === 'shelf' ? 'Filed cases' : 'Pending intake'} could not be read from this browser.`); }
       }
       try { state.active = readActive(); } catch (_) { state.problems.push('The current trial could not be read.'); }
-      const active = state.active?.hasActiveCase && !(state.active?.extreme?.version || state.active?.mode === 'extreme' || state.active?.activeCaseSeed?.extreme?.version);
+      const active = state.active?.hasActiveCase;
       $('active-slip').hidden = !active;
       $('menu-resume').hidden = !active;
       if(active){const trial=RYCArchiveTrial.describe(state.active);$('active-title').textContent=trial.title;$('active-phase').textContent=trial.phase;$('active-resume').textContent=trial.action;}

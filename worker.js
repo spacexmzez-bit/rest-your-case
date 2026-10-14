@@ -3,8 +3,6 @@
  * Rest Your Case — Cloudflare Worker; dialogue contract and bounded AI requests.
  * Configure GEMINI_API_KEY as a Worker secret, or use the existing BYOK header.
  */
-import { routeExtreme, ExtremeCase } from './extreme-worker.js';
-export { ExtremeCase };
 const ALLOWED_ORIGINS = [
   'https://rest-your-case.mazendev.com',
   'https://spacexmzez-bit.github.io',
@@ -15,7 +13,6 @@ const TOTAL_BUDGET_MS = 40000;
 // Full conversation histories can exceed the former 32 KB cap; never silently truncate them.
 const MAX_REQUEST_BYTES = 131072;
 const SCOUT_MODEL = 'gemini-3.5-flash-lite';
-const LIGHT_MODEL_CASCADE = [SCOUT_MODEL, 'gemini-3.1-flash-lite'];
 const COURT_MODEL_CASCADE = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash'];
 function getCorsHeaders(request) {
   const origin = request.headers.get('Origin');
@@ -152,7 +149,6 @@ export default {
     const cors = getCorsHeaders(request);
     if (request.method === 'OPTIONS') return new Response(null, {status: 204, headers: cors});
     if (request.method !== 'POST') return jsonResponse({error: 'NOT_FOUND', details: 'Endpoint not found.'}, 404, cors);
-    if (new URL(request.url).pathname.replace(/\/$/, '') === '/extreme') return routeExtreme(request, env, cors);
     const deadline = Date.now() + TOTAL_BUDGET_MS;
     try {
       return await bounded(signal => handleAIRoute(request, env, cors, signal, deadline), TOTAL_BUDGET_MS,
@@ -202,10 +198,10 @@ async function handleAIRoute(request, env, cors, signal, deadline) {
   const customKey = request.headers.get('X-Custom-Gemini-Key')?.trim();
   const apiKey = customKey || (typeof env?.GEMINI_API_KEY === 'string' ? env.GEMINI_API_KEY.trim() : '');
   if (!apiKey) throw fault('NO_API_KEY', 'Configure GEMINI_API_KEY or enter your Gemini key in Settings.', 401);
-  let models = engineMode === 'light' ? LIGHT_MODEL_CASCADE : COURT_MODEL_CASCADE, system = MASTER_COURT_DIRECTIVE;
+  let models = engineMode === 'light' ? [SCOUT_MODEL] : COURT_MODEL_CASCADE, system = MASTER_COURT_DIRECTIVE;
   let generationConfig = {temperature: 0.7, topP: 0.95, maxOutputTokens: 8192};
   if (targetPersona === 'scout') {
-    models = LIGHT_MODEL_CASCADE; system = SCOUT_SYSTEM_INSTRUCTION;
+    models = [SCOUT_MODEL]; system = SCOUT_SYSTEM_INSTRUCTION;
     generationConfig = {temperature: 0.6, topP: 0.95, maxOutputTokens: 2048,
       responseMimeType: 'application/json', responseSchema: SCOUT_RESPONSE_SCHEMA};
   } else if (targetPersona === 'partner' || targetPersona === 'diaz') {

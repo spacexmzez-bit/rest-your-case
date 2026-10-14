@@ -12,7 +12,7 @@
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8" />
-  <script src="ryc-ar.js?v=foundation-2"></script>
+  <script src="ryc-ar.js?v=ar-1"></script>
   <script src="ryc-i18n.js?v=ar-1"></script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -57,8 +57,6 @@
   </script>
 <link rel="stylesheet" href="visual-theme.css?v=5"><link rel="stylesheet" href="overview-guide.css?v=5">
   <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
-  <link rel="stylesheet" href="extreme.css?v=foundation-2">
-  <script defer src="extreme.js?v=foundation-2"></script>
 </head>
 <body data-visual="overview" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -187,7 +185,6 @@
     <nav class="p-4 flex flex-col space-y-2 font-mono text-xs overflow-y-auto flex-grow">
       <a href="index.html" class="w-full text-left px-3 py-2.5 rounded bg-brand-border text-white border border-brand-gold/40 transition block">Overview</a>
       <a id="drawer-terminal-link" href="game.html#terminal" class="hidden w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Live Terminal</a>
-      <a href="extreme.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Extreme terminal</a>
       <a href="game.html#notebook" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Notebook</a>
       <a href="shelf.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition flex items-center justify-between">
         <span>Case Shelf</span>
@@ -204,7 +201,6 @@
   </aside>
 
   <!-- ================= INTAKE & CASE DOSSIER FOLDER MODAL ================= -->
-  <div class="max-w-5xl mx-auto px-4 pb-6 flex gap-3 flex-wrap"><button type="button" onclick="RYCExtreme.generate()" class="bg-brand-surface border border-brand-border text-brand-gold px-5 py-3 rounded">Generate Extreme brief</button><a href="extreme.html" class="border border-brand-border text-brand-gold px-5 py-3 rounded">Open / resume Extreme terminal</a><button type="button" onclick="openIntakeModal()" class="border border-brand-border text-brand-gold px-5 py-3 rounded">Generate Standard brief</button></div>
   <div id="intake-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
     <div class="bg-brand-surface border border-brand-border rounded max-w-xl w-full p-5 sm:p-6 space-y-5 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
       
@@ -390,9 +386,8 @@
   <script src="scout_prompt.js?v=ar-1"></script>
   <script src="game-state.js?v=ap-v2"></script>
   <script src="case-store.js?v=5"></script>
-  <script src="archive-trial.js?v=foundation-2"></script>
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=foundation-2"></script>
+  <script src="cases.js?v=ar-1"></script>
   <script>
     let customGeminiKey=null;try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
     function showStorageError(error){let el=document.getElementById('overview-storage-error');if(!el){el=document.createElement('p');el.id='overview-storage-error';el.setAttribute('role','alert');document.body.prepend(el);}el.textContent='Could not access saved cases: '+error.message;}
@@ -486,7 +481,6 @@ function saveCustomKey() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (parsed.extreme?.version || parsed.mode === 'extreme' || parsed.activeCaseSeed?.extreme?.version) { window.location.href = 'extreme.html'; return; }
           if (parsed.hasActiveCase) {
             window.location.href = 'game.html#terminal';
             return;
@@ -669,6 +663,5 @@ function saveCustomKey() {
       }
     })();
   </script>
-<script>if(location.hash === "#generate") openIntakeModal();</script>
 </body>
 </html>
