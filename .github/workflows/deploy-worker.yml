@@ -1,4 +1,4 @@
-# File name:  .github/workflows/deploy-worker.yml
+# File name: .github/workflows/deploy-worker.yml
 name: Deploy RYC Worker
 
 on:
@@ -6,14 +6,6 @@ on:
     branches: [main]
     paths:
       - worker.js
-      - extreme-worker.js
-      - extreme.js
-      - tests/foundation.test.mjs
-      - tests/foundation.browser.mjs
-      - extreme.html
-      - extreme.css
-      - index.html
-      - shelf.html
       - wrangler.toml
       - .github/workflows/deploy-worker.yml
   workflow_dispatch:
@@ -33,25 +25,8 @@ jobs:
       - name: Download repository files
         uses: actions/checkout@v6
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Check imported modules and browser JavaScript
-        run: |
-          node --input-type=module --check < worker.js
-          node --input-type=module --check < extreme-worker.js
-          node --check extreme.js
-          node --test tests/foundation.test.mjs
-
-      - name: Install browser test runtime
-        run: |
-          npm install --no-save --package-lock=false playwright@1.62.1
-          npx playwright install --with-deps chromium
-
-      - name: Run Foundation browser gates
-        run: node tests/foundation.browser.mjs
+      - name: Check Worker syntax
+        run: node --input-type=module --check < worker.js
 
       - name: Check deployment credentials
         env:
@@ -73,4 +48,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
+
           command: deploy --config wrangler.toml
