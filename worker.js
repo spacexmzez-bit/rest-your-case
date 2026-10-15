@@ -299,3 +299,18 @@ function formatGeminiContents(history, currentMessage) {
   else contents.push({role: 'user', parts: [{text: currentMessage}]});
   return contents;
 }
+
+
+// Compatibility export for the already-provisioned Extreme namespace.
+// Extreme gameplay is disabled. Existing records are not read or deleted.
+export class ExtremeCase {
+  async fetch() {
+    return new Response(JSON.stringify({
+      error: 'EXTREME_DISABLED',
+      details: 'Extreme is postponed. Use Standard complexities 1-5.'
+    }), { status: 410, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  }
+  async alarm() {
+    // Acknowledge old scheduled alarms without running models or modifying data.
+  }
+}
