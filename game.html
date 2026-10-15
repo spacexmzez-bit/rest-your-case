@@ -13,7 +13,7 @@
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8" />
-  <script src="ryc-ar.js?v=ar-1"></script>
+  <script src="ryc-ar.js?v=standard-review-1"></script>
   <script src="ryc-i18n.js?v=ar-1"></script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -59,6 +59,7 @@
   <link rel="stylesheet" href="visual-theme.css?v=5" />
   <link rel="stylesheet" href="game-scene.css?v=dialogue-buttons-5" />
   <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
+<link rel="stylesheet" href="standard-update.css?v=standard-review-1">
 </head>
 <body data-visual="game" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -101,7 +102,7 @@
       <div class="room-menu-wrap"><button id="room-menu-toggle" aria-label="Choose a room" aria-expanded="false" aria-controls="room-menu" type="button">Rooms</button>
         <nav id="room-menu" aria-label="Rooms" hidden>
           <button type="button" data-room="court">Courtroom</button><button type="button" data-room="office">Your office</button><button type="button" data-room="diaz">Investigator Diaz</button><button type="button" data-room="partner">Senior partner</button><button type="button" data-room="da">DA’s office</button><button type="button" data-room="intake">Client interview</button>
-          <a href="library.html">Legal library</a><a href="shelf.html">Case archive</a><button type="button" onclick="openWipeModal()">Purge current case</button>
+          <a href="library.html">Legal library</a>
         </nav>
       </div>
     </div>
@@ -344,13 +345,22 @@
   </footer>
 
   <!-- Scripts loaded in execution order -->
-  <script src="data.js?v=7"></script>
-  <script src="game-state.js?v=ap-v2"></script>
+  <script src="standard-support.js?v=standard-review-1"></script>
+  <script src="data.js?v=standard-review-1"></script>
+  <script src="game-state.js?v=standard-review-1"></script>
   <script src="case-store.js?v=5"></script>
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=ar-1"></script>
+  <script src="cases.js?v=standard-review-1"></script>
   <script src="ryc-dialogue.js?v=1"></script>
-  <script src="game-scene.js?v=ar-1"></script>
-  <script src="game.js?v=ar-1"></script>
+  <script src="game-scene.js?v=standard-review-1"></script>
+  <script src="game.js?v=standard-review-1"></script>
+
+  <button id="token-toggle" class="token-toggle" type="button" aria-controls="token-panel" aria-expanded="false">Dev · tokens</button>
+  <aside id="token-panel" class="token-panel" aria-labelledby="token-title" hidden>
+    <header><strong id="token-title">AI token usage</strong><button id="token-close" type="button" aria-label="Close token meter">Close ×</button></header>
+    <div id="token-counts" aria-live="polite"></div>
+    <p>Measured Gemini usage across Scout, court and consultations, including cascade attempts. Output includes reported thinking. Exact repeats mean identical full model input for the same model; this is separate from provider caching and does not imply a discount. Missing usage is unknown, never an estimate. Counts are for this browser since reset.</p>
+    <button id="token-reset" type="button">Reset meter</button>
+  </aside>
 </body>
 </html>

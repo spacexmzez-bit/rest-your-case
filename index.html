@@ -12,7 +12,7 @@
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
   <meta charset="UTF-8" />
-  <script src="ryc-ar.js?v=ar-1"></script>
+  <script src="ryc-ar.js?v=standard-review-1"></script>
   <script src="ryc-i18n.js?v=ar-1"></script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -57,6 +57,7 @@
   </script>
 <link rel="stylesheet" href="visual-theme.css?v=5"><link rel="stylesheet" href="overview-guide.css?v=5">
   <link rel="stylesheet" href="ryc-i18n.css?v=ar-1" />
+<link rel="stylesheet" href="standard-update.css?v=standard-review-1">
 </head>
 <body data-visual="overview" class="bg-brand-dark text-slate-200 min-h-screen antialiased flex flex-col justify-between overflow-x-hidden relative">
 
@@ -219,6 +220,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-brand-dark/80 p-3 rounded border border-brand-border text-xs font-mono">
         <div>
           <label class="text-brand-gold text-[10px] uppercase block mb-1">Trial Rules</label>
+          <button id="difficulty-info" type="button" aria-label="How difficulty changes partner advice" class="difficulty-info">!</button>
           <select id="intake-diff" class="w-full bg-brand-surface border border-brand-border p-1.5 rounded text-white outline-none focus:border-brand-gold">
             <option value="Sandbox">Sandbox (Unlimited AP)</option>
             <option value="Easy">Easy (150% case AP)</option>
@@ -382,12 +384,13 @@
   </footer>
 
   <!-- Scripts loaded in execution order with cache busting -->
-  <script src="data.js?v=7"></script>
-  <script src="scout_prompt.js?v=ar-1"></script>
-  <script src="game-state.js?v=ap-v2"></script>
+  <script src="standard-support.js?v=standard-review-1"></script>
+  <script src="data.js?v=standard-review-1"></script>
+  <script src="scout_prompt.js?v=standard-review-1"></script>
+  <script src="game-state.js?v=standard-review-1"></script>
   <script src="case-store.js?v=5"></script>
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=ar-1"></script>
+  <script src="cases.js?v=standard-review-1"></script>
   <script>
     let customGeminiKey=null;try{customGeminiKey=localStorage.getItem('rest_your_case_custom_gemini_key')||null;}catch(_){}
     function showStorageError(error){let el=document.getElementById('overview-storage-error');if(!el){el=document.createElement('p');el.id='overview-storage-error';el.setAttribute('role','alert');document.body.prepend(el);}el.textContent='Could not access saved cases: '+error.message;}
@@ -546,10 +549,10 @@ function saveCustomKey() {
       document.getElementById('card-genre').innerText = `${seed.meta.genre_name} (Complexity ${seed.meta.complexity}/5)`;
       document.getElementById('card-title').innerText = scout.caseTitle;
       document.getElementById('card-charge').innerText = seed.charge.charge;
-      document.getElementById('card-client').innerText = seed.roster.client.name;
+      document.getElementById('card-client').innerText = RYCStandard.nameLabel({activeCaseSeed:{seed}},seed.roster.client.name);
       document.getElementById('card-client-occupation').innerText = RYCState.occupationLabel(RYCState.recordOccupation(currentCase));
-      document.getElementById('card-judge').innerText = seed.roster.judge.name;
-      document.getElementById('card-da').innerText = seed.roster.da.name;
+      document.getElementById('card-judge').innerText = RYCStandard.nameLabel({activeCaseSeed:{seed}},seed.roster.judge.name);
+      document.getElementById('card-da').innerText = RYCStandard.nameLabel({activeCaseSeed:{seed}},seed.roster.da.name);
       document.getElementById('card-summary').innerText = `"${scout.crimeSummary}"`;
       
       const exhibits = (scout.starterExhibits || []).map(e => e.name || e.id).join(', ');
@@ -663,5 +666,23 @@ function saveCustomKey() {
       }
     })();
   </script>
+
+  <button id="token-toggle" class="token-toggle" type="button" aria-controls="token-panel" aria-expanded="false">Dev · tokens</button>
+  <aside id="token-panel" class="token-panel" aria-labelledby="token-title" hidden>
+    <header><strong id="token-title">AI token usage</strong><button id="token-close" type="button" aria-label="Close token meter">Close ×</button></header>
+    <div id="token-counts" aria-live="polite"></div>
+    <p>Measured Gemini usage across Scout, court and consultations, including cascade attempts. Output includes reported thinking. Exact repeats mean identical full model input for the same model; this is separate from provider caching and does not imply a discount. Missing usage is unknown, never an estimate. Counts are for this browser since reset.</p>
+    <button id="token-reset" type="button">Reset meter</button>
+  </aside>
+
+  <dialog id="difficulty-help" class="difficulty-help" aria-labelledby="difficulty-title">
+    <h2 id="difficulty-title">Partner consultations & difficulty</h2>
+    <p><strong>Sandbox:</strong> Very obvious directional hints and useful next questions, without giving you the solution.</p>
+    <p><strong>Easy:</strong> Clear tactical hints with relevant legal explanations.</p>
+    <p><strong>Normal:</strong> Balanced issue spotting, alternatives and trade-offs.</p>
+    <p><strong>Hard:</strong> Minimal general legal clarification. No case-specific tactics or recommended moves.</p>
+    <p>Consultations cost 0 AP. No difficulty reveals the hidden case truth.</p>
+    <button id="difficulty-close" type="button">Close</button>
+  </dialog>
 </body>
 </html>

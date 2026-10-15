@@ -465,9 +465,9 @@ function renderTerminalSidePanel() {
   const daEl = document.getElementById('panel-da-name');
 
   if (titleEl) titleEl.innerText = appState.profile.title || 'State v. Unknown';
-  if (clientEl) clientEl.innerText = appState.profile.client || 'TBD';
-  if (judgeEl) judgeEl.innerText = appState.profile.judge || 'TBD';
-  if (daEl) daEl.innerText = appState.profile.da || 'TBD';
+  if (clientEl) clientEl.innerText = RYCStandard.nameLabel(appState,appState.profile.client) || 'TBD';
+  if (judgeEl) judgeEl.innerText = RYCStandard.nameLabel(appState,appState.profile.judge) || 'TBD';
+  if (daEl) daEl.innerText = RYCStandard.nameLabel(appState,appState.profile.da) || 'TBD';
 
   const evList = document.getElementById('panel-evidence-list');
   const evCount = document.getElementById('panel-evidence-count');
@@ -562,47 +562,64 @@ async function completeCaseIntake() {
   return sendCourtAction(prompt,true);
 }
 
-function openAddExhibitModal() { 
-  document.getElementById('exhibit-modal').classList.remove('hidden'); 
+let editingExhibitId = null;
+function openAddExhibitModal(index) {
+  if(engineLocked)return;
+  const item=Number.isInteger(index)?appState.docket[index]:null;
+  if(item && !item.isManual)return;
+  editingExhibitId=item?(item.id||item.tag):null;
+  document.querySelector('#exhibit-modal h3').textContent=item?'Edit manual exhibit':'Log manual exhibit';
+  for(const [id,value] of [['modal-tag',item?.id||item?.tag||''],['modal-title',item?.name||item?.title||''],['modal-details',item?.facts||item?.details||''],['modal-type',item?.type||'Documentary']])document.getElementById(id).value=value;
+  document.getElementById('exhibit-modal').classList.remove('hidden');
+  document.getElementById('modal-title').focus();
 }
-
-function closeAddExhibitModal() { 
-  document.getElementById('exhibit-modal').classList.add('hidden'); 
-  document.getElementById('modal-tag').value = ''; 
-  document.getElementById('modal-title').value = ''; 
-  document.getElementById('modal-details').value = ''; 
+function closeAddExhibitModal() {
+  document.activeElement?.blur();
+  document.getElementById('exhibit-modal').classList.add('hidden');
+  editingExhibitId=null;
 }
-
 async function saveNewExhibit() {
-  const entered=document.getElementById('modal-tag').value.trim();
-  const item={id:entered,name:document.getElementById('modal-title').value.trim()||'Untitled',type:document.getElementById('modal-type')?.value||'Documentary',facts:document.getElementById('modal-details').value.trim(),status:'Admitted',isManual:true};
+  if(engineLocked)return false;
+  const previousId=editingExhibitId;
+  const item={id:document.getElementById('modal-tag').value.trim(),name:document.getElementById('modal-title').value.trim()||'Untitled',type:document.getElementById('modal-type').value,facts:document.getElementById('modal-details').value.trim(),status:'Marked',isManual:true};
+  item.details=item.facts;
+  if(!item.facts){alert('Enter the exhibit details.');return false;}
   try {
     await commitCase(next=>{
-      if(!entered){let number=next.docket.length+1;while(next.docket.some(e=>(e.id||e.tag)===`Ex. ${number}`))number++;item.id=`Ex. ${number}`;}
+      if(!item.id){let number=next.docket.length+1;while(next.docket.some(e=>(e.id||e.tag)===`Ex. ${number}`))number++;item.id=`Ex. ${number}`;}
       RYCState.exhibit(item);
-      if(next.docket.some(e=>(e.id||e.tag)===item.id))throw new Error('An exhibit with this identifier already exists. Choose a different identifier.');
-      next.docket.push(item);return next;
+      if(next.docket.some(e=>(e.id||e.tag)===item.id && (e.id||e.tag)!==previousId))throw new Error('Choose a unique exhibit identifier.');
+      if(previousId){const at=next.docket.findIndex(e=>(e.id||e.tag)===previousId && e.isManual);if(at<0)throw new Error('Manual exhibit no longer exists.');item.status=next.docket[at].status;next.docket[at]=item;
+        if(previousId!==item.id){next.exhibitNotes[item.id]=next.exhibitNotes[previousId]||'';delete next.exhibitNotes[previousId];}}
+      else next.docket.push(item);
+      return next;
     });
-    renderDocket();closeAddExhibitModal();return true;
-  } catch(error){alert(error.message);return false;}
+    closeAddExhibitModal();renderDocket();RYCScene.refresh();return true;
+  }catch(error){alert(error.message);return false;}
 }
 async function setExhibitStatus(index, newStatus) {
   const id=appState.docket[index]?.id||appState.docket[index]?.tag;
   try{await commitCase(next=>{const item=next.docket.find(e=>(e.id||e.tag)===id);if(item)item.status=newStatus;return next;});renderDocket();}catch(_){}
 }
 async function deleteExhibit(index) {
-  const id=appState.docket[index]?.id||appState.docket[index]?.tag;
-  try{await commitCase(next=>{next.docket=next.docket.filter(e=>(e.id||e.tag)!==id);return next;});renderDocket();}catch(_){}
+  if(engineLocked)return;
+  const item=appState.docket[index];if(!item?.isManual || !confirm('Delete this manual exhibit and its notes?'))return;
+  const id=item.id||item.tag;
+  try{await commitCase(next=>{next.docket=next.docket.filter(e=>!((e.id||e.tag)===id && e.isManual));delete next.exhibitNotes[id];return next;});renderDocket();}catch(_){}
 }
 
 function renderDocket() {
   const container = document.getElementById('docket-list');
-  if (!container || container.contains(document.activeElement)) return; 
+  if (!container) return;
+  const focused=container.contains(document.activeElement)&&document.activeElement.matches('textarea,input')?{id:document.activeElement.dataset.exid,start:document.activeElement.selectionStart,end:document.activeElement.selectionEnd,value:document.activeElement.value}:null; 
   container.innerHTML = '';
+  if(focused)requestAnimationFrame(()=>{const target=[...container.querySelectorAll('textarea,input')].find(el=>el.dataset.exid===focused.id);if(target){target.value=focused.value;target.focus({preventScroll:true});target.setSelectionRange(focused.start,focused.end);}});
   
+  const findings=(appState.investigations||[]).filter(r=>r.status==='completed');
+  const findingCards=()=>{for(const r of findings)container.innerHTML+=`<article class="p-3 rounded border border-brand-border font-mono text-xs"><strong>Investigation result · ${escapeGameText(r.id)}</strong><p>${escapeGameText(r.summary)}</p><p>${escapeGameText((r.exhibitIds||[]).join(', '))}</p>${(r.facts||[]).map(f=>`<p>${escapeGameText(f)}</p>`).join('')}</article>`;};
   if (!appState.docket || appState.docket.length === 0) { 
-    container.innerHTML = `<div class="col-span-full p-4 border border-brand-border border-dashed rounded text-brand-muted text-xs font-mono text-center">No evidence discovered yet.</div>`; 
-    return; 
+    container.innerHTML = `<div class="col-span-full p-4 border border-brand-border border-dashed rounded text-brand-muted text-xs font-mono text-center">No evidence discovered yet.</div>`;
+    findingCards();return; 
   }
   
   appState.docket.forEach((item, index) => {
@@ -625,7 +642,7 @@ function renderDocket() {
             <button title="Manually override to Admitted" onclick="setExhibitStatus(${index}, 'Admitted')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-emerald-400">Admit</button>
             <button title="Manually override to Marked" onclick="setExhibitStatus(${index}, 'Marked')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-amber-400">Mark</button>
             <button title="Manually override to Suppress" onclick="setExhibitStatus(${index}, 'SUPPRESSED')" class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border hover:text-rose-400">Suppress</button>
-          </div><button onclick="deleteExhibit(${index})" class="text-brand-muted hover:text-rose-400 text-[10px]">Del</button>
+          </div><button onclick="openAddExhibitModal(${index})" class="text-brand-gold text-[10px]">Edit</button><button onclick="deleteExhibit(${index})" class="text-brand-muted hover:text-rose-400 text-[10px]">Del</button>
         </div>
       `;
     }
@@ -644,11 +661,12 @@ function renderDocket() {
         </div>
         <p class="text-brand-muted text-[11px] font-sans flex-grow">${escapeGameText(item.facts || item.details || 'No forensic notes.')}</p>
         <div class="mt-2 pt-2 border-t border-brand-border/30">
-          <textarea placeholder="Defense Annotations..." data-exid="${tag}" onchange="saveExhibitNote(this.dataset.exid, this.value)" class="w-full bg-brand-dark border border-brand-border rounded p-1.5 text-slate-300 text-[10px] font-mono outline-none resize-none focus:border-brand-gold" rows="2">${notes}</textarea>
+          <textarea placeholder="Defense Annotations..." data-exid="${tag}" oninput="saveExhibitNote(this.dataset.exid, this.value)" class="w-full bg-brand-dark border border-brand-border rounded p-1.5 text-slate-300 text-[10px] font-mono outline-none resize-none focus:border-brand-gold" rows="2">${notes}</textarea>
         </div>
         ${controlsHtml}
       </div>`;
   });
+  findingCards();
   renderTerminalSidePanel(); 
 }
 
@@ -733,7 +751,7 @@ function renderFactLedger() {
 
 function parseTranscriptFormat(text) {
   const raw=String(text).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&');
-  try{return RYCDialogue.parse(raw).map(m=>'<p class="message-speaker">'+escapeGameText(m.name)+'</p><div class="message-text">'+escapeGameText(m.text).replace(/\n/g,'<br>')+'</div>').join('');}
+  try{return RYCDialogue.parse(raw).map(m=>'<p class="message-speaker">'+escapeGameText(RYCStandard.nameLabel(appState,m.name))+'</p><div class="message-text">'+escapeGameText(m.text).replace(/\n/g,'<br>')+'</div>').join('');}
   catch(_){return '<p>A saved reply has an unreadable dialogue format.</p>';}
 }
 
@@ -895,6 +913,8 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
 }
 
 async function requestReply(payload) {
+  payload={...payload,userText:payload.message,contractVersion:2,operationId:payload.operationId||RYCStandard.id(),caseState:RYCStandard.publicCase(appState)};
+  if(payload.targetPersona==='diaz')payload.investigationTruth=appState.activeCaseSeed?.scout?.unencryptedTruth||'';
   // Include the lock in the message as well as metadata, for older worker versions.
   const role=RYCState.clientOccupation(appState);
   const roleInstruction=role
@@ -907,7 +927,11 @@ async function requestReply(payload) {
   const headers={'Content-Type':'application/json'};
   if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;
   payload.message+='\n[DIALOGUE FORMAT: '+RYCDialogue.instruction+']';
-  const {response,data}=await fetchWithTimeout(GAME_WORKER_URL,{method:'POST',headers,body:JSON.stringify(payload)},60000);
+  let received;
+  try{received=await fetchWithTimeout(GAME_WORKER_URL,{method:'POST',headers,body:JSON.stringify(payload)},60000);}
+  catch(error){RYCTokens.record(null,payload.targetPersona);throw error;}
+  const {response,data}=received;
+  RYCTokens.record(data?.usage,payload.targetPersona);
   ensureCaseCurrent();
   if(!response.ok) {
     const detail=typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message;
@@ -930,9 +954,10 @@ async function showRequestError(ch,error,request) {
 }
 async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
   if(engineLocked||caseConflict||!appState.hasActiveCase)return false;
-  const request=isRetry&&pendingRequests.court?pendingRequests.court:{prompt:userPrompt,isInit,started:false};
+  const request=isRetry&&pendingRequests.court?pendingRequests.court:{prompt:userPrompt,isInit,started:false,operationId:RYCStandard.id()};
   if(isRetry&&RYCState.intakeStatus(appState)==='incomplete'&&!request.isInit)return completeCaseIntake();
   if(!request.isInit&&RYCState.intakeStatus(appState)!=='ready'){storageNotice('Finish case setup before sending a trial action.');return false;}
+  request.operationId ||= RYCStandard.id();
   pendingRequests.court=request;userPrompt=request.prompt;isInit=request.isInit;
   engineLocked=true;
   try {
@@ -946,11 +971,11 @@ async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
     }
     request.error='';
     const baseHistory=userPrompt.trim().toLowerCase().startsWith('/undo')?trialHistory.slice(0,-2):trialHistory;
-    const data=request.response||await requestReply({message:userPrompt,history:baseHistory,targetPersona:'court'});
+    const data=request.response||await requestReply({message:userPrompt,history:baseHistory,targetPersona:'court',operationId:request.operationId});
     if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw Object.assign(new Error('Invalid model metadata. No case update was applied.'),{name:'ResponseValidationError'});
     ensureCaseCurrent();
     const apply=state=>{
-      const result=RYCState.next(state,data.reply,'court',{undo:/^\/undo(?:\s|$)/i.test(userPrompt.trim())});
+      const result=RYCState.next(state,data.reply,'court',{undo:/^\/undo(?:\s|$)/i.test(userPrompt.trim()),contractVersion:2,requestText:userPrompt});
       if(isInit){
         RYCState.validateInitialization(result.state,data.reply);
         result.state.intakeComplete=true;
@@ -977,14 +1002,15 @@ async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
   }
 }
 function buildContextCapsule() {
-  if(!appState.hasActiveCase)return 'No active case.';
-  return `Case: ${appState.profile.title} | Client: ${appState.profile.client} | Client occupation: ${RYCState.clientOccupation(appState) ?? "Unclassified; preserve established story"} | Judge: ${appState.profile.judge} | DA: ${appState.profile.da} | Phase: ${appState.phase} | AP: ${appState.ap} | Strikes: ${appState.strikes}\nAP Policy: ${RYCState.apContext(appState)}\nMarked Docket: ${JSON.stringify(appState.docket)}\nEstablished Court Facts: ${JSON.stringify(appState.facts)}`;
+  return 'Use the supplied public case snapshot as the current record. Private consultations do not act as the judge or change trial phase. The clerk supplies original attributed exchanges; distinguish claims, findings, corrections and open questions.';
 }
+
 async function sendAssistantAction(userPrompt,isRetry=false) {
   if(engineLocked||caseConflict||!appState.hasActiveCase)return false;
   if(RYCState.intakeStatus(appState)!=='ready'){storageNotice('Finish case setup before requesting a consultation.');return false;}
   const ch=activeAssistantTab==='diaz'?'diaz':'partner';
-  const request=isRetry&&pendingRequests[ch]?pendingRequests[ch]:{prompt:userPrompt,started:false};
+  const request=isRetry&&pendingRequests[ch]?pendingRequests[ch]:{prompt:userPrompt,started:false,operationId:RYCStandard.id()};
+  request.operationId ||= RYCStandard.id();
   pendingRequests[ch]=request;userPrompt=request.prompt;
   const prefix=ch==='diaz'?'[INVESTIGATOR CONSULTATION]: ':'[SENIOR PARTNER CONSULTATION]: ';
   engineLocked=true;
@@ -999,13 +1025,16 @@ async function sendAssistantAction(userPrompt,isRetry=false) {
     renderAssistantFeeds();toggleTypingIndicator(ch+'-feed',true,ch==='diaz'?'Diaz investigating':'Partner reviewing');
     request.error='';
     const directive=ch==='diaz'?'\nReport any completed investigation with a STATE_CHECKPOINT containing the remaining ap and newly discovered docket/facts. Investigations spend at most 2 AP, cannot overspend, and new exhibits are Marked. Advice alone costs 0 AP. Do not change court phase, judge, strikes, or admit evidence. Follow the established case; never expose sealed truth.':'';
-    const data=request.response||await requestReply({message:prefix+userPrompt,history:hist.slice(0,-1),targetPersona:ch,capsule:buildContextCapsule()+directive});
+    const packet=RYCStandard.memoryPacket(appState,{court:trialHistory,[ch]:hist.slice(0,-1)},ch,userPrompt);
+    const data=request.response||await requestReply({message:prefix+userPrompt,history:packet.history,targetPersona:ch,operationId:request.operationId,capsule:buildContextCapsule()+directive+'\nCLERK SOURCE INDEX (original attributed text): '+JSON.stringify({...packet,history:undefined})});
     if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw Object.assign(new Error('Invalid model metadata. No case update was applied.'),{name:'ResponseValidationError'});
     ensureCaseCurrent();
     const apply=state=>{
-      const next=ch==='diaz'?RYCState.next(state,data.reply,'diaz').state:state;
+      if(ch==='diaz' && RYCStandard.checkpoint(data.reply)?.investigation?.id!==request.operationId)RYCStandard.error('Investigation ID does not match this request.');
+      const next=ch==='diaz'?RYCState.next(state,data.reply,'diaz',{contractVersion:2,requestText:userPrompt}).state:state;
       if(ch!=='diaz')RYCState.parse(data.reply);
-      if(data.activeModel)next.selectedModel=data.activeModel;return next;
+      if(data.activeModel)next.selectedModel=data.activeModel;
+      next.clerkMemory||={};next.clerkMemory[ch]={indexedThrough:hist.length,updatedAt:Date.now(),method:'original-source-index'};return next;
     };
     apply(RYCState.clone(appState));request.response=data;
     const requests={...pendingRequests};delete requests[ch];

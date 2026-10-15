@@ -108,6 +108,7 @@ const RYCState = (() => {
     if(object(repairedRecord)&&!seedError(repairedRecord)) result.activeCaseSeed=repairedRecord;
     result.profile.clientOccupation = occupation(result.activeCaseSeed?.seed?.roster?.client?.occupation) ?? occupation(saved.profile?.clientOccupation) ?? recordOccupation(result.activeCaseSeed);
     if (!result.hasActiveCase && result.profile.clientOccupation === null) result.profile.clientOccupation = 'civilian';
+    Object.assign(result, RYCStandard.normalize(saved));
     return result;
   }
   function needsRecovery(saved) {
@@ -142,7 +143,9 @@ const RYCState = (() => {
   }
   function next(current, raw, channel='court', options={}) {
     const parsed=parse(raw), next=clone(current), u=parsed.update;
-    if(!u || !current.hasActiveCase) { if(channel==='court'&&current.hasActiveCase)next.turn++;return {state:next,text:parsed.text}; }
+    if(channel==='diaz' && options.contractVersion===2) RYCStandard.validateDiscovery(raw,current);
+    if(!u || !current.hasActiveCase) { if(channel==='court'&&current.hasActiveCase)next.turn++;RYCStandard.applyRecords(next,raw,channel,options.requestText||'',current);return {state:next,text:parsed.text}; }
+    if(channel==='court' && u.turn===undefined)next.turn=current.turn+1;
     if(channel==='partner') invalid('Consultations cannot update case resources.');
     let grant = 0;
     if(u.apGrant !== undefined) {
@@ -182,17 +185,12 @@ const RYCState = (() => {
     }
     for(const key of ['phase','caseTitle','clientName','judge','da']) if(u[key]!==undefined&&typeof u[key]!=='string')invalid('Invalid checkpoint '+key+'.');
     if(u.case!==undefined) { if(!object(u.case))invalid('Invalid checkpoint case.');for(const key of ['title','client'])if(u.case[key]!==undefined&&typeof u.case[key]!=='string')invalid('Invalid case '+key+'.'); }
-    if(u.facts!==undefined) {if(!Array.isArray(u.facts)||u.facts.some(f=>typeof f!=='string'))invalid('Checkpoint facts must be a list of text.');next.facts=channel==='diaz'?[...new Set([...next.facts,...u.facts])]:u.facts;}
+    if(u.facts!==undefined) {if(!Array.isArray(u.facts)||u.facts.some(f=>typeof f!=='string'))invalid('Checkpoint facts must be a list of text.');next.facts=[...new Set([...next.facts,...u.facts])];}
     if(u.docket!==undefined) {
       if(!Array.isArray(u.docket))invalid('Checkpoint docket must be a list.');
       const incoming=u.docket.map(e=>({...exhibit(e),isApi:true}));
       const ids=incoming.map(e=>e.id||e.tag);if(new Set(ids).size!==ids.length)invalid('Duplicate exhibit identifiers.');
-      if(channel==='diaz') {
-        // A private report is incremental; do not erase prior court exhibits.
-        const merged=new Map(next.docket.map(e=>[e.id||e.tag,e]));
-        for(const e of incoming){const old=merged.get(e.id||e.tag);merged.set(e.id||e.tag,{...old,...e,status:old?.status||'Marked'});}
-        next.docket=[...merged.values()];
-      } else next.docket=[...incoming,...next.docket.filter(e=>e.isManual&&!ids.includes(e.id||e.tag))];
+      next.docket=RYCStandard.mergeDocket(next.docket,incoming,channel);
     }
     // No model-driven refills; an explicit undo may refund a single action.
     const undoRefund = channel==='court' && options.undo===true && current.difficulty!=='Hard' && !grant ? 2 : 0;
@@ -208,7 +206,10 @@ const RYCState = (() => {
       if(u.case?.client!==undefined||u.clientName!==undefined)next.profile.client=u.clientName??u.case.client;
       for(const key of ['judge','da'])if(u[key]!==undefined)next.profile[key]=u[key];
     }
+    RYCStandard.applyRecords(next,raw,channel,options.requestText||'',current);
     return {state:next,text:parsed.text};
   }
   return {AP_VERSION,apBudget,apLabel,apContext,apGrantLimit,occupations,validOccupation,occupation,recordOccupation,clientOccupation,occupationLabel,repairOccupationRecord,object,clone,history,normalize,needsRecovery,next,parse,exhibit,placeholder,intakeStatus,seedError,emptyState,validateInitialization};
 })();
+
+globalThis.RYCState = RYCState;

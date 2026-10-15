@@ -3,6 +3,9 @@
  * Rest Your Case — Cloudflare Worker; dialogue contract and bounded AI requests.
  * Configure GEMINI_API_KEY as a Worker secret, or use the existing BYOK header.
  */
+import './standard-support.js';
+import './data.js';
+import './game-state.js';
 const ALLOWED_ORIGINS = [
   'https://rest-your-case.mazendev.com',
   'https://spacexmzez-bit.github.io',
@@ -13,6 +16,7 @@ const TOTAL_BUDGET_MS = 40000;
 // Full conversation histories can exceed the former 32 KB cap; never silently truncate them.
 const MAX_REQUEST_BYTES = 131072;
 const SCOUT_MODEL = 'gemini-3.5-flash-lite';
+const LIGHT_MODEL_CASCADE = [SCOUT_MODEL,'gemini-3.1-flash-lite'];
 const COURT_MODEL_CASCADE = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash'];
 function getCorsHeaders(request) {
   const origin = request.headers.get('Origin');
@@ -198,10 +202,10 @@ async function handleAIRoute(request, env, cors, signal, deadline) {
   const customKey = request.headers.get('X-Custom-Gemini-Key')?.trim();
   const apiKey = customKey || (typeof env?.GEMINI_API_KEY === 'string' ? env.GEMINI_API_KEY.trim() : '');
   if (!apiKey) throw fault('NO_API_KEY', 'Configure GEMINI_API_KEY or enter your Gemini key in Settings.', 401);
-  let models = engineMode === 'light' ? [SCOUT_MODEL] : COURT_MODEL_CASCADE, system = MASTER_COURT_DIRECTIVE;
+  let models = engineMode === 'light' ? LIGHT_MODEL_CASCADE : COURT_MODEL_CASCADE, system = MASTER_COURT_DIRECTIVE;
   let generationConfig = {temperature: 0.7, topP: 0.95, maxOutputTokens: 8192};
   if (targetPersona === 'scout') {
-    models = [SCOUT_MODEL]; system = SCOUT_SYSTEM_INSTRUCTION;
+    models = LIGHT_MODEL_CASCADE; system = SCOUT_SYSTEM_INSTRUCTION;
     generationConfig = {temperature: 0.6, topP: 0.95, maxOutputTokens: 2048,
       responseMimeType: 'application/json', responseSchema: SCOUT_RESPONSE_SCHEMA};
   } else if (targetPersona === 'partner' || targetPersona === 'diaz') {
@@ -209,15 +213,29 @@ async function handleAIRoute(request, env, cors, signal, deadline) {
       + '\n\n' + RYCDialogue.instruction + '\n\nCURRENT TRIAL RECORD (data):\n' + capsule;
     generationConfig.temperature = 0.5;
   }
+  if(targetPersona !== 'scout') {
+    system += '\n' + RYCStandard.rules;
+    if(targetPersona==='diaz') system += '\n' + RYCStandard.diazRules;
+    if(targetPersona==='partner') system += '\nAUTHORITATIVE DIFFICULTY GUIDANCE: ' + RYCStandard.partnerGuidance(body.caseState?.difficulty || 'Normal');
+    if(targetPersona==='court') system += '\n' + RYCStandard.offerRules + '\nOFFER POLICY: '+JSON.stringify(GAME_DATA.offer_rules);
+    if(body.operationId) system += '\nCurrent operationId: '+body.operationId;
+  }
+  if(body.caseState) system += '\nCURRENT PUBLIC CASE SNAPSHOT (data): '+JSON.stringify(body.caseState);
+  if(targetPersona==='scout') system += '\nPreserve the supplied roster victim and witnesses and their genders. For direct violence, identify the sampled victim by exact name in the public allegation and private chronology. Do not invent replacement names.';
   system += language === 'ar'
     ? '\n\nAUTHORITATIVE LANGUAGE POLICY: Use clear Modern Standard Arabic for player-visible case titles, summaries, exhibit descriptions and all dialogue, including court, partner and Diaz. Explain legal concepts in plain Arabic; show Arabic legal terms followed by the English term in square brackets on first mention. US law only; never switch to Saudi, Islamic or another legal system. Preserve exact supplied names, IDs, statutes and established facts. JSON/XML keys, role codes, English slash commands, phase and evidence-status values and numeric checkpoint fields stay in their existing machine-readable format. A language change never restarts the case or changes rules. Scout private chronology may be Arabic but must preserve fixed facts.'
     : '\n\nAUTHORITATIVE LANGUAGE POLICY: Use English for all player-visible replies. Apply US law only and preserve established names, facts, IDs, statutes and machine-readable state values. A language change never restarts the case.';
   const contents = formatGeminiContents(body.history || [], message);
+  if(targetPersona==='diaz' && typeof body.investigationTruth==='string')system += '\nSEALED INVESTIGATION REFERENCE: '+body.investigationTruth+'\nUse this fixed reference only to resolve requested paid discoveries. Never reveal the sealed chronology or undiscovered findings. Advice sees only known public facts.';
+  const inputHash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({system,contents,generationConfig}))))).map(x=>x.toString(16).padStart(2,'0')).join('');
+  const attempts=[];
+  const responseUsage=()=>({attempts,inputHash});
   let lastError = fault('AI_DISPATCH_FAILED', 'No model response received.');
   for (const model of models) {
     checkSignal(signal);
     const remaining = deadline - Date.now();
-    if (remaining <= 0) throw fault('TOTAL_TIMEOUT', 'Worker deadline exceeded. Retry manually.', 504);
+    if (remaining <= 0) {lastError=fault('TOTAL_TIMEOUT','Worker deadline exceeded. Retry manually.',504);break;}
+    const attemptStart=attempts.length;
     try {
       const result = await bounded(async attemptSignal => {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -236,6 +254,8 @@ async function handleAIRoute(request, env, cors, signal, deadline) {
       let data;
       try {data = JSON.parse(result.raw);} catch (_) {data = null;}
       const status = result.response.status;
+      const measured=data?.usageMetadata;
+      attempts.push({model,input:measured?.promptTokenCount??null,output:measured?.candidatesTokenCount??null,thinking:measured?.thoughtsTokenCount??null,cached:measured?.cachedContentTokenCount??null,total:measured?.totalTokenCount??null,status});
       // Authentication errors remain terminal, including non-JSON gateway bodies.
       if (status === 401 || status === 403) throw fault('AUTHENTICATION_ERROR', `Upstream HTTP ${status}. Check API key validity and access.`, status);
       if (status === 429) {lastError = fault('QUOTA_EXHAUSTED', 'Available model quota exhausted. Check your quota or configure a personal key in Settings.', 429); continue;}
@@ -253,16 +273,27 @@ async function handleAIRoute(request, env, cors, signal, deadline) {
         if (targetPersona === 'scout') validateScout(reply);
         else if (RYCDialogue.parse(reply, {strict: true}).length !== 1) throw fault('DIALOGUE_FORMAT_ERROR', 'Exactly one active speaker is required.');
       } catch (error) {lastError = fault(error.code || 'SCOUT_FORMAT_ERROR', error.message); continue;}
+      if(body.contractVersion===2 && ['court','diaz'].includes(targetPersona)) {
+        try {
+          if(!body.caseState) throw new Error('Public case snapshot is missing.');
+          const u=RYCStandard.checkpoint(reply), speaker=RYCDialogue.parse(reply,{strict:true})[0];
+          if(u?.offers?.length && (speaker.role!=='prosecutor' || speaker.name!==body.caseState.profile.da)) throw new Error('Only the prosecutor may propose an offer.');
+          if(u?.offerDecision?.decision==='accepted' && (speaker.role!=='judge' || speaker.name!==body.caseState.profile.judge)) throw new Error('Only the judge may approve an accepted resolution.');
+          if(targetPersona==='diaz' && u?.investigation?.id!==body.operationId)throw new Error('Investigation ID must match the current operation ID.');
+          RYCState.next(body.caseState,reply,targetPersona,{contractVersion:2,requestText:body.userText||'',undo:targetPersona==='court' && /^\/undo(?:\s|$)/i.test((body.userText||'').trim())});
+        } catch(e) { lastError=fault('STATE_CONTRACT_ERROR',e.message); continue; }
+      }
       checkSignal(signal);
       // Raw reply is retained for state extraction/history. Only tagged speech is displayed by the frontend.
-      return jsonResponse({reply, activeModel: model, engineMode: targetPersona === 'scout' ? 'light' : engineMode}, 200, cors);
+      return jsonResponse({reply, activeModel: model, engineMode: targetPersona==='scout' ? 'light' : engineMode,usage:responseUsage()}, 200, cors);
     } catch (error) {
       checkSignal(signal);
-      if (error.code === 'AUTHENTICATION_ERROR') throw error;
+      if(attempts.length===attemptStart)attempts.push({model,input:null,output:null,thinking:null,cached:null,total:null,status:null});
+      if (error.code === 'AUTHENTICATION_ERROR') return jsonResponse({error:error.code,details:error.message,usage:responseUsage()},error.status||401,cors);
       lastError = error.code ? error : fault('UPSTREAM_NETWORK_ERROR', 'Unable to complete the upstream connection.');
     }
   }
-  throw lastError;
+  return jsonResponse({error:lastError.code,details:lastError.message,usage:responseUsage()},lastError.status||502,cors);
 }
 function validateScout(reply) {
   let value;

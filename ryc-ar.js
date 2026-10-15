@@ -829,3 +829,42 @@ window.RYC_AR = {
   "[Sealed case record withheld]": "[الحقيقة الأصلية للقضية محجوبة]",
   "[Sealed record withheld]": "[السجل السري محجوب]"
 };
+
+// Standard evidence, consultation, offers and development controls.
+Object.assign(window.RYC_AR, {
+  "Dev · tokens": "تطوير · الرموز",
+  "AI token usage": "استهلاك رموز الذكاء الاصطناعي",
+  "Overall input": "إجمالي رموز الإدخال",
+  "Overall output (incl. thinking)": "إجمالي رموز الإخراج (بما فيها التفكير)",
+  "Last request input": "رموز إدخال الطلب الأخير",
+  "Last request output (incl. thinking)": "رموز إخراج الطلب الأخير (بما فيها التفكير)",
+  "Provider cached input · overall / last": "الإدخال المخزن مؤقتاً لدى المزود · الإجمالي / الأخير",
+  "Exact repeated input · overall / last": "الإدخال المتكرر المطابق · الإجمالي / الأخير",
+  "Thinking · overall / last": "التفكير · الإجمالي / الأخير",
+  "Requests": "الطلبات",
+  "Last route": "المسار الأخير",
+  "Unreported usage fields": "حقول استهلاك لم يبلغ عنها المزود",
+  "Reset meter": "تصفير العداد",
+  "Partner consultations & difficulty": "استشارات الشريك ومستوى الصعوبة",
+  "Very obvious directional hints and useful next questions, without giving you the solution.": "تلميحات توجيهية واضحة جداً وأسئلة تالية مفيدة، من دون كشف الحل.",
+  "Clear tactical hints with relevant legal explanations.": "تلميحات تكتيكية واضحة مع شرح قانوني مناسب.",
+  "Balanced issue spotting, alternatives and trade-offs.": "تحديد متوازن للمسائل والبدائل والمفاضلات.",
+  "Minimal general legal clarification. No case-specific tactics or recommended moves.": "توضيح قانوني عام محدود جداً، من دون تكتيكات خاصة بالقضية أو اقتراح خطوات.",
+  "Consultations cost 0 AP. No difficulty reveals the hidden case truth.": "الاستشارات لا تستهلك نقاط إجراء. لا يكشف أي مستوى صعوبة الحقيقة المخفية للقضية.",
+  "Request an offer": "اطلب عرضاً",
+  "Request disclosure": "اطلب الإفصاح",
+  "Ask judge to approve": "اطلب موافقة القاضي",
+  "Reject offer": "ارفض العرض",
+  "Disclosures": "الإفصاحات",
+  "Open evidence docket": "افتح سجل الأدلة",
+  "Edit manual exhibit": "تعديل الدليل اليدوي",
+  "Delete manual exhibit": "احذف الدليل اليدوي",
+  "Log manual exhibit": "إضافة دليل يدوي",
+  "Investigation findings": "نتائج التحقيق",
+  "Victim": "المجني عليه",
+  "Edit": "تعديل",
+  "No offers have been made. The prosecutor may decline to offer terms.": "لم يقدم أي عرض. قد يرفض الادعاء تقديم شروط للتسوية.",
+  "No disclosure records received.": "لم تصل سجلات إفصاح بعد.",
+  "Offers are proposals from the prosecutor. Requesting or rejecting one does not resolve the case. Acceptance asks the judge to approve the exact saved terms. Disclosure records are kept here and linked to the evidence docket.": "العروض مقترحات من الادعاء. طلبها أو رفضها لا ينهي القضية. قبول العرض يطلب من القاضي اعتماد الشروط المحفوظة نفسها. تحفظ سجلات الإفصاح هنا وترتبط بسجل الأدلة.",
+  "Measured Gemini usage across Scout, court and consultations, including cascade attempts. Output includes reported thinking. Exact repeats mean identical full model input for the same model; this is separate from provider caching and does not imply a discount. Missing usage is unknown, never an estimate. Counts are for this browser since reset.": "استهلاك Gemini المبلغ عنه لتوليد القضية والمحكمة والاستشارات، بما يشمل محاولات النماذج البديلة. يشمل الإخراج رموز التفكير المبلغ عنها. التكرار المطابق يعني تطابق كامل إدخال النموذج نفسه، وهو منفصل عن التخزين المؤقت لدى المزود ولا يعني تخفيض السعر. الاستهلاك غير المبلغ عنه مجهول ولا يقدر. الأعداد لهذا المتصفح منذ آخر تصفير."
+});

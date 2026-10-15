@@ -116,14 +116,16 @@ async function generateCase(diff, comp, cat, signal, onProgress) {
   const customKey=localStorage.getItem('rest_your_case_custom_gemini_key');
   const headers={'Content-Type':'application/json'};
   if(customKey)headers['X-Custom-Gemini-Key']=customKey;
+  let usageRecorded=false;
   try {
     const {response,data}=await RYCRequest.fetchJSON(WORKER_URL,{method:'POST',headers,body:JSON.stringify({message:pendingRequest.prompt,history:[],targetPersona:'scout',engineMode:RYCModels.get(),language})},{signal,onProgress});
+    globalThis.RYCTokens?.record(data?.usage,'scout');usageRecorded=true;
     if(!response.ok)throw RYCRequest.error('HTTP_'+response.status,typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message||'Server returned HTTP '+response.status+'.');
     let scout;try{scout=parseScoutResponse(data?.reply,pendingRequest.seed);}catch(e){throw RYCRequest.error('INVALID_RESPONSE',e.message);}
     const finalCase={id:'case_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),timestamp:Date.now(),difficulty:diff,language,seed:pendingRequest.seed,scout};
     const pending=getPendingCases();pending.push(finalCase);savePendingCases(pending);
     if(failedScout===pendingRequest)failedScout=null;return finalCase;
-  } catch(e) {if(e.code==='CANCELLED'&&failedScout===pendingRequest)failedScout=null;throw e;}
+  } catch(e) {if(!usageRecorded)globalThis.RYCTokens?.record(null,'scout');if(e.code==='CANCELLED'&&failedScout===pendingRequest)failedScout=null;throw e;}
 }
 
 // =========================================================================
@@ -183,7 +185,9 @@ async function startTrialWithCase(caseObj) {
     maxStrikes: strikesMax, 
     notes: '',
     transcript: [], 
-    docket: startingDocket, 
+    docket: startingDocket,
+    characters:[caseObj.seed.roster.client,caseObj.seed.roster.judge,caseObj.seed.roster.da,caseObj.seed.roster.victim,...(caseObj.seed.roster.witnesses||[])].filter(person=>person?.name && ['F','M'].includes(person.gender)).map(({name,gender})=>({name,gender})),
+    offers:[],disclosures:[],investigations:[],clerkMemory:{}, 
     facts: [`Defendant is formally charged with ${caseObj.seed.charge.charge}.`], 
     difficulty: diff, 
     complexity: caseObj.seed.meta.complexity,

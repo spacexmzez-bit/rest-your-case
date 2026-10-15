@@ -15,6 +15,7 @@ const GAME_DATA = {
     {
       id: "judge_pendelton",
       name: "Judge Arthur Pendelton",
+      gender: "M",
       short_name: "Pendelton",
       title: "Presiding Judge",
       style: "Textualist / Procedure-Strict",
@@ -27,6 +28,7 @@ const GAME_DATA = {
     {
       id: "judge_ramos",
       name: "Judge Evelyn Ramos",
+      gender: "F",
       short_name: "Ramos",
       title: "Presiding Judge",
       style: "Pragmatic / Docket-Pacing",
@@ -39,6 +41,7 @@ const GAME_DATA = {
     {
       id: "judge_choi",
       name: "Judge Kenneth Choi",
+      gender: "M",
       short_name: "Choi",
       title: "Presiding Judge",
       style: "Forensic / Detail-Obsessed",
@@ -51,6 +54,7 @@ const GAME_DATA = {
     {
       id: "judge_al_hassan",
       name: "Judge Mirah Al-Hassan",
+      gender: "F",
       short_name: "Al-Hassan",
       title: "Presiding Judge",
       style: "Constitutionalist / Defense-Fair",
@@ -63,6 +67,7 @@ const GAME_DATA = {
     {
       id: "judge_callahan",
       name: "Judge Raymond Callahan",
+      gender: "M",
       short_name: "Callahan",
       title: "Presiding Judge",
       style: "Pro-Law-Enforcement / Traditionalist",
@@ -75,6 +80,7 @@ const GAME_DATA = {
     {
       id: "judge_de_la_torre",
       name: "Judge Patricia De La Torre",
+      gender: "F",
       short_name: "De La Torre",
       title: "Presiding Judge",
       style: "Even-Handed / Academic",
@@ -89,6 +95,7 @@ const GAME_DATA = {
     {
       id: "da_thorne",
       name: "ADA Gregory Thorne",
+      gender: "M",
       short_name: "Thorne",
       title: "Prosecuting Attorney",
       style: "Bulldozer / Aggressive",
@@ -101,6 +108,7 @@ const GAME_DATA = {
     {
       id: "da_ward",
       name: "ADA Samantha Ward",
+      gender: "F",
       short_name: "Ward",
       title: "Prosecuting Attorney",
       style: "Forensic Precisionist",
@@ -113,6 +121,7 @@ const GAME_DATA = {
     {
       id: "da_mansour",
       name: "ADA Tariq Mansour",
+      gender: "M",
       short_name: "Mansour",
       title: "Prosecuting Attorney",
       style: "Charismatic Storyteller",
@@ -125,6 +134,7 @@ const GAME_DATA = {
     {
       id: "da_rostova",
       name: "ADA Elena Rostova",
+      gender: "F",
       short_name: "Rostova",
       title: "Prosecuting Attorney",
       style: "Cold Realist / Deal-Cutter",
@@ -137,6 +147,7 @@ const GAME_DATA = {
     {
       id: "da_delaney",
       name: "ADA Marcus Delaney",
+      gender: "M",
       short_name: "Delaney",
       title: "Prosecuting Attorney",
       style: "Bureaucratic / By-the-Book",
@@ -149,6 +160,7 @@ const GAME_DATA = {
     {
       id: "da_zhang",
       name: "ADA Chloe Zhang",
+      gender: "F",
       short_name: "Zhang",
       title: "Prosecuting Attorney",
       style: "Rapid-Fire Cross-Examiner",
@@ -722,6 +734,20 @@ function sampleCaseDocket(complexity = 3, categoryKey = "Random Case File") {
   const lastName = pickRandom(ethPool.last_names);
   const clientName = `${firstName} ${lastName}`;
 
+  const usedNames = new Set([clientName, pickedJudge.name, pickedDA.name]);
+  function samplePerson(id, role) {
+    for (let attempt=0;attempt<100;attempt++) {
+      const ethnicity=pickRandom(ethnicityKeys), pool=GAME_DATA.names_by_ethnicity[ethnicity];
+      const gender=Math.random()>0.5?'F':'M';
+      const name=pickRandom(pool.first_names[gender==='F'?'female':'male'])+' '+pickRandom(pool.last_names);
+      if(!usedNames.has(name)){usedNames.add(name);return {id,name,gender,role,ethnicity};}
+    }
+    throw new Error('Could not sample distinct character names. Retry generation.');
+  }
+  const directViolence = /murder|manslaughter|assault|battery|homicide|robbery|kidnap|sexual|rape|death|false imprisonment|arson|carjacking|domestic violence/i.test(pickedCharge.charge);
+  const victim=directViolence?samplePerson('VICTIM','victim'):null;
+  const witnesses=Array.from({length:Math.min(6,2+comp)},(_,i)=>samplePerson('W'+String(i+1).padStart(2,'0'),'witness'));
+
   // 4. Sample Narrative & Evidentiary Seeds
   const pickedVenue = pickRandom(filterByComplexity(GAME_DATA.venues));
   const pickedAnchor = pickRandom(filterByComplexity(GAME_DATA.evidence_anchors));
@@ -745,9 +771,11 @@ function sampleCaseDocket(complexity = 3, categoryKey = "Random Case File") {
       da: pickedDA,
       client: {
         name: clientName,
+        gender: isFemale ? "F" : "M",
         ethnicity: chosenEthnicity,
         occupation: pickRandom(GAME_DATA.client_occupations)
       },
+      victim, witnesses,
       investigator: "Investigator Carlos Diaz"
     },
     charge: pickedCharge,
@@ -769,3 +797,14 @@ function sampleCaseDocket(complexity = 3, categoryKey = "Random Case File") {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { GAME_DATA, sampleCaseDocket };
 }
+// Offer templates constrain game resolutions; the engine writes case-specific terms.
+GAME_DATA.offer_rules = {
+  version: 1,
+  types: [
+    {id:'lesser_charge',label:'Lesser-charge plea',requiresReducedCharge:true,outcome:'negotiated_resolution'},
+    {id:'recommended_disposition',label:'Plea with a disposition recommendation',requiresReducedCharge:false,outcome:'negotiated_resolution'}
+  ],
+  maxLifetimeTurns:20,
+  rules:'Offers are prosecution proposals, not guaranteed sentences. Explicit player acceptance and judge approval are required. No invented statutory ranges, automatic guilt, secret-state knowledge or mandatory offer availability. Lesser charges must be legally plausible from the supplied charge; no fixed prison term is required.'
+};
+globalThis.GAME_DATA = GAME_DATA;

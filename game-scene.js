@@ -18,11 +18,12 @@ window.RYCScene = (() => {
   const channel = () => current === 'partner' || current === 'diaz' ? current : 'court';
   const state = () => appState;
   const profile = () => state().profile || {};
-  function displayName(key) {
+  function rawName(key) {
     if (key.startsWith('witness:')) return key.slice(8) + ' (witness)';
     const name=value=>typeof value==='string'&&value.trim()&&!/^(?:TBD|unknown|assigning case[.\s…]*)$/i.test(value.trim())?value:null;
     return ({court: 'The court', judge: name(profile().judge) || 'Judge', witness: 'Witness', client: name(profile().client) || 'Your client', da: name(profile().da) || 'Prosecutor', partner: 'Senior partner', diaz: 'Investigator Diaz'})[key];
   }
+  function displayName(key) {return key.startsWith('witness:')?RYCStandard.nameLabel(state(),key.slice(8))+' (witness)':RYCStandard.nameLabel(state(),rawName(key));}
   function knownWitnesses() {
     const names = new Map();
     const add = value => {
@@ -32,6 +33,7 @@ window.RYCScene = (() => {
       names.set(name.toLocaleLowerCase(), name);
     };
     (state().knownWitnesses || []).forEach(add);
+    (state().activeCaseSeed?.seed?.roster?.witnesses || []).forEach(p=>add(p.name));
     // Read only public records, never the sealed truth or the private case seed.
     const publicEntries=[...(state().transcript||[]),...diazHistory.filter(e=>e.role==='model').map(e=>({text:e.parts?.[0]?.text||''}))];
     for (const entry of publicEntries) {
@@ -54,12 +56,12 @@ window.RYCScene = (() => {
     const options = ['court','judge','client','da','partner','diaz'].map(key=>[key,displayName(key)]);
     options.push(['witness','Choose a witness…']);
     const witnesses=knownWitnesses();
-    witnesses.forEach(name=>options.push(['witness:'+name,name+' (witness)']));
+    witnesses.forEach(name=>options.push(['witness:'+name,RYCStandard.nameLabel(state(),name)+' (witness)']));
     if(recipient.startsWith('witness:') && !witnesses.includes(recipient.slice(8))) options.push([recipient,displayName(recipient)]);
     select.replaceChildren(...options.map(([value,label])=>new Option(label,value)));
     select.value=recipient;
     const picker=byId('witness-select');
-    picker.replaceChildren(new Option('Select a known witness',''),...witnesses.map(name=>new Option(name+' (witness)',name)));
+    picker.replaceChildren(new Option('Select a known witness',''),...witnesses.map(name=>new Option(RYCStandard.nameLabel(state(),name)+' (witness)',name)));
     picker.value=recipient.startsWith('witness:')?recipient.slice(8):'';
     byId('witness-status').textContent=witnesses.length?'Choose anyone from either side, or enter another known witness’s name.':'Enter a witness’s name from your case to address them.';
   }
@@ -200,8 +202,8 @@ window.RYCScene = (() => {
   async function submitCourt() {
     const input = byId('court-user-input'); const text = input.value.trim();
     if (!text || engineLocked || caseConflict || RYCState.intakeStatus(state())!=='ready') return;
-    const targets = {judge:displayName('judge'),client:displayName('client'),da:displayName('da')};
-    const target=recipient.startsWith('witness:')?displayName(recipient):targets[recipient];
+    const targets = {judge:rawName('judge'),client:rawName('client'),da:rawName('da')};
+    const target=recipient.startsWith('witness:')?rawName(recipient):targets[recipient];
     const prompt = !text.startsWith('/') && target ? `To ${target}: ${text}` : text;
     input.value=''; drafts.set('court',''); byId('autocomplete-menu').classList.add('hidden');
     const ok=await sendCourtAction(prompt, false);
@@ -229,7 +231,7 @@ window.RYCScene = (() => {
   }
   function appendDialogue(feed,sender,text,user,last) {
     const el = node('article', null, 'dialogue-entry' + (user ? ' player-message' : '') + (last ? ' current-message' : ''));
-    el.append(node('p', sender, 'message-speaker'), node('div', String(text), 'message-text'));
+    el.append(node('p', RYCStandard.nameLabel(state(),sender), 'message-speaker'), node('div', String(text), 'message-text'));
     feed.append(el);
   }
   function updated(ch, count) {
@@ -274,7 +276,24 @@ window.RYCScene = (() => {
     refreshRecipients();
     document.querySelectorAll('button[data-room]').forEach(el => el.classList.toggle('has-update', unread.has(el.dataset.room)));
     byId('scene-activity').textContent = unread.size ? 'New conversation updates available' : '';
-    // Open documents are snapshots. Never replace an active editor on request completion.
+    refreshDocument();
+  }
+  function refreshDocument() {
+    const dialog=byId('scene-document');if(!dialog.open)return;
+    const editor=document.activeElement;
+    const saved=dialog.contains(editor) && editor.matches('textarea') ? {
+      exhibitId:editor.dataset.exid,caseNotes:editor.dataset.caseNotes,value:editor.value,
+      start:editor.selectionStart,end:editor.selectionEnd,scroll:editor.scrollTop
+    } : null;
+    const scroll=dialog.scrollTop;
+    // New discoveries must appear even while the player is writing an annotation.
+    // Rebuild the record, then restore the editor's unsaved text and selection.
+    fillDocument(openKind);
+    if(saved){
+      const replacement=[...dialog.querySelectorAll('textarea')].find(el=>saved.exhibitId!==undefined ? el.dataset.exid===saved.exhibitId : saved.caseNotes==='true' && el.dataset.caseNotes==='true');
+      if(replacement){replacement.value=saved.value;replacement.focus({preventScroll:true});replacement.setSelectionRange(saved.start,saved.end);replacement.scrollTop=saved.scroll;}
+    }
+    dialog.scrollTop=scroll;
   }
   function renderRequestError(ch) {
     const request=pendingRequests[ch];if(!request?.error)return;
@@ -327,38 +346,65 @@ window.RYCScene = (() => {
       body.append(node('h3','Case resolution'),node('p',truth||'No original sealed record is available in this legacy save.'));return;
     } else if(kind==='da-overview') {
       const da=state().activeCaseSeed?.seed?.roster?.da || GAME_DATA.district_attorneys.find(d=>d.name===profile().da);
-      documentText(body,'Prosecutor',profile().da||'Not yet assigned');
+      documentText(body,'Prosecutor',RYCStandard.nameLabel(state(),profile().da)||'Not yet assigned');
       if(da)for(const [key,label]of [['style','Style'],['temperament','Temperament'],['profile','Overview'],['tactic','Typical tactics'],['courtroom_behavior','Courtroom behavior'],['tactical_guidance','Preparation guidance']])if(da[key])documentText(body,label,da[key]);
       else body.append(node('p','Traits are unavailable for this prosecutor.'));
     } else if (kind==='brief') {
       documentText(body,'Case',profile().title || 'Active case');
-      for (const [key,label] of [['client','Client'],['judge','Judge'],['da','Prosecutor']]) documentText(body,label,profile()[key]||'Not yet assigned');
+      for (const [key,label] of [['client','Client'],['judge','Judge'],['da','Prosecutor']]) documentText(body,label,RYCStandard.nameLabel(state(),profile()[key])||'Not yet assigned');
+      const victim=state().activeCaseSeed?.seed?.roster?.victim;if(victim)documentText(body,'Victim',RYCStandard.nameLabel(state(),victim.name));
       documentText(body,'Client occupation',RYCState.occupationLabel(RYCState.clientOccupation(state())));
       documentText(body,'Current phase',state().phase);
       documentText(body,'Resources',`${RYCState.apLabel(state())} AP · ${state().strikes}/${state().maxStrikes} judicial strikes · Turn ${state().turn}`);
       const facts=knownFacts(); body.append(node('h3','Established facts'));
       if (!facts.length) body.append(node('p','No facts entered yet.'));
       const list=node('ul'); facts.forEach(f=>list.append(node('li',f)));body.append(list);
+    } else if (kind==='offers') {
+      body.append(node('p','Offers are proposals from the prosecutor. Requesting or rejecting one does not resolve the case. Acceptance asks the judge to approve the exact saved terms. Disclosure records are kept here and linked to the evidence docket.'));
+      const action=async prompt=>{if(engineLocked||caseConflict)return;closeDocument();selectRoom('da');await sendCourtAction(prompt);openDocument('offers');};
+      const ask=button('Request an offer',()=>action('/offer request'));
+      const disclose=button('Request disclosure',()=>action(`To ${profile().da}: Please disclose the prosecution exhibits and any known exculpatory material. Save disclosure records and each newly disclosed exhibit in the docket; do not fabricate an outstanding discovery response.`));
+      ask.disabled=disclose.disabled=engineLocked||caseConflict||RYCDialogue.ended(state())||RYCState.intakeStatus(state())!=='ready';body.append(ask,disclose);
+      const offers=state().offers||[];
+      if(!offers.length)body.append(node('p','No offers have been made. The prosecutor may decline to offer terms.'));
+      for(const offer of offers){
+        const card=node('article',null,'document-exhibit');
+        const active=offer.status==='proposed' && state().turn<offer.expiresTurn && !RYCDialogue.ended(state());
+        card.append(node('h3',offer.title),node('p',`${offer.id} · ${offer.status==='proposed'&&!active?'expired / unavailable':offer.status} · expires at turn ${offer.expiresTurn}`),node('p',offer.terms),node('p','Basis: '+offer.basis));
+        if(offer.reducedCharge)card.append(node('p','Proposed charge: '+offer.reducedCharge));
+        card.append(node('p','Referenced exhibits: '+(offer.sourceExhibitIds.join(', ')||'None')));
+        if(active){const accept=button('Ask judge to approve',()=>{if(confirm('Accept these exact terms and ask the judge to end the case?\n\n'+offer.terms))action('/offer accept '+offer.id);});
+          const reject=button('Reject offer',()=>action('/offer reject '+offer.id));accept.disabled=reject.disabled=engineLocked||caseConflict;card.append(accept,reject);}
+        body.append(card);
+      }
+      body.append(node('h3','Disclosures'));
+      if(!(state().disclosures||[]).length)body.append(node('p','No disclosure records received.'));
+      for(const disclosure of state().disclosures||[])body.append(node('h4',disclosure.id),node('p',disclosure.text),node('p','Exhibits: '+(disclosure.exhibitIds.join(', ')||'No exhibits attached')));
+      body.append(button('Open evidence docket',()=>{openKind='evidence';fillDocument('evidence');}));
     } else if (kind==='evidence') {
       const dock=Array.isArray(state().docket)?state().docket:[];
       if (!dock.length) body.append(node('p','No exhibits marked yet.'));
       dock.forEach((item,index)=>{
         const card=node('article',null,'document-exhibit');
         card.append(node('h3',`${item.id||item.tag||'Exhibit'} · ${item.name||item.title||'Untitled'}`),node('p',item.status||'Marked','exhibit-status'));
-        for(const key of ['type','facts','details','description','foundation']) if(item[key]) documentText(card,key.charAt(0).toUpperCase()+key.slice(1),String(item[key]));
+        for(const key of ['type','facts','details','description','foundation']) if(item[key] && !(key==='details' && item.details===item.facts)) documentText(card,key.charAt(0).toUpperCase()+key.slice(1),String(item[key]));
         const label=node('label','Your exhibit notes');
         const notes=node('textarea');notes.dataset.exid=item.id||item.tag||'';notes.value=state().exhibitNotes?.[item.id||item.tag]||'';notes.setAttribute('aria-label',`Notes for ${item.id||item.tag||index}`);
         notes.addEventListener('input',()=>saveExhibitNote(item.id||item.tag,notes.value));
         card.append(label,notes,button('Inspect',()=>{closeDocument(byId('court-user-input'));switchTab('terminal');selectRoom('court');quickAction('/inspect '+(item.id||item.tag||item.name));}));
         card.append(button('Prepare presentation',()=>{closeDocument(byId('court-user-input'));switchTab('terminal');selectRoom('court');quickAction('I ask to introduce Exhibit '+(item.id||item.tag||item.name)+'. ');}));
+        if(item.isManual){card.append(button('Edit manual exhibit',()=>{closeDocument();openAddExhibitModal(index);}));card.append(button('Delete manual exhibit',async()=>{await deleteExhibit(index);fillDocument('evidence');}));}
         card.append(button('Manage exhibit',()=>{closeDocument(byId('tab-notebook'));switchTab('notebook');setTimeout(()=>byId('docket-list').scrollIntoView({block:'start'}),0);}));
         body.append(card);
       });
+      const reports=(state().investigations||[]).filter(r=>r.status==='completed');
+      if(reports.length)body.append(node('h3','Investigation findings'));
+      for(const report of reports){body.append(node('h4',report.id),node('p',report.summary),node('p','Exhibits: '+((report.exhibitIds||[]).join(', ')||'No exhibit; factual finding only')));for(const fact of report.facts||[])body.append(node('p',fact));}
       body.append(button('+ Manual entry',()=>{closeDocument(null);lastTrigger=null;openAddExhibitModal();}));
     } else if (kind==='board') {
       body.append(node('p','Established facts and your preparation notes. These notes do not create evidence.'));
       const list=node('ul',null,'board-facts'); knownFacts().forEach(f=>list.append(node('li',f)));body.append(list);
-      const notes=node('textarea');notes.value=state().notes||'';notes.setAttribute('aria-label','Defense preparation notes');
+      const notes=node('textarea');notes.dataset.caseNotes='true';notes.value=state().notes||'';notes.setAttribute('aria-label','Defense preparation notes');
       notes.addEventListener('input',()=>{byId('attorney-notes').value=notes.value;saveCaseNotes(notes.value);});body.append(notes);
     } else {
       let entries;
@@ -367,7 +413,7 @@ window.RYCScene = (() => {
       if (!entries.length) body.append(node('p',kind==='reports'?'No investigation reports received yet.':kind==='advice'?'No advice recorded yet.':'No case conversation recorded yet.'));
       if (kind==='offers') body.append(node('p','The recorded case conversation appears below. Only terms explicitly offered by the prosecutor are an offer; this view creates no new agreement.'));
       if (kind==='statement') body.append(node('p','Review the recorded conversation for your client’s statements. This view does not introduce new testimony.'));
-      entries.forEach(t=>{try{const messages=RYCDialogue.parse(t,{fallback:kind==='reports'?'Investigator Diaz':kind==='advice'?'Senior partner':'Case conversation'});messages.forEach(m=>body.append(node('h3',m.name),node('div',m.text,'document-record')));}catch(_){body.append(node('p','A saved reply has an unreadable dialogue format.'));}});
+      entries.forEach(t=>{try{const messages=RYCDialogue.parse(t,{fallback:kind==='reports'?'Investigator Diaz':kind==='advice'?'Senior partner':'Case conversation'});messages.forEach(m=>body.append(node('h3',RYCStandard.nameLabel(state(),m.name)),node('div',m.text,'document-record')));}catch(_){body.append(node('p','A saved reply has an unreadable dialogue format.'));}});
     }
   }
   function openDocument(kind) {
