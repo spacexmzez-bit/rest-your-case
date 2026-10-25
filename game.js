@@ -310,6 +310,10 @@ function commitCase(next, histories={}, requests, options={}) {
       ensureCaseCurrent();
       const proposed=typeof next==='function'?next(RYCState.clone(appState)):next;
       const nextHistories={court:histories.court??trialHistory,partner:histories.partner??partnerHistory,diaz:histories.diaz??diazHistory};
+      const existing={court:trialHistory,partner:partnerHistory,diaz:diazHistory};
+      const source=Object.keys(histories).find(ch=>nextHistories[ch].length>existing[ch].length);
+      RYCTokenCore.capture(appState,proposed,{id:source?RYCTokenCore.sourceId(source,nextHistories[source].length-1,nextHistories[source].at(-1)):'player-or-case-update'});
+      RYCTokenCore.preserveReplacedSources(proposed,existing,nextHistories);
       const nextRequests=requests??pendingRequests;
       const saved=await RYCCaseStore.write(savedCaseRaw,{...proposed,_histories:nextHistories,_requests:nextRequests},{backup:recoveryOriginal,...options});
       savedCaseRaw=saved.raw;appState=RYCState.normalize(saved.state,RYCState.emptyState());
@@ -923,15 +927,27 @@ async function requestReply(payload) {
   const legacyContext=!role && payload.targetPersona==='court'
     ? '\nEstablished client information: '+JSON.stringify({client:appState.profile.client,summary:appState.activeCaseSeed?.scout?.crimeSummary ?? '',facts:appState.facts,transcript:appState.transcript}) : '';
   payload={...payload,language:RYCI18n.get(),engineMode:RYCModels.get(),message:payload.message+'\n'+RYCState.apContext(appState)+legacyContext+'\n[CASE METADATA: '+roleInstruction+' Players may address any known witness from either side, on or off stand. Respond as the explicitly addressed person; addressing a witness alone does not call them to the stand, switch the trial phase, or make an informal conversation sworn testimony. Police/expert clients remain defendants; do not infer witness roles from this field. Difficulty='+appState.difficulty+'; complexity='+appState.complexity+'; currentAP='+appState.ap+'; maxStrikes='+appState.maxStrikes+'; trialEnded='+(appState.trialEnded===true)+'.]'};
+  const histories={court:trialHistory,[payload.targetPersona]:payload.history||[]};
+  const prepared=RYCTokenContext.prepare(appState,histories,payload.targetPersona,payload.userText);
+  payload.history=prepared.history;
+  payload.contextBrief=prepared.brief;
+  payload.tokenSystem=RYCTokenCore.version;
+  if(payload.targetPersona==='court' && !/^\s*\/start\b/i.test(payload.userText)) {
+    payload.engineReference=RYCTokenCore.privateReference(appState,'court');
+    if(!payload.engineReference) {
+      const intake=(histories.court||[]).find(e=>e.role==='user' && /^\s*\/start\b/i.test(e.parts?.[0]?.text||''));
+      if(intake)payload.engineReference={legacyIntake:intake.parts.map(p=>p.text).join('\n')};
+    }
+  }
   if(role)payload.clientOccupation=role;
   const headers={'Content-Type':'application/json'};
   if(customGeminiKey)headers['X-Custom-Gemini-Key']=customGeminiKey;
   payload.message+='\n[DIALOGUE FORMAT: '+RYCDialogue.instruction+']';
   let received;
   try{received=await fetchWithTimeout(GAME_WORKER_URL,{method:'POST',headers,body:JSON.stringify(payload)},60000);}
-  catch(error){RYCTokens.record(null,payload.targetPersona);throw error;}
+  catch(error){await RYCTokens.record(null,payload.targetPersona);throw error;}
   const {response,data}=received;
-  RYCTokens.record(data?.usage,payload.targetPersona);
+  await RYCTokens.record(data?.usage,payload.targetPersona);
   ensureCaseCurrent();
   if(!response.ok) {
     const detail=typeof data?.details==='string'?data.details:typeof data?.error==='string'?data.error:data?.error?.message;
@@ -989,6 +1005,7 @@ async function sendCourtAction(userPrompt,isInit=false,isRetry=false) {
     const requests={...pendingRequests};delete requests.court;
     await commitCase(apply,{court:[...baseHistory,{role:'user',parts:[{text:userPrompt}]},{role:'model',parts:[{text:data.reply}]}]},requests);
     if(document.getElementById('court-user-input').value)saveDraft();else{try{localStorage.removeItem('terminal_draft');}catch(_){}}
+    await RYCTokens.completed('court',appState,request.operationId);
     renderUI();return true;
   } catch(error) {
     // A rendering failure after a successful commit must not replay the action.
@@ -1025,8 +1042,7 @@ async function sendAssistantAction(userPrompt,isRetry=false) {
     renderAssistantFeeds();toggleTypingIndicator(ch+'-feed',true,ch==='diaz'?'Diaz investigating':'Partner reviewing');
     request.error='';
     const directive=ch==='diaz'?'\nReport any completed investigation with a STATE_CHECKPOINT containing the remaining ap and newly discovered docket/facts. Investigations spend at most 2 AP, cannot overspend, and new exhibits are Marked. Advice alone costs 0 AP. Do not change court phase, judge, strikes, or admit evidence. Follow the established case; never expose sealed truth.':'';
-    const packet=RYCStandard.memoryPacket(appState,{court:trialHistory,[ch]:hist.slice(0,-1)},ch,userPrompt);
-    const data=request.response||await requestReply({message:prefix+userPrompt,history:packet.history,targetPersona:ch,operationId:request.operationId,capsule:buildContextCapsule()+directive+'\nCLERK SOURCE INDEX (original attributed text): '+JSON.stringify({...packet,history:undefined})});
+    const data=request.response||await requestReply({message:prefix+userPrompt,history:hist.slice(0,-1),targetPersona:ch,operationId:request.operationId,capsule:buildContextCapsule()+directive});
     if(data.activeModel!==undefined&&typeof data.activeModel!=='string')throw Object.assign(new Error('Invalid model metadata. No case update was applied.'),{name:'ResponseValidationError'});
     ensureCaseCurrent();
     const apply=state=>{
@@ -1039,6 +1055,7 @@ async function sendAssistantAction(userPrompt,isRetry=false) {
     apply(RYCState.clone(appState));request.response=data;
     const requests={...pendingRequests};delete requests[ch];
     await commitCase(apply,{[ch]:[...hist,{role:'model',parts:[{text:data.reply}]}]},requests);
+    await RYCTokens.completed(ch,appState,request.operationId);
     renderUI();renderAssistantFeeds();return true;
   } catch(error) {
     if(caseConflict||error.name==='CaseConflictError')invalidateCase();
@@ -1054,6 +1071,7 @@ async function processCourtResponse(rawText) {
 }
 
 initApp();
+RYCTokens.configure(()=>appState);
 RYCScene.init();
 window.addEventListener('storage',event=>{
   if(event.key!==RYCCaseStore.key&&event.key!==null)return;

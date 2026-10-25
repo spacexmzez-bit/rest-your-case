@@ -220,6 +220,7 @@
       <a href="info.html#howtoplay-section" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">How to Play</a>
       <a href="library.html" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Legal Library</a>
       <a href="info.html#setup-section" class="w-full text-left px-3 py-2.5 rounded text-brand-muted hover:text-white hover:bg-brand-surface transition block">Setup Guide</a>
+    <button type="button" class="ryc-log-button" data-token-log>log</button>
     </nav>
   
     <div class="p-3 bg-brand-surface border-t border-brand-border text-[10px] font-mono text-brand-muted text-center">
@@ -345,22 +346,25 @@
   </footer>
 
   <!-- Scripts loaded in execution order -->
-  <script src="standard-support.js?v=standard-review-1"></script>
+  <script src="standard-support.js?v=mix-1-2-v1"></script>
+  <script src="token-core.js?v=mix-1-2-v1"></script>
+  <script src="token-context.js?v=mix-1-2-v1"></script>
+  <script src="token-runtime.js?v=mix-1-2-v1"></script>
   <script src="data.js?v=standard-review-1"></script>
   <script src="game-state.js?v=standard-review-1"></script>
   <script src="case-store.js?v=5"></script>
   <script src="ryc-models.js?v=1"></script>
-  <script src="cases.js?v=standard-review-1"></script>
+  <script src="cases.js?v=mix-1-2-v1"></script>
   <script src="ryc-dialogue.js?v=1"></script>
   <script src="game-scene.js?v=standard-review-1"></script>
-  <script src="game.js?v=standard-review-1"></script>
+  <script src="game.js?v=mix-1-2-v1"></script>
 
   <button id="token-toggle" class="token-toggle" type="button" aria-controls="token-panel" aria-expanded="false">Dev · tokens</button>
   <aside id="token-panel" class="token-panel" aria-labelledby="token-title" hidden>
     <header><strong id="token-title">AI token usage</strong><button id="token-close" type="button" aria-label="Close token meter">Close ×</button></header>
     <div id="token-counts" aria-live="polite"></div>
     <p>Measured Gemini usage across Scout, court and consultations, including cascade attempts. Output includes reported thinking. Exact repeats mean identical full model input for the same model; this is separate from provider caching and does not imply a discount. Missing usage is unknown, never an estimate. Counts are for this browser since reset.</p>
-    <button id="token-reset" type="button">Reset meter</button>
+    <button id="token-reset" type="button">Reset meter</button> <button type="button" class="ryc-log-button" data-token-log>log</button>
   </aside>
 </body>
 </html>
