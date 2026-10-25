@@ -5,8 +5,8 @@ import {readFile} from 'node:fs/promises';
 import {webcrypto} from 'node:crypto';
 const root=new URL('../',import.meta.url);
 const read=name=>readFile(new URL(name,root),'utf8');
-const sources=Object.fromEntries(await Promise.all(['standard-support.js','data.js','game-state.js','scout_prompt.js','worker.js','game.js','game-scene.js'].map(async n=>[n,await read(n)])));
-function runtime(){const ctx=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Request,Response,Headers,AbortController,setTimeout,clearTimeout});for(const n of ['standard-support.js','data.js','game-state.js','scout_prompt.js'])vm.runInContext(sources[n],ctx,{filename:n});return ctx;}
+const sources=Object.fromEntries(await Promise.all(['token-core.js','token-context.js','token-runtime.js','standard-support.js','data.js','game-state.js','scout_prompt.js','worker.js','game.js','game-scene.js'].map(async n=>[n,await read(n)])));
+function runtime(){const ctx=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Request,Response,Headers,AbortController,setTimeout,clearTimeout});for(const n of ['standard-support.js','data.js','game-state.js','scout_prompt.js','token-core.js','token-context.js','token-runtime.js'])vm.runInContext(sources[n],ctx,{filename:n});return ctx;}
 const plain=x=>JSON.parse(JSON.stringify(x));
 const exhibit=(id='E01',details='Dispatch log shows a 21:05 call.')=>({id,name:'Dispatch log',type:'Documentary',status:'Marked',details});
 function state(ctx){return {...plain(ctx.RYCState.emptyState()),hasActiveCase:true,intakeComplete:true,profile:{title:'State v. Alex',client:'Alex',judge:'Judge Arthur Pendelton',da:'ADA Samantha Ward',clientOccupation:'civilian'},ap:10,docket:[exhibit()],facts:['The incident occurred at 21:00.'],exhibitNotes:{},characters:[],offers:[],disclosures:[],investigations:[],clerkMemory:{}};}
@@ -21,6 +21,135 @@ test('violent cases sample unique named victims and gendered witnesses from the 
  const ctx=runtime();let violent=0;
  for(let i=0;i<350;i++){const seed=vm.runInContext(`sampleCaseDocket(${i%5+1})`,ctx);const people=[seed.roster.client,seed.roster.judge,seed.roster.da,...seed.roster.witnesses];if(seed.roster.victim){violent++;people.push(seed.roster.victim);assert.match(seed.charge.charge,/murder|manslaughter|assault|battery|homicide|robbery|kidnap|sexual|rape|death|false imprisonment|arson|carjacking|domestic violence/i);}assert.equal(new Set(people.map(p=>p.name)).size,people.length);people.forEach(p=>assert.ok(['F','M'].includes(p.gender)));}
  assert.ok(violent>0);
+});
+
+// Token trial #1 + #2: original text, current state, isolation and reset accounting.
+const entry=(text,role='user')=>({role,parts:[{text}]});
+test('mix: 200-turn brief keeps the preceding exact exchange, old linked originals and source IDs',()=>{
+ const ctx=runtime(),s=state(ctx);
+ const history=Array.from({length:400},(_,i)=>entry(i%2?reply({ap:10,docket:[exhibit()]},'Unrelated harbor discussion '+i):'Unrelated harbor question '+i,i%2?'model':'user'));
+ history[2]=entry('The violet ticket quote was “I left at 21:05.”');
+ history[3]=entry(reply({ap:10},'Correction: the certified violet ticket timestamp is 21:15.'),'model');
+ history[399]=entry(reply({ap:10},'You asked about the violet ticket. I will check the custodian next.'),'model');
+ const original=JSON.stringify(history),packet=plain(ctx.RYCTokenContext.prepare(s,{diaz:history,court:[],partner:[entry('SECRET PARTNER STRATEGY')]},'diaz','What did he mean by that?'));
+ assert.ok(packet.history.at(-1).parts[0].text.includes('I will check the custodian next.'));
+ assert.ok(packet.brief.originals.some(e=>e.text.includes('“I left at 21:05.”')));
+ assert.ok(packet.brief.originals.some(e=>e.text.includes('21:15')));
+ assert.ok(!JSON.stringify(packet).includes('STATE_CHECKPOINT'));assert.ok(!JSON.stringify(packet).includes('SECRET PARTNER'));
+ assert.equal(JSON.stringify(history),original);assert.ok(packet.brief.includedSources<400);
+ assert.ok(packet.brief.originals.every(e=>/^\w+:\d+:[a-f0-9]+-\d+$/.test(e.id)));
+});
+test('mix: global or unmatched older questions widen originals instead of silently dropping context',()=>{
+ const ctx=runtime(),s=state(ctx),history=Array.from({length:80},(_,i)=>entry('Harbor exchange '+i));
+ for(const prompt of ['Give the closing argument for the entire case','Zqxw unseen topic']){
+  const packet=ctx.RYCTokenContext.prepare(s,{court:history,partner:[entry('PRIVATE')],diaz:[entry('PRIVATE DIAZ')]},'court',prompt);
+  assert.equal(packet.brief.retrieval,'expanded-originals');assert.equal(packet.brief.includedSources,80);
+  assert.ok(!JSON.stringify(packet).includes('PRIVATE'));
+ }
+});
+test('mix: no sealed intake/checkpoint replay, and private referee reference is separate',()=>{
+ const ctx=runtime(),s=state(ctx);s.activeCaseSeed={scout:{unencryptedTruth:'SEALED SECRET'},seed:{mechanics:{trap:'PRIVATE TRAP'}}};
+ const histories={court:[entry('/start --mode=web\nSEALED SECRET'),entry(reply({docket:[exhibit('E01','EXACT PRIVATE CHECKPOINT')]},'Public opening'),'model')],partner:[],diaz:[]};
+ for(const channel of ['partner','diaz','court']){
+  const packet=ctx.RYCTokenContext.prepare(s,histories,channel,'Explain the public opening');
+  assert.ok(!JSON.stringify(packet).includes('SEALED SECRET'));assert.ok(!JSON.stringify(packet).includes('EXACT PRIVATE CHECKPOINT'));
+ }
+ assert.equal(ctx.RYCTokenCore.privateReference(s,'partner'),null);
+ assert.equal(ctx.RYCTokenCore.privateReference(s,'court').truth,'SEALED SECRET');
+ const actor=ctx.RYCTokenContext.prepare(s,histories,'court','To Sam Johnson: What did you see?').brief.actor;
+ assert.equal(actor.name,'Sam Johnson');assert.match(actor.knowledge,/perspective/);
+});
+test('mix: live journal preserves exact corrections, deleted manual entries, notes and replaced undo sources',()=>{
+ const ctx=runtime(),s=state(ctx);s.caseId='case-1';s.notes='Private original';s.docket.push({...exhibit('M01','Unverified player text'),isManual:true});
+ let next=plain(s);next.docket[0].details='Certified correction: 21:15';next.docket.pop();next.notes='Private edited';
+ next=ctx.RYCTokenCore.capture(s,next,{id:'court:3:source'});
+ const changes=next.clerkMemory.liveRecord.events[0].changes;
+ assert.ok(changes.some(c=>c.before?.details==='Unverified player text' && c.after===null));
+ assert.ok(changes.some(c=>c.before?.details.includes('21:05') && c.after?.details.includes('21:15')));
+ assert.ok(changes.some(c=>c.path==='private:notes' && c.before==='Private original'));
+ const old={court:[entry('Kept'),entry('Undone exact text')],partner:[],diaz:[]},current={...old,court:[entry('Kept')]};
+ ctx.RYCTokenCore.preserveReplacedSources(next,old,current);
+ assert.equal(next.clerkMemory.liveRecord.replacedSources[0].entry.parts[0].text,'Undone exact text');
+ const normalized=ctx.RYCState.normalize(next,ctx.RYCState.emptyState());
+ assert.equal(JSON.stringify(normalized.clerkMemory),JSON.stringify(next.clerkMemory));
+ const packet=ctx.RYCTokenContext.prepare(next,{court:[],partner:[],diaz:[]},'partner','Inspect M01 and the certified correction');
+ assert.ok(JSON.stringify(packet.brief.revisions).includes('Unverified player text'));assert.ok(!JSON.stringify(packet).includes('Private original'));
+ assert.equal(next.docket.length,1);
+});
+test('mix: model snapshot removes only duplicate display fields and preserves roster/allegation/manual provenance',()=>{
+ const ctx=runtime(),s=state(ctx);s.docket[0].facts=s.docket[0].details;s.docket[0].foundation='Certified by custodian';
+ s.docket.push({...exhibit('M01'),isManual:true});
+ const snapshot=plain(ctx.RYCStandard.publicCase(s));snapshot.roster={client:{name:'Alex'}};snapshot.allegation='Public allegation';
+ const result=ctx.RYCTokenCore.modelRecord(snapshot);
+ assert.equal(result.roster.client.name,'Alex');assert.equal(result.allegation,'Public allegation');
+ assert.equal(result.docket[0].foundation,'Certified by custodian');assert.equal(result.docket[0].details,s.docket[0].details);
+ assert.ok(!('facts' in result.docket[0]));assert.equal(result.docket[1].authority,'UNVERIFIED_PLAYER_ENTRY');
+});
+function memoryStorage(){const values=new Map();return {getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};}
+test('logs: reset atomically saves totals, accurate per-request means, turns, title, IDs and fallback details',()=>{
+ const ctx=runtime(),storage=memoryStorage(),s=state(ctx);s.caseId='case-1';s.turn=7;
+ const store=ctx.RYCTokenRuntime.createStore(storage,()=>s);
+ const usage={inputHash:'abc',attempts:[{model:'a',input:100,output:20,thinking:5,cached:40,status:200},{model:'b',input:120,output:30,thinking:0,cached:0,status:200}]};
+ store.record(usage,'court');store.record(null,'diaz');store.completed('court',s,'op-1');store.completed('court',s,'op-1');
+ const log=store.reset();assert.equal(log.totals.input,220);assert.equal(log.totals.output,55);
+ assert.equal(log.averages.inputPerRequest,110);assert.equal(log.averages.outputPerRequest,27.5);
+ assert.equal(log.totals.requests,2);assert.equal(log.attempts,2);assert.ok(log.totals.unknown>0);
+ assert.equal(log.turns,7);assert.equal(log.completedTurns,1);assert.equal(log.caseTitle,'State v. Alex');assert.ok(log.id);
+ assert.equal(store.read().totals.requests,0);assert.equal(store.read().logs.length,1);
+ assert.ok(!JSON.stringify(log).includes('Dispatch log'));assert.ok(!JSON.stringify(log).includes('test-key'));
+ const second=store.reset();assert.notEqual(second.id,log.id);assert.equal(second.averages.inputPerRequest,0);
+ assert.equal(store.read().logs.length,2);
+});
+test('logs: old totals migrate, absent case is null, and quota failure leaves counter and prior logs intact',()=>{
+ const ctx=runtime(),storage=memoryStorage(),store=ctx.RYCTokenRuntime.createStore(storage);
+ storage.setItem(ctx.RYCTokenRuntime.key,JSON.stringify(ctx.RYCStandard.usageTotals(null,{attempts:[{model:'a',input:42,output:8,thinking:0}]},'scout')));
+ const log=store.reset();assert.equal(log.totals.input,42);assert.equal(log.caseTitle,null);assert.equal(log.turns,null);assert.equal(log.legacyTotals,true);
+ store.record({attempts:[{model:'b',input:5,output:2,thinking:0}]},'partner');
+ const before=storage.getItem(ctx.RYCTokenRuntime.key);storage.setItem=()=>{throw new Error('QuotaExceededError');};
+ assert.throws(()=>store.reset(),/Quota/);assert.equal(storage.getItem(ctx.RYCTokenRuntime.key),before);
+});
+test('logs: two stores share the same counters and logs across pages and reloads',()=>{
+ const ctx=runtime(),storage=memoryStorage(),a=ctx.RYCTokenRuntime.createStore(storage),b=ctx.RYCTokenRuntime.createStore(storage);
+ const usage={attempts:[{model:'a',input:10,output:3,thinking:1,cached:4}]};
+ a.record(usage,'scout');b.record(usage,'court');assert.equal(a.read().totals.requests,2);
+ a.reset();b.record(usage,'partner');assert.equal(a.read().logs.length,1);assert.equal(a.read().totals.requests,1);
+});
+test('logs UI: drawer log control opens saved logs; reset is serialized with pending usage',async()=>{
+ const ctx=runtime(),storage=memoryStorage();
+ class Element {
+  constructor(tag){this.tagName=tag;this.children=[];this.events={};this.hidden=false;this.open=false;this.textContent='';}
+  append(...children){this.children.push(...children);}replaceChildren(...children){this.children=[...children];}
+  addEventListener(type,fn){(this.events[type]||=[]).push(fn);}setAttribute(k,v){this[k]=v;}
+  focus(){}showModal(){this.open=true;}close(){this.open=false;}
+ }
+ const walk=node=>[node,...node.children.flatMap(walk)];
+ const body=new Element('body'),head=new Element('head'),drawerButton=new Element('button');drawerButton.textContent='log';
+ body.append(drawerButton);
+ for(const id of ['token-counts','token-toggle','token-close','token-reset','token-panel']){const e=new Element('div');e.id=id;body.append(e);}
+ const handlers={};ctx.document={head,body,createElement:tag=>new Element(tag),getElementById:id=>walk(body).find(e=>e.id===id),
+  querySelectorAll:()=>[drawerButton],addEventListener:(name,fn)=>handlers[name]=fn};
+ ctx.window=ctx;ctx.addEventListener=()=>{};ctx.localStorage=storage;ctx.confirm=()=>true;
+ ctx.navigator={locks:{request:async(_,fn)=>fn()}};
+ vm.runInContext(sources['token-runtime.js'],ctx);handlers.DOMContentLoaded();
+ const pending=Array.from({length:5},()=>ctx.RYCTokens.record({attempts:[{model:'a',input:10,output:3,thinking:1,cached:0}]},'court'));
+ await ctx.document.getElementById('token-reset').events.click[0]();await Promise.all(pending);await ctx.RYCTokens.flush();
+ const saved=JSON.parse(storage.getItem(ctx.RYCTokenRuntime.key));assert.equal(saved.logs.length,1);assert.equal(saved.logs[0].totals.input,50);
+ assert.equal(saved.logs[0].totals.requests,5);assert.equal(saved.totals.input,0);
+ await drawerButton.events.click[0]();const dialog=ctx.document.getElementById('ryc-log-dialog');
+ assert.ok(dialog.open);assert.ok(walk(dialog).some(e=>e.textContent==='ID: '+saved.logs[0].id));
+ assert.ok(walk(dialog).some(e=>e.textContent==='Average input / output per request: 10 / 4'));
+ await walk(dialog).find(e=>e.textContent==='Close ×').onclick();assert.equal(dialog.open,false);
+});
+test('mix: Worker uses the current brief and private reference without changing the response contract',async()=>{
+ let system,contents;const ctx=workerRuntime(async(_,options)=>{const body=JSON.parse(options.body);system=body.systemInstruction.parts[0].text;contents=body.contents;return provider(reply({ap:10}));});
+ const s=state(ctx),history=[entry('/start SECRET SEED'),entry(reply({ap:10},'The exact prior reply'),'model')];
+ const packet=ctx.RYCTokenContext.prepare(s,{court:history},'court','Explain that');
+ const result=await dispatch(ctx,{message:'Explain that',userText:'Explain that',targetPersona:'court',contractVersion:2,
+  tokenSystem:ctx.RYCTokenCore.version,caseState:s,contextBrief:packet.brief,history:packet.history,engineReference:{truth:'FIXED SECRET'}});
+ assert.equal(result.status,200,JSON.stringify(result.data));assert.match(system,/PRIVATE REFEREE REFERENCE/);assert.match(system,/FIXED SECRET/);
+ assert.match(system,/LIVE RECORD AND SOURCE CONTRACT/);assert.match(JSON.stringify(contents),/exact prior reply/);
+ assert.ok(!JSON.stringify(contents).includes('STATE_CHECKPOINT'));assert.ok(!JSON.stringify(contents).includes('SECRET SEED'));
+ assert.ok(result.data.usage.attempts.length===1);
 });
 test('Scout rejects missing victim names and retains the existing four-field output structure',()=>{
  const ctx=runtime();const seed={roster:{client:{name:'Alex',occupation:'civilian'},victim:{name:'Sam Johnson'}}};const valid={caseTitle:'State v. Alex',crimeSummary:'Alex allegedly assaulted Sam Johnson.',starterExhibits:[exhibit(),exhibit('E02')],unencryptedTruth:'Sam Johnson saw the encounter.'};ctx.fixture=valid;ctx.seed=seed;
@@ -146,7 +275,7 @@ test('Offers and evidence documents render structured records and actionable con
 
 test('standalone dashboard Worker matches modular sources and handles a Standard request',async()=>{
  const bundle=await read('worker-cloudflare.txt');
- for(const name of ['standard-support.js','data.js','game-state.js','worker.js'])assert.ok(bundle.includes(name==='worker.js'?sources[name].replace(/^import .*;\s*$/gm,''):sources[name]),name+' differs from dashboard bundle');
+ for(const name of ['standard-support.js','token-core.js','token-context.js','data.js','game-state.js','worker.js'])assert.ok(bundle.includes(name==='worker.js'?sources[name].replace(/^import .*;\s*$/gm,''):sources[name]),name+' differs from dashboard bundle');
  const ctx=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Request,Response,Headers,AbortController,setTimeout,clearTimeout,fetch:async()=>provider(reply({ap:10}))});
  vm.runInContext(bundle.replace('export default {','globalThis.worker = {').replace('export class ExtremeCase','globalThis.ExtremeCase = class ExtremeCase'),ctx);
  const result=await dispatch(ctx,{contractVersion:2,targetPersona:'court',caseState:state(ctx)});assert.equal(result.status,200,JSON.stringify(result.data));assert.equal((await new ctx.ExtremeCase().fetch()).status,410);
