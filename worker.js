@@ -4,9 +4,6 @@
  * Configure GEMINI_API_KEY as a Worker secret, or use the existing BYOK header.
  */
 import './standard-support.js';
-import './token-core.js';
-import './token-context.js';
-import './data.js';
 import './game-state.js';
 const ALLOWED_ORIGINS = [
   'https://rest-your-case.mazendev.com',

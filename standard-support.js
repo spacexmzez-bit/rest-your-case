@@ -1,3 +1,4 @@
+/* ===== Merged from: standard-support.js ===== */
 /* File name: standard-support.js — shared Standard evidence, offers and memory contracts. */
 (() => {
   'use strict';
@@ -219,4 +220,321 @@
   const offerRules = `OFFERS CONTRACT: The supplied offer policy bounds gameplay only, not real sentencing law. The /offer request command addresses the named prosecutor; the response speaker must be that prosecutor. The /offer accept ID command addresses the named judge; the response speaker must be that judge. Only the named prosecutor may propose an offer; only the judge may approve an explicit /offer accept ID. Offer proposals in STATE_CHECKPOINT: offers:[{id,type,title,terms,basis,reducedCharge,sourceExhibitIds:[],expiresTurn:responseCheckpointTurn+1..20}]. Explain the same terms in dialogue. Never propose an offer based on hidden truth or invent an offer as guaranteed. New IDs for changed terms. A player rejection /offer reject ID emits offerDecision:{offerId,decision:'rejected'} and does not end the trial. Acceptance /offer accept ID requires the exact saved active offer; if legally/ procedurally suitable, return offerDecision:{offerId,decision:'accepted'}, trialEnded:true and explain the negotiated resolution. Otherwise refuse and keep the offer unchanged. Do not end the case because the player merely requests/discusses an offer. Disclosure responses use disclosures:[{id,text,exhibitIds:[]}]; newly disclosed items must also appear in docket and must not duplicate existing IDs. No speculative sentence numbers or unsupported promises. No information-bargain that silently spends AP.`;
   globalThis.RYCStandard = { object, key, clone, id, error, checkpoint, evidence, mergeDocket, validateDiscovery, normalize, applyRecords,
     partnerGuidance, nameLabel, dialogueText, historySources, memoryPacket, publicCase, usageTotals, rules, diazRules, offerRules };
+})();
+/* ===== Merged from: token-core.js ===== */
+/* Shared trial files (reuse these names in EVERY later trial):
+ * token-core.js, token-context.js, token-runtime.js, game.js, game.html,
+ * worker.js, standard-support.js, index.html, shelf.html, cases.js,
+ * .github/workflows/deploy-worker.yml, tests/standard-update.test.mjs,
+ * worker-cloudflare.txt.
+ * Trial: mix-1-2-v1. No provider/model changes, Clerk calls or summary generation.
+ * The original state/_histories remain authoritative and backward compatible.
+ */
+(() => {
+  'use strict';
+  const version = 'mix-1-2-v1';
+  const clone = x => JSON.parse(JSON.stringify(x));
+  const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+  function sourceId(channel,index,entry) {
+    const text=JSON.stringify(entry);let hash=2166136261;
+    for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);
+    return channel+':'+index+':'+(hash>>>0).toString(16)+'-'+text.length;
+  }
+  function preserveReplacedSources(state,previous,next) {
+    const journal=state.clerkMemory?.liveRecord;if(!journal)return;
+    journal.replacedSources||=[];
+    for(const channel of ['court','partner','diaz'])for(let index=0;index<(previous[channel]||[]).length;index++) {
+      const entry=previous[channel][index];
+      if(same(entry,next[channel]?.[index]))continue;
+      const id=sourceId(channel,index,entry);
+      if(!journal.replacedSources.some(e=>e.id===id))journal.replacedSources.push({id,channel,entry:clone(entry),reason:'replaced or undone; historical only'});
+    }
+  }
+  const fields = ['profile','phase','turn','ap','strikes','trialEnded','apGrants','caseOutcome'];
+  // Optional metadata lives in the existing, preserved clerkMemory container.
+  // This is a deterministic change journal, not an AI-generated factual summary.
+  function capture(previous, next, source = {}) {
+    if (!next.hasActiveCase) return next;
+    const prior = previous.caseId === next.caseId ? previous : {};
+    const memory = next.clerkMemory ||= {};
+    const journal = clone(prior.clerkMemory?.liveRecord || {schema:1,events:[]});
+    if (journal.schema !== 1 || !Array.isArray(journal.events)) throw new Error('Unsupported live-record journal; original save retained.');
+    const changes = [];
+    const put = (path,before,after) => { if(!same(before,after)) changes.push({path,before:before??null,after:after??null}); };
+    for (const field of fields) put(field,prior[field],next[field]);
+    for (const field of ['docket','offers','investigations','disclosures']) {
+      const old = new Map((prior[field]||[]).map(x=>[x.id||x.tag,x]));
+      const current = new Map((next[field]||[]).map(x=>[x.id||x.tag,x]));
+      for (const id of new Set([...old.keys(),...current.keys()])) put(field+':'+id,old.get(id),current.get(id));
+    }
+    for (const field of ['facts','trashedFacts','hiddenFacts']) {
+      const before=prior[field]||[],after=next[field]||[];
+      for (const value of before) if(!after.includes(value)) changes.push({path:field,before:value,after:null});
+      for (const value of after) if(!before.includes(value)) changes.push({path:field,before:null,after:value});
+    }
+    // Retain edits/deletions of player notes without promoting them to case truth.
+    for (const field of ['notes','exhibitNotes']) put('private:'+field,prior[field],next[field]);
+    if(changes.length) journal.events.push({id:'change:'+journal.events.length,turn:next.turn,
+      revision:(prior.revision||0)+1,at:Date.now(),source:source.id||'player-or-case-update',changes});
+    memory.liveRecord=journal;
+    return next;
+  }
+  function modelRecord(state) {
+    const record=RYCStandard.publicCase(state);
+    record.roster=clone(state.roster||record.roster||{});
+    record.allegation=state.allegation??record.allegation;
+    record.docket=(record.docket||[]).map(e=>{
+      const value={id:e.id||e.tag,name:e.name||e.title,type:e.type,status:e.status,
+        details:e.details||e.facts||e.description||'',source:e.source,foundation:e.foundation};
+      // Keep custom evidence fields, but remove identical display aliases only.
+      for(const [k,v] of Object.entries(e)) {
+        if(k==='isApi' || (k==='tag'&&v===value.id) || (k==='title'&&v===value.name)
+          || (['facts','description'].includes(k)&&v===value.details))continue;
+        if(!(k in value))value[k]=v;
+      }
+      if(e.isManual)value.authority='UNVERIFIED_PLAYER_ENTRY';
+      return value;
+    });
+    record.caseOutcome=state.caseOutcome||null;
+    return record;
+  }
+  function privateReference(state,channel) {
+    if(!['court','diaz'].includes(channel))return null;
+    const original=state.activeCaseSeed;
+    if(!original?.scout?.unencryptedTruth)return null;
+    if(channel==='diaz')return {truth:original.scout.unencryptedTruth};
+    const n=original.seed?.narrative_seeds||{};
+    return {truth:original.scout.unencryptedTruth,constitutionalFlaw:n.constitutional_flaw,
+      witnessFriction:n.witness_friction,clientComplication:n.client_complication,mechanics:original.seed?.mechanics};
+  }
+  const contract = `LIVE RECORD AND SOURCE CONTRACT: The supplied current record is the current mechanical state. Old dialogue is attributed testimony, not a second state snapshot or established truth. Preserve exact source wording, uncertainty, conflicting claims and provenance. A later claim is not automatically a certified correction. Keep all mandatory response formats and gameplay rules. Checkpoints may give incremental facts/docket changes; omit unchanged evidence rather than resending it. Omission never deletes evidence. Deleted or manually edited exhibits must not be restored from older dialogue. Player-entered evidence and private notes are unverified, never independent corroboration. Use source IDs to identify supporting originals when helpful. Never reconstruct an absent quotation. Ask for clarification when a source is missing. No extra AP or discoveries from retrieval. Private engine reference is for fixed-case adjudication only: it grants no character knowledge. Only expose a finding through the existing permitted discovery/gameplay rules.`;
+  globalThis.RYCTokenCore={version,capture,sourceId,preserveReplacedSources,modelRecord,privateReference,contract};
+})();
+/* ===== Merged from: token-context.js ===== */
+/* Deterministic character briefs. Original saves and transcripts are never trimmed.
+ * Retrieval has no hard token cutoff: ambiguous/global questions widen the brief.
+ * Court is the referee route and retains its fixed private reference separately;
+ * public material is NOT permission for an NPC to adopt another person's knowledge.
+ */
+(() => {
+  'use strict';
+  const terms = text => [...new Set(String(text).toLowerCase().match(/[\p{L}\p{N}]{3,}/gu)||[])]
+    .filter(x=>!new Set(['the','and','that','this','with','what','from','you','can','did','was','why','how','about','please','could','would','have','for','are','not','but','all','على','هذا','هذه','ماذا','كيف','الذي','التي','الى','إلى','منذ']).has(x));
+  const spoken=text=>String(text).replace(/<[^>]+>/g,' ');
+  function entries(history,channel) {
+    return (history||[]).map((entry,i)=>{
+      const raw=(entry.parts||[]).map(p=>typeof p==='string'?p:p.text||'').join('\n');
+      // Never send the original intake's hidden fields through conversational retrieval.
+      if(/^\s*\/start\b/i.test(raw))return null;
+      const block=raw.match(/<DIALOGUE\s*>[\s\S]*?<\/DIALOGUE\s*>/i)?.[0];
+      const text=entry.role==='model' ? block || RYCStandard.dialogueText(raw)
+        .replace(/^\s*`?\[(?:STATE|ROSTER|DOCKET):[^\n]*$/gmi,'').trim() : raw;
+      return text?{id:RYCTokenCore.sourceId(channel,i,entry),channel,role:entry.role,text}:null;
+    }).filter(Boolean);
+  }
+  function prepare(state,histories,channel,message) {
+    const own=entries(histories[channel],channel);
+    const publicCourt=channel==='court'?[]:entries(histories.court,'court');
+    const pool=[...publicCourt,...own];
+    const recent=own.slice(-12);
+    const recentIds=new Set(recent.map(e=>e.id));
+    // The preceding exchange resolves 'that', 'it', and follow-up topic references.
+    const literalTerms=terms(message);
+    const followup=/\b(?:that|it|he|she|they|those|this|him|her)\b|ذلك|هذا|قصد|تقصد/i.test(message);
+    const directMatch=pool.some(e=>literalTerms.some(x=>spoken(e.text).toLowerCase().includes(x)));
+    const priorReply=own.filter(e=>e.role==='model').at(-1);
+    const query=directMatch?literalTerms:terms(message+' '+(followup?spoken(priorReply?.text||''):''));
+    const people=[state.profile?.client,state.profile?.judge,state.profile?.da,
+      ...(state.characters||[]).map(p=>p.name),...(state.activeCaseSeed?.seed?.roster?.witnesses||[]).map(p=>p.name)].filter(Boolean);
+    const entities=[...(state.docket||[]).map(e=>e.id||e.tag),...people].filter(value=>
+      (message+' '+(followup?spoken(priorReply?.text||''):'')).toLowerCase().includes(value.toLowerCase()));
+    const isGlobal=/\/(?:undo|recap)\b|verdict|closing|whole case|entire case|all (?:evidence|statements|contradictions)|case strategy|الحكم|مرافع|القضية كاملة|كل الأدلة|كل التناقض/i.test(message);
+    const relevant=pool.filter(e=>entities.some(x=>e.text.toLowerCase().includes(x.toLowerCase())) || query.some(x=>spoken(e.text).toLowerCase().includes(x)) || message.includes(e.id));
+    // Preserve every correction/commitment/open issue, with its neighboring exchange.
+    const pinned=new Set();
+    for(let i=0;i<pool.length;i++)if(/correct|actually|instead|promis|agreed|mistake|disput|contradict|not true|unresolved|pending|will (?:check|find|ask)|تصحيح|وعد|خطأ|تناقض|لم نتأكد|سأبحث|سأتحقق/i.test(pool[i].text)) {
+      for(const e of pool.slice(Math.max(0,i-1),i+2))if(e.channel===pool[i].channel)pinned.add(e.id);
+    }
+    const widen=isGlobal || (!directMatch && !(followup&&priorReply) && own.length>recent.length);
+    const selected=new Set((widen?pool:relevant).map(e=>e.id));
+    for(const e of publicCourt.slice(-4))selected.add(e.id);
+    for(const id of pinned)selected.add(id);
+    const originals=pool.filter(e=>selected.has(e.id)&&!recentIds.has(e.id));
+    // Evidence revisions remain exact source-linked records; never revive deleted items.
+    const revisions=[];
+    for(const event of state.clerkMemory?.liveRecord?.events||[])for(const change of event.changes||[]) {
+      if(!change.path.startsWith('docket:') || !change.before)continue;
+      const combined=JSON.stringify(change);
+      if(isGlobal || query.some(t=>combined.toLowerCase().includes(t)) || entities.some(id=>combined.includes(id)))
+        revisions.push({sourceId:event.id,turn:event.turn,...change,authority:'historical record; current docket controls; manual edits are unverified'});
+    }
+    const seed=state.activeCaseSeed?.seed;
+    const addressed=channel==='court' ? message.match(/^To\s+([^:\n]+):/i)?.[1]?.trim() : null;
+    const actor=addressed?{name:addressed,knowledge:'Only this person’s established perspective, disclosures to them, and procedurally available material. Referee access is not character access.'}:null;
+    const brief={schema:1,version:RYCTokenCore.version,recipient:channel,
+      actor,
+      boundary:channel==='court'
+        ? 'Referee route. No Partner/Diaz private chat. Attribute every statement to its speaker. NPC knowledge remains role/perspective limited; the public defense record is not universal NPC knowledge.'
+        : 'Defense consultation. Own conversation and shared court record only. Other private consultation chats and sealed intake are excluded. Claims are not proof.',
+      retrieval:widen?'expanded-originals':'recent-and-linked-originals',
+      originals,revisions,
+      caseDefinition:seed?{charge:seed.charge,venue:seed.narrative_seeds?.venue}:null,
+      availableSources:pool.length,includedSources:originals.length+recent.length};
+    return {history:recent.map(e=>({role:e.role,parts:[{text:'[Original source '+e.id+']\n'+e.text}]})),brief};
+  }
+  globalThis.RYCTokenContext={prepare,entries};
+})();
+/* ===== Merged from: token-runtime.js ===== */
+/* Counter + reset log UI, shared across overview, shelf and game.
+ * One atomic localStorage write archives a log AND clears the meter.
+ * Logs never contain prompts, case truth, evidence text or API keys.
+ * Output includes separately reported thinking once; cached input is a subset.
+ */
+(() => {
+  'use strict';
+  const key='ryc_dev_tokens_v1'; // Reuse the original counter; import its totals.
+  const copy=x=>JSON.parse(JSON.stringify(x));
+  const number=x=>Number.isFinite(x)&&x>=0?x:0;
+  function fresh(logs=[]) {
+    return {schema:2,version:RYCTokenCore.version,startedAt:new Date().toISOString(),
+      totals:{input:0,output:0,thinking:0,cached:0,repeated:0,requests:0,unknown:0},seen:{},
+      entries:[],completed:[],logs};
+  }
+  function createStore(storage,getCase=()=>null) {
+    function read() {
+      const raw=storage.getItem(key);
+      if(!raw)return fresh();
+      const saved=JSON.parse(raw);
+      if(!saved || !saved.totals || !saved.seen)throw new Error('The saved meter is unreadable; reset was cancelled to preserve it.');
+      return {...fresh(),...saved,logs:saved.logs||[],entries:saved.entries||[],completed:saved.completed||[],
+        legacyTotals:saved.legacyTotals || saved.schema!==2,startedAt:saved.startedAt||null};
+    }
+    const write=value=>{storage.setItem(key,JSON.stringify(value));return value;};
+    const caseInfo=()=>{
+      const value=getCase();
+      return value?.hasActiveCase?{caseId:value.caseId||null,caseTitle:value.profile?.title||null,currentCaseTurn:value.turn??null}:null;
+    };
+    function record(usage,channel) {
+      const current=read();
+      const next=RYCStandard.usageTotals(current,usage,channel);
+      next.schema=2;
+      if(!current.totals.requests)next.startedAt=new Date().toISOString();
+      next.entries.push({id:globalThis.crypto?.randomUUID?.()||'request_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+        at:new Date().toISOString(),version:RYCTokenCore.version,channel,case:channel==='scout'?null:caseInfo(),...copy(next.last),
+        // Store only whitelisted provider metadata; no bodies or credentials.
+        attempts:(usage?.attempts||[]).map(a=>Object.fromEntries(['model','input','output','thinking','cached','total','status'].map(k=>[k,a[k]??null])))});
+      return write(next);
+    }
+    function completed(channel,state,operationId) {
+      const current=read();
+      if(current.completed.some(x=>x.operationId===operationId))return current;
+      current.completed.push({operationId,channel,caseId:state.caseId||null,caseTitle:state.profile?.title||null,
+        turn:state.turn,at:new Date().toISOString()});
+      return write(current);
+    }
+    function reset() {
+      const current=read(), t=current.totals, requests=number(t.requests), info=caseInfo();
+      const id=globalThis.crypto?.randomUUID?.()||'log_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      const cases=[...new Map(current.completed.filter(x=>x.caseId).map(x=>[x.caseId,{id:x.caseId,title:x.caseTitle}])).values()];
+      const log={id,createdAt:new Date().toISOString(),startedAt:current.startedAt,
+        version:current.version,versions:[...new Set(current.entries.map(e=>e.version))],legacyTotals:current.legacyTotals===true,
+        caseId:info?.caseId||cases.at(-1)?.id||null,caseTitle:info?.caseTitle||cases.at(-1)?.title||null,cases,turns:info?.currentCaseTurn??null,
+        completedTurns:current.completed.filter(x=>['court','diaz'].includes(x.channel)).length,
+        completedActions:current.completed.length,totals:copy(t),
+        averages:{inputPerRequest:requests?number(t.input)/requests:0,outputPerRequest:requests?number(t.output)/requests:0},
+        attempts:current.entries.reduce((sum,e)=>sum+e.attempts.length,0),
+        // Preserve the per-request/per-attempt breakdown for later comparisons.
+        requests:copy(current.entries),actions:copy(current.completed)};
+      // Do not clear the counter unless the whole log is successfully saved.
+      write(fresh([...current.logs,log]));
+      return log;
+    }
+    return {read,record,completed,reset};
+  }
+  globalThis.RYCTokenRuntime={createStore,key,fresh};
+  if(typeof document==='undefined')return;
+  let getCase=()=>{try{return JSON.parse(localStorage.getItem('rest_your_case_state')||'null');}catch{return null;}};
+  const store=createStore(localStorage,()=>getCase());
+  let queue=Promise.resolve(),lastError='';
+  function run(action) {
+    const task=()=>typeof navigator!=='undefined'&&navigator.locks
+      ? navigator.locks.request('ryc-token-meter',action):action();
+    const result=queue.then(task);
+    queue=result.catch(error=>{lastError=error.message;}).then(()=>render());
+    return result;
+  }
+  const safe=promise=>promise.catch(()=>{});
+  globalThis.RYCTokens={
+    configure(fn){getCase=fn;},
+    record(usage,channel){return safe(run(()=>store.record(usage,channel)));},
+    completed(channel,state,operationId){const snapshot=copy(state);return safe(run(()=>store.completed(channel,snapshot,operationId)));},
+    flush(){return queue;},
+    reset(){return run(()=>store.reset());}
+  };
+  const el=(tag,text)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
+  const row=(container,label,value)=>container.append(el('p',label+': '+value));
+  const formatted=value=>number(value).toLocaleString(undefined,{maximumFractionDigits:2});
+  function render() {
+    const body=document.getElementById('token-counts');if(!body)return;
+    body.replaceChildren();
+    try {
+      const value=store.read(),t=value.totals,l=value.last;
+      row(body,'Trial',RYCTokenCore.version);
+      row(body,'Overall input',formatted(t.input));row(body,'Overall output (incl. thinking)',formatted(t.output));
+      row(body,'Average input / request',formatted(t.requests?t.input/t.requests:0));
+      row(body,'Average output / request',formatted(t.requests?t.output/t.requests:0));
+      row(body,'Requests',t.requests);row(body,'Completed actions since reset',value.completed.length);
+      row(body,'Last request input / output',`${l?.input||0} / ${l?.output||0}`);
+      row(body,'Provider cached input · overall / last',`${t.cached||0} / ${l?.cached||0}`);
+      row(body,'Exact repeated input · overall / last',`${t.repeated||0} / ${l?.repeated||0}`);
+      row(body,'Thinking · overall / last',`${t.thinking||0} / ${l?.thinking||0}`);
+      row(body,'Last route',l?l.channel+' · '+l.models.join(' → '):'None');
+      row(body,'Unreported usage fields',t.unknown||0);row(body,'Saved reset logs',value.logs.length);
+      if(t.unknown)body.append(el('p','Totals contain only reported usage. Averages include all requests and are incomplete when usage is unreported.'));
+    }catch(error){lastError=error.message;}
+    if(lastError)body.append(el('p','Meter storage: '+lastError));
+  }
+  function mount() {
+    const style=el('style');style.textContent=`
+      .ryc-log-button{font:12px system-ui;border:1px solid #967a45;border-radius:5px;padding:5px 12px;background:#292b33;color:#f4dfac;cursor:pointer;align-self:flex-start}
+      #ryc-log-dialog{width:min(660px,94vw);max-height:86dvh;overflow:auto;background:#171b23;color:#f1e7cf;border:1px solid #967a45;border-radius:9px;padding:20px;font:14px/1.6 system-ui}
+      #ryc-log-dialog::backdrop{background:#000b}#ryc-log-dialog header{display:flex;align-items:center;justify-content:space-between;gap:15px}#ryc-log-dialog button{border:1px solid #967a45;border-radius:5px;padding:6px 12px;background:#292b33;color:#f4dfac;cursor:pointer}#ryc-log-dialog article{border-top:1px solid #665738;margin-top:18px;padding-top:14px;overflow-wrap:anywhere}#ryc-log-dialog p{margin:5px 0}#ryc-log-dialog summary{cursor:pointer}#ryc-log-dialog pre{white-space:pre-wrap;font:11px/1.5 monospace}`;
+    document.head.append(style);
+    const dialog=el('dialog');dialog.id='ryc-log-dialog';dialog.setAttribute('aria-labelledby','ryc-log-title');
+    const header=el('header'),title=el('strong','Token logs');title.id='ryc-log-title';
+    const close=el('button','Close ×');close.type='button';close.onclick=()=>dialog.close();
+    header.append(title,close);dialog.append(header);const content=el('div');dialog.append(content);document.body.append(dialog);
+    async function openLogs() {
+      await queue;content.replaceChildren();
+      try{
+        const logs=store.read().logs;
+        content.append(el('p','Reset saves a log before clearing the meter. Logs stay in this browser. Output includes thinking. A request includes all its fallback attempts.'));
+        if(!logs.length)content.append(el('p','No logs yet. Press Reset meter to save the current totals.'));
+        for(const log of [...logs].reverse()){
+          const card=el('article');row(card,'ID',log.id);row(card,'Saved',new Date(log.createdAt).toLocaleString());
+          row(card,'Trial',log.versions.join(', ')||log.version||'Earlier version');row(card,'Case',log.caseTitle||'No active case');
+          row(card,'Current case turn',log.turns??'—');row(card,'Completed gameplay turns since reset',log.completedTurns);
+          row(card,'Completed actions since reset',log.completedActions);row(card,'Requests',log.totals.requests);
+          row(card,'Overall input / output',`${formatted(log.totals.input)} / ${formatted(log.totals.output)}`);
+          row(card,'Average input / output per request',`${formatted(log.averages.inputPerRequest)} / ${formatted(log.averages.outputPerRequest)}`);
+          row(card,'Unreported usage fields',log.totals.unknown||0);
+          if(log.legacyTotals)card.append(el('p','Includes totals from the previous meter; older request details and completion counts were not recorded.'));
+          const details=el('details'),summary=el('summary','Request details'),pre=el('pre',JSON.stringify(log,null,2));details.append(summary,pre);card.append(details);content.append(card);
+        }
+      }catch(error){content.append(el('p',error.message));}
+      if(!dialog.open)dialog.showModal();
+    }
+    for(const button of document.querySelectorAll('[data-token-log]'))button.addEventListener('click',openLogs);
+    const panel=document.getElementById('token-panel'),toggle=document.getElementById('token-toggle');
+    toggle?.addEventListener('click',()=>{panel.hidden=!panel.hidden;toggle.setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden)document.getElementById('token-close')?.focus();});
+    document.getElementById('token-close')?.addEventListener('click',()=>{panel.hidden=true;toggle?.setAttribute('aria-expanded','false');toggle?.focus();});
+    document.getElementById('token-reset')?.addEventListener('click',async()=>{
+      if(!confirm('Save the current usage as a log, then reset the meter?'))return;
+      try{lastError='';const log=await RYCTokens.reset();lastError='';render();const notice=el('p','Saved log '+log.id);document.getElementById('token-counts')?.append(notice);}
+      catch(error){lastError=error.message;render();}
+    });
+    window.addEventListener('storage',event=>{if(event.key===key||event.key===null)render();});
+    render();
+  }
+  document.addEventListener('DOMContentLoaded',mount);
 })();

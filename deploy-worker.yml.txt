@@ -8,11 +8,8 @@ on:
       - worker.js
       - standard-support.js
       - game-state.js
-      - data.js
       - game.js
-      - game-scene.js
       - cases.js
-      - scout_prompt.js
       - tests/standard-update.test.mjs
       - wrangler.toml
       - .github/workflows/deploy-worker.yml
@@ -41,7 +38,7 @@ jobs:
 
       - name: Check Standard scripts
         run: |
-          for file in standard-support.js game-state.js data.js game.js game-scene.js cases.js scout_prompt.js; do
+          for file in standard-support.js game-state.js game.js cases.js; do
             node --check "$file"
           done
           node --test tests/standard-update.test.mjs

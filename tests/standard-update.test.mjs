@@ -5,8 +5,8 @@ import {readFile} from 'node:fs/promises';
 import {webcrypto} from 'node:crypto';
 const root=new URL('../',import.meta.url);
 const read=name=>readFile(new URL(name,root),'utf8');
-const sources=Object.fromEntries(await Promise.all(['token-core.js','token-context.js','token-runtime.js','standard-support.js','data.js','game-state.js','scout_prompt.js','worker.js','game.js','game-scene.js'].map(async n=>[n,await read(n)])));
-function runtime(){const ctx=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Request,Response,Headers,AbortController,setTimeout,clearTimeout});for(const n of ['standard-support.js','data.js','game-state.js','scout_prompt.js','token-core.js','token-context.js','token-runtime.js'])vm.runInContext(sources[n],ctx,{filename:n});return ctx;}
+const sources=Object.fromEntries(await Promise.all(['standard-support.js','game-state.js','worker.js','game.js'].map(async n=>[n,await read(n)])));
+function runtime(){const ctx=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Request,Response,Headers,AbortController,setTimeout,clearTimeout});for(const n of ['standard-support.js','game-state.js'])vm.runInContext(sources[n],ctx,{filename:n});return ctx;}
 const plain=x=>JSON.parse(JSON.stringify(x));
 const exhibit=(id='E01',details='Dispatch log shows a 21:05 call.')=>({id,name:'Dispatch log',type:'Documentary',status:'Marked',details});
 function state(ctx){return {...plain(ctx.RYCState.emptyState()),hasActiveCase:true,intakeComplete:true,profile:{title:'State v. Alex',client:'Alex',judge:'Judge Arthur Pendelton',da:'ADA Samantha Ward',clientOccupation:'civilian'},ap:10,docket:[exhibit()],facts:['The incident occurred at 21:00.'],exhibitNotes:{},characters:[],offers:[],disclosures:[],investigations:[],clerkMemory:{}};}
@@ -130,7 +130,7 @@ test('logs UI: drawer log control opens saved logs; reset is serialized with pen
   querySelectorAll:()=>[drawerButton],addEventListener:(name,fn)=>handlers[name]=fn};
  ctx.window=ctx;ctx.addEventListener=()=>{};ctx.localStorage=storage;ctx.confirm=()=>true;
  ctx.navigator={locks:{request:async(_,fn)=>fn()}};
- vm.runInContext(sources['token-runtime.js'],ctx);handlers.DOMContentLoaded();
+ vm.runInContext(sources['standard-support.js'],ctx);handlers.DOMContentLoaded();
  const pending=Array.from({length:5},()=>ctx.RYCTokens.record({attempts:[{model:'a',input:10,output:3,thinking:1,cached:0}]},'court'));
  await ctx.document.getElementById('token-reset').events.click[0]();await Promise.all(pending);await ctx.RYCTokens.flush();
  const saved=JSON.parse(storage.getItem(ctx.RYCTokenRuntime.key));assert.equal(saved.logs.length,1);assert.equal(saved.logs[0].totals.input,50);
@@ -251,9 +251,8 @@ test('Offers and evidence documents render structured records and actionable con
  }
  const byId=id=>{if(!nodes.has(id))nodes.set(id,new Element('div'));return nodes.get(id);};
  ctx.window=ctx;ctx.addEventListener=()=>{};ctx.document={activeElement:new Element('button'),addEventListener(){},getElementById:byId,createElement:tag=>new Element(tag),querySelector:()=>byId('heading'),querySelectorAll:()=>[]};ctx.confirm=()=>true;ctx.alert=text=>{throw Error(text);};ctx.RYCScene={};ctx.fixture=state(ctx);
- vm.runInContext(sources['game.js'].split('\ninitApp();')[0],ctx);
+ vm.runInContext(sources['game.js'].split('\ninitApp();')[0].replace('renderCourtFeed,renderAssistantFeeds,openDocument,','renderCourtFeed,renderAssistantFeeds,refreshDocument,openDocument,'),ctx);
  vm.runInContext('appState=fixture;commitCase=async fn=>{appState=fn(JSON.parse(JSON.stringify(appState)));};sendCourtAction=async prompt=>{globalThis.sentPrompt=prompt;return true;};',ctx);
- vm.runInContext(await read('ryc-dialogue.js'),ctx);vm.runInContext(sources['game-scene.js'].replace('renderCourtFeed,renderAssistantFeeds,openDocument,','renderCourtFeed,renderAssistantFeeds,refreshDocument,openDocument,'),ctx);
  byId('scene-document').append(byId('document-body'));
  vm.runInContext('appState.offers=[{...fixtureOffer,status:"proposed"}]',Object.assign(ctx,{fixtureOffer:offer()}));
  ctx.RYCScene.openDocument('offers');
@@ -275,7 +274,7 @@ test('Offers and evidence documents render structured records and actionable con
 
 test('standalone dashboard Worker matches modular sources and handles a Standard request',async()=>{
  const bundle=await read('worker-cloudflare.txt');
- for(const name of ['standard-support.js','token-core.js','token-context.js','data.js','game-state.js','worker.js'])assert.ok(bundle.includes(name==='worker.js'?sources[name].replace(/^import .*;\s*$/gm,''):sources[name]),name+' differs from dashboard bundle');
+ for(const name of ['standard-support.js','game-state.js','worker.js'])assert.ok(bundle.includes(name==='worker.js'?sources[name].replace(/^import .*;\s*$/gm,''):sources[name]),name+' differs from dashboard bundle');
  const ctx=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Request,Response,Headers,AbortController,setTimeout,clearTimeout,fetch:async()=>provider(reply({ap:10}))});
  vm.runInContext(bundle.replace('export default {','globalThis.worker = {').replace('export class ExtremeCase','globalThis.ExtremeCase = class ExtremeCase'),ctx);
  const result=await dispatch(ctx,{contractVersion:2,targetPersona:'court',caseState:state(ctx)});assert.equal(result.status,200,JSON.stringify(result.data));assert.equal((await new ctx.ExtremeCase().fetch()).status,410);
