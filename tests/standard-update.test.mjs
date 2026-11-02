@@ -272,14 +272,6 @@ test('Offers and evidence documents render structured records and actionable con
  vm.runInContext('renderUI=()=>{};appState.trashedFacts=["fact-id"]',ctx);await ctx.restoreFact('fact-id');assert.equal(vm.runInContext('appState.trashedFacts.length',ctx),0);
 });
 
-test('standalone dashboard Worker matches modular sources and handles a Standard request',async()=>{
- const bundle=await read('worker-cloudflare.txt');
- for(const name of ['standard-support.js','game-state.js','worker.js'])assert.ok(bundle.includes(name==='worker.js'?sources[name].replace(/^import .*;\s*$/gm,''):sources[name]),name+' differs from dashboard bundle');
- const ctx=vm.createContext({console,crypto:webcrypto,TextEncoder,TextDecoder,Request,Response,Headers,AbortController,setTimeout,clearTimeout,fetch:async()=>provider(reply({ap:10}))});
- vm.runInContext(bundle.replace('export default {','globalThis.worker = {').replace('export class ExtremeCase','globalThis.ExtremeCase = class ExtremeCase'),ctx);
- const result=await dispatch(ctx,{contractVersion:2,targetPersona:'court',caseState:state(ctx)});assert.equal(result.status,200,JSON.stringify(result.data));assert.equal((await new ctx.ExtremeCase().fetch()).status,410);
-});
-
 // Regression cases discovered during the follow-up code review.
 test('review: updating an existing exhibit through facts/title replaces its stale aliases',()=>{
  const ctx=runtime(),s=state(ctx);s.docket[0].facts=s.docket[0].details;

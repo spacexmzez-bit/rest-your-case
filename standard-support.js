@@ -225,8 +225,7 @@
 /* Shared trial files (reuse these names in EVERY later trial):
  * token-core.js, token-context.js, token-runtime.js, game.js, game.html,
  * worker.js, standard-support.js, index.html, shelf.html, cases.js,
- * .github/workflows/deploy-worker.yml, tests/standard-update.test.mjs,
- * worker-cloudflare.txt.
+ * .github/workflows/deploy-worker.yml, tests/standard-update.test.mjs.
  * Trial: mix-1-2-v1. No provider/model changes, Clerk calls or summary generation.
  * The original state/_histories remain authoritative and backward compatible.
  */
